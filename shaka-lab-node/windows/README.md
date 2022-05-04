@@ -14,11 +14,16 @@ platforms, see [the general docs](../README.md#readme).
 
 ## Installation
 
-TODO: Package distribution
+```sh
+choco source add -n=shaka-lab -s=https://shaka-lab-chocolatey-dot-shaka-player-demo.appspot.com/
+choco install shaka-lab-node
+```
 
 ## Updates
 
-TODO: Package distribution
+```sh
+choco upgrade -y shaka-lab-node
+```
 
 ## Configuration
 
