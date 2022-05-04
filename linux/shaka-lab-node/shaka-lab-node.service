@@ -20,6 +20,7 @@ Wants=network.target
 
 [Service]
 Type=simple
+User=shaka-lab-node
 ExecStart=/opt/shaka-lab/selenium-node/start-nodes.sh
 Restart=always
 

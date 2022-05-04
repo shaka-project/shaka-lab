@@ -20,6 +20,7 @@ Wants=network.target
 
 [Service]
 Type=simple
+User=shaka-lab-hub
 ExecStart=/opt/shaka-lab/selenium-hub/start-hub.sh
 Restart=always
 

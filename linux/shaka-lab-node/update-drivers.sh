@@ -14,13 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update all WebDrivers.  Runs after package installation and again nightly.
+# Update all WebDrivers.  Runs after package installation, on service startup,
+# and again nightly.
 
-if test -z "$NVM_DIR"; then
-  # Load NVM so we can use our hermetic copy of nodejs.
-  export NVM_DIR=/opt/shaka-lab/nvm
-  . "$NVM_DIR/nvm.sh"
+# Fail on error.
+set -e
+
+# If run as root (from cron of package postinstall script), the script
+# re-launches itself as the non-root user that owns the folder.
+if [[ "$EUID" == 0 ]]; then
+  exec /bin/su shaka-lab-node -s /bin/bash -c "$0"
+  # NOTE: exec replaces the current running process, and doesn't return.
 fi
+
+# Load NVM so we can use our hermetic copy of nodejs.
+export NVM_DIR=/opt/shaka-lab/nvm
+. "$NVM_DIR/nvm.sh"
 
 cd /opt/shaka-lab/selenium-node
 

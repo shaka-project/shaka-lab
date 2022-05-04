@@ -19,6 +19,13 @@
 # Fail on error
 set -e
 
+# Create a non-root user for the service.
+adduser \
+  --system \
+  shaka-lab-hub \
+  --home /opt/shaka-lab/selenium-hub \
+  --no-create-home
+
 # Enable and start the service.
 systemctl daemon-reload
 systemctl enable shaka-lab-hub.service
