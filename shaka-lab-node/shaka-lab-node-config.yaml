@@ -1,0 +1,68 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Shaka Lab Node Config
+
+# The Selenium hub to connect to.  Customize this to your local grid.
+# If you install shaka-lab-hub with a default config on the same machine,
+# this will be correct.
+hub: http://127.0.0.1:4444/
+
+# Optional: The local hostname or IP to listen on.
+# For some systems with multiple IPs, you may need this to get the nodes
+# properly registered.
+#host: 192.168.1.55
+
+# The Selenium nodes to create.  Customize this to your lab devices.
+# Any regular browser you enable will have to be installed separately.
+nodes:
+  - template: chrome
+
+  #- template: firefox
+
+  #- template: edge
+
+  # NOTE: Safari requires macOS.
+  #- template: safari
+
+  # NOTE: Safari Tech Preview requires macOS.
+  #- template: safari-tp
+
+  # NOTE: Android requires adb: sudo apt install adb
+  # NOTE: Also requires device with debugging permission connected via USB.
+  #- template: chrome-android
+
+  #- template: chromecast
+  #  params:
+  #    hostname: shaka-test-chromecast-ultra
+  #    version: Ultra
+
+  #- template: chromeos
+  #  params:
+  #    hostname: shaka-test-chromebook
+  #    version: Pixelbook
+
+  # NOTE: Tizen nodes require Docker: sudo apt install docker.io
+  #- template: tizen
+  #  params:
+  #    hostname: shaka-test-tizen
+  #    ethaddr: "28:39:5e:0a:78:54"
+  #    version: 3
+
+  # NOTE: Xbox One nodes must be run on Windows, with Visual Studio installed
+  #- template: xboxone
+  #  params:
+  #    hostname: shaka-test-xbox-one
+  #    username: YOUR USERNAME HERE
+  #    password: YOUR PASSWORD HERE

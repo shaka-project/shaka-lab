@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+
+# Fail on error
+set -e
+
+# Create a non-root user for the service.
+adduser \
+  --quiet \
+  --system \
+  shaka-lab-node \
+  --home /opt/shaka-lab/shaka-lab-node \
+  --no-create-home
+
+# Grant that user access to docker, to be able to run the Tizen node.
+# Don't fail if docker is not installed.
+usermod -a -G docker shaka-lab-node || true
+
+# Install NVM, which we don't / shouldn't bundle into the deb package.
+# The location of our NVM installation.
+export NVM_DIR=/opt/shaka-lab/nvm
+# Request that NVM not touch the bash profile of root.
+export PROFILE=/dev/null
+curl -so- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh \
+  | bash >/dev/null
+. "$NVM_DIR/nvm.sh" >/dev/null
+
+# Install Node 16.
+nvm install 16 &>/dev/null
+
+# Give the non-root user ownership of the folder it will update.
+chown -R shaka-lab-node:nogroup /opt/shaka-lab/shaka-lab-node
+
+# Enable and start the service.
+systemctl daemon-reload
+systemctl enable shaka-lab-node.service
+systemctl start shaka-lab-node.service
