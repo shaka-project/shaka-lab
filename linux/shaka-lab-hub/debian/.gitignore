@@ -2,3 +2,4 @@ debhelper-build-stamp
 files
 shaka-lab-hub
 shaka-lab-hub.substvars
+*.debhelper
