@@ -1,0 +1,91 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Shaka Lab Node Templates
+
+# Defines templates for how Selenium Nodes can be created.
+# Actual nodes are configured in /etc/shaka-lab-node-config.yaml
+
+chrome:
+  capabilities:
+    browserName: chrome
+
+firefox:
+  capabilities:
+    browserName: firefox
+
+chrome-android:
+  defs:
+    webdriver.chrome.driver: ./chromedriver-android
+  capabilities:
+    browserName: chrome
+    platform: Android
+
+chromecast:
+  generic-webdriver-server: true
+  params:
+    - hostname
+    - version
+  defs:
+    genericwebdriver.browser.name: chromecast
+    genericwebdriver.backend.exe: node_modules/.bin/chromecast-webdriver-server
+    genericwebdriver.backend.params.hostname: $hostname
+  capabilities:
+    browserName: chromecast
+    version: $version
+
+chromeos:
+  generic-webdriver-server: true
+  params:
+    - hostname
+    - version
+  defs:
+    genericwebdriver.browser.name: chromeos
+    genericwebdriver.backend.exe: node_modules/.bin/chromeos-webdriver-server
+    genericwebdriver.backend.params.hostname: $hostname
+  capabilities:
+    browserName: chromeos
+    version: $version
+
+tizen:
+  generic-webdriver-server: true
+  params:
+    - hostname
+    - ?ethaddr  # optional
+    - version
+  defs:
+    genericwebdriver.browser.name: tizen
+    genericwebdriver.backend.exe: node_modules/.bin/tizen-webdriver-server
+    genericwebdriver.backend.params.hostname: $hostname
+    genericwebdriver.backend.params.wake-on-lan-address: $ethaddr
+  capabilities:
+    browserName: tizen
+    version: $version
+
+xboxone:
+  generic-webdriver-server: true
+  params:
+    - hostname
+    - username
+    - password
+  defs:
+    genericwebdriver.browser.name: xboxone
+    genericwebdriver.backend.exe: node_modules/.bin/xbox-one-webdriver-server
+    genericwebdriver.backend.params.hostname: $hostname
+    genericwebdriver.backend.params.username: $username
+    genericwebdriver.backend.params.password: $password
+    genericwebdriver.backend.params.wake-on-lan-address: $ethaddr
+  capabilities:
+    browserName: xboxone
+

@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "dependencies": {
+    "chromecast-webdriver-server": "^1",
+    "chromeos-webdriver-server": "^1",
+    "generic-webdriver-server": "^1",
+    "js-yaml": "^4",
+    "tizen-webdriver-server": "^1",
+    "webdriver-installer": "^1"
+  }
+}

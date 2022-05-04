@@ -1,0 +1,55 @@
+#!/usr/bin/make -f
+
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Makefile to build the debain package.
+
+# Debug the debian build process.
+export DH_VERBOSE = 1
+
+# Defines Make variable DEB_SOURCE for us, which is the name of the package.
+include /usr/share/dpkg/pkg-info.mk
+
+# Where we will install things.
+export PREFIX = $(PWD)/debian/$(DEB_SOURCE)
+export DESTDIR = $(PREFIX)/opt/shaka-lab
+
+# How "dh" helpers will install the package contents to a staging area.
+override_dh_auto_install:
+	install -m 755 -d "$(DESTDIR)/nvm"
+	echo "NVM placeholder; installed by package post-install" \
+	    | install -m 644 /dev/stdin "$(DESTDIR)/nvm/.placeholder"
+	
+	install -m 755 -d "$(DESTDIR)/selenium-node"
+	install -m 644 ../../selenium-jar/selenium-server-standalone-3.141.59.jar "$(DESTDIR)/selenium-node/"
+	install -m 644 package.json "$(DESTDIR)/selenium-node/"
+	install -m 755 update-drivers.sh "$(DESTDIR)/selenium-node/"
+	install -m 755 start-nodes.sh "$(DESTDIR)/selenium-node/"
+	install -m 644 start-nodes.js "$(DESTDIR)/selenium-node/"
+	install -m 644 node-templates.yaml "$(DESTDIR)/selenium-node/"
+	
+	install -m 755 -d "$(PREFIX)/etc"
+	install -m 644 shaka-lab-node-config.yaml "$(PREFIX)/etc/"
+	
+	install -m 755 -d "$(PREFIX)/etc/systemd/system"
+	install -m 644 shaka-lab-node.service "$(PREFIX)/etc/systemd/system/"
+	
+	install -m 755 -d "$(PREFIX)/etc/cron.daily"
+	ln -sf /opt/shaka-lab/selenium-node/update-drivers.sh "$(PREFIX)/etc/cron.daily/update-selenium-drivers"
+
+# Generically, any build target should be handled off to "dh" to do something
+# standard, unless a step is overriden above.
+%:
+	dh $@

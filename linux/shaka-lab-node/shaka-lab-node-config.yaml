@@ -1,0 +1,44 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Shaka Lab Node Config
+
+# The Selenium Hub to connect to.  Customize this to your local grid.
+# If you install shaka-lab-hub on the same machine, this will be correct.
+hub: http://127.0.0.1:4444/
+
+# The Selenium nodes to create.  Customize this to your lab devices.
+nodes:
+  - template: chrome
+
+  - template: firefox
+
+  - template: chrome-android
+
+#  - template: chromecast
+#    params:
+#      hostname: shaka-test-chromecast-ultra
+#      version: Ultra
+
+#  - template: chromeos
+#    params:
+#      hostname: shaka-test-chromebook
+#      version: Pixelbook
+
+#  NOTE: Tizen nodes require Docker: sudo apt install docker.io
+#  - template: tizen
+#    params:
+#      hostname: shaka-test-tizen
+#      ethaddr: "28:39:5e:0a:78:54"
+#      version: 3

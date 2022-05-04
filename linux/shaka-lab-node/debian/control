@@ -1,0 +1,14 @@
+Source: shaka-lab-node
+Maintainer: Joey Parrish <joeyparrish@google.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9)
+
+Package: shaka-lab-node
+Architecture: any
+Build-Depends: curl (>= 7)
+Depends: default-jre-headless | java-runtime-headless, xvfb
+Suggests: docker.io
+Description: Shaka Lab Selenium node for Debian or Ubuntu
+ Installs a Selenium node for Shaka Lab integration.
