@@ -43,9 +43,16 @@ override_dh_auto_install:
 	install -m 755 -d "$(PREFIX)/etc"
 	install -m 644 shaka-lab-node-config.yaml "$(PREFIX)/etc/"
 	
-	install -m 755 -d "$(PREFIX)/etc/systemd/system"
-	install -m 644 shaka-lab-node.service "$(PREFIX)/etc/systemd/system/"
+	install -m 755 -d "$(PREFIX)/lib/systemd/system"
+	install -m 644 shaka-lab-node.service "$(PREFIX)/lib/systemd/system/"
 	
+	# If you don't put the service in /lib and symlink it to /etc, debian will
+	# see it as a "config file", and it will not be removed when a package is
+	# uninstalled.
+	install -m 755 -d "$(PREFIX)/etc/systemd/system"
+	ln -sf /lib/systemd/system/shaka-lab-node.service "$(PREFIX)/etc/systemd/system/"
+	
+	# Update drivers daily.
 	install -m 755 -d "$(PREFIX)/etc/cron.daily"
 	ln -sf /opt/shaka-lab/selenium-node/update-drivers.sh "$(PREFIX)/etc/cron.daily/update-selenium-drivers"
 
