@@ -24,6 +24,8 @@ nodes:
 
   - template: firefox
 
+  # NOTE: Android requires adb: sudo apt install adb
+  # NOTE: Also requires device with debugging permission connected via USB.
   - template: chrome-android
 
 #  - template: chromecast

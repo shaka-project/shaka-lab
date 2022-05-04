@@ -9,6 +9,6 @@ Package: shaka-lab-node
 Architecture: any
 Build-Depends: curl (>= 7)
 Depends: default-jre-headless | java-runtime-headless, xvfb
-Suggests: docker.io
+Suggests: adb, docker.io
 Description: Shaka Lab Selenium node for Debian or Ubuntu
- Installs a Selenium node for Shaka Lab integration.
+ Installs Selenium nodes for Shaka Lab integration.
