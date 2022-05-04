@@ -1,0 +1,12 @@
+Source: shaka-lab-hub
+Maintainer: Joey Parrish <joeyparrish@google.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9)
+
+Package: shaka-lab-hub
+Architecture: any
+Depends: default-jre-headless | java-runtime-headless
+Description: Shaka Lab Selenium hub for Debian or Ubuntu
+ Installs a Selenium hub for Shaka Lab integration.
