@@ -166,6 +166,8 @@ function main() {
 
     // TODO: See if we need to specify additional options on Windows
     const process = childProcess.spawn(command, args, {
+      // Run from the package's folder.
+      cwd: seleniumNodePath,
       // Ignore stdin, pass stdout and stderr to the parent process.
       stdio: ['ignore', 'inherit', 'inherit'],
     });
