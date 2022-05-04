@@ -16,6 +16,12 @@
 
 # Update all WebDrivers.  Runs after package installation and again nightly.
 
+if test -z "$NVM_DIR"; then
+  # Load NVM so we can use our hermetic copy of nodejs.
+  export NVM_DIR=/opt/shaka-lab/nvm
+  . "$NVM_DIR/nvm.sh"
+fi
+
 cd /opt/shaka-lab/selenium-node
 
 rm -f package-lock.json
