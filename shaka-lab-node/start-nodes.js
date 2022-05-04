@@ -39,6 +39,11 @@ if (process.platform == 'win32') {
   classPathSeparator = ';';
   exe = '.exe';
   cmd = '.cmd';
+} else if (process.platform == 'darwin') {
+  configPath = '/opt/homebrew/etc/shaka-lab-node-config.yaml';
+  shakaLabNodePath = '/opt/homebrew/opt/shaka-lab-node';
+  workingDirectory = '/opt/homebrew/opt/shaka-lab-node';
+  updateDrivers = `${shakaLabNodePath}/update-drivers.sh`;
 }
 
 // Paths derived from the OS-specific ones above.
@@ -282,6 +287,14 @@ function main() {
 
     processes.push(child);
   }
+
+  // If shut down politely, exit with code 0.
+  // This is important, as it will not trigger a restart on macOS.
+  // Without this, there is no way to shut down a service on macOS explicitly
+  // without the keepAlive setting starting it again.
+  process.once('SIGTERM', () => {
+    process.exit(0);
+  });
 
   // Add an explicit handler to kill all processes when _this_ process stops.
   // This seems to help with service shut down on Windows, which would
