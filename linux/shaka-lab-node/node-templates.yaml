@@ -25,6 +25,14 @@ firefox:
   capabilities:
     browserName: firefox
 
+edge:
+  generic-webdriver-server: true
+  defs:
+    genericwebdriver.browser.name: msedge
+    genericwebdriver.backend.exe: ./msedgedriver
+  capabilities:
+    browserName: msedge
+
 chrome-android:
   defs:
     webdriver.chrome.driver: ./chromedriver-android

@@ -24,7 +24,7 @@ nodes:
 
   #- template: firefox
 
-  #- template: msedge
+  #- template: edge
 
   # NOTE: Android requires adb: sudo apt install adb
   # NOTE: Also requires device with debugging permission connected via USB.
