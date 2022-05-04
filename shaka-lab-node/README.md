@@ -3,6 +3,7 @@
 The Shaka Lab Node package provides Selenium grid nodes, and is available for:
 
  - [Linux](linux/README.md#readme)
+ - [Windows](windows/README.md#readme)
 
 Click a platform above for platform-specific instructions on installation,
 updating, config file locations, tailing logs, and uninstallation.

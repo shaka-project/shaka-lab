@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2022 Google LLC
+ 
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+      http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Shaka Lab Node - Chocolately Package Definition
+-->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>shaka-lab-node</id>
+    <title>shaka-lab-node (Install)</title>
+    <version>1.0.0</version>
+
+    <owners>joeyparrish@google.com</owners>
+    <authors>joeyparrish@google.com</authors>
+
+    <packageSourceUrl>https://github.com/shaka-project/shaka-lab</packageSourceUrl>
+    <projectUrl>https://github.com/shaka-project/shaka-lab</projectUrl>
+    <projectSourceUrl>https://github.com/shaka-project/shaka-lab</projectSourceUrl>
+
+    <copyright>2022 Google LLC</copyright>
+    <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <tags>shaka-lab-node shaka-lab</tags>
+    <summary>Shaka Lab Node</summary>
+    <description>Selenium grid nodes for the Shaka Lab</description>
+
+    <dependencies>
+      <dependency id="nodejs" version="12.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <!-- this section controls what actually gets packaged into the Chocolatey package -->
+    <file src="../../LICENSE.txt" target="./" />
+    <file src="../../selenium-jar/selenium-server-standalone-3.141.59.jar" target="./" />
+    <file src="../node-templates.yaml" target="./" />
+    <file src="../shaka-lab-node-config.yaml" target="./default-node-config.yaml" />
+    <file src="../package.json" target="./" />
+    <file src="../start-nodes.js" target="./" />
+    <file src="update-drivers.cmd" target="./" />
+    <file src="WinSW-x64.exe" target="./shaka-lab-node-svc.exe" />
+    <file src="shaka-lab-node-svc.yml" target="./" />
+
+    <file src="chocolatey*.ps1" target="./" />
+  </files>
+</package>

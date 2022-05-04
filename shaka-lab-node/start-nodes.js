@@ -31,6 +31,16 @@ let classPathSeparator = ':';
 let exe = '';
 let cmd = '';
 
+if (process.platform == 'win32') {
+  configPath = 'c:/ProgramData/shaka-lab-node/shaka-lab-node-config.yaml';
+  shakaLabNodePath = 'c:/ProgramData/chocolatey/lib/shaka-lab-node';
+  workingDirectory = 'c:/ProgramData/shaka-lab-node/';
+  updateDrivers = `${shakaLabNodePath}/update-drivers.cmd`;
+  classPathSeparator = ';';
+  exe = '.exe';
+  cmd = '.cmd';
+}
+
 // Paths derived from the OS-specific ones above.
 const templatesPath = `${shakaLabNodePath}/node-templates.yaml`;
 const genericWebdriverServerJarPath =
@@ -272,6 +282,17 @@ function main() {
 
     processes.push(child);
   }
+
+  // Add an explicit handler to kill all processes when _this_ process stops.
+  // This seems to help with service shut down on Windows, which would
+  // otherwise leave the child processes orphaned and running.
+  process.once('exit', () => {
+    stopAllProcesses(processes);
+  });
+
+  // Now the nodejs process will remain open until either all subprocesses stop
+  // or until the script itself is killed.  If a subprocess is killed or
+  // otherwise dies, the script will respond by shutting down all others.
 }
 
 main();
