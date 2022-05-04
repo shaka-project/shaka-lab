@@ -22,25 +22,27 @@ hub: http://127.0.0.1:4444/
 nodes:
   - template: chrome
 
-  - template: firefox
+  #- template: firefox
+
+  #- template: msedge
 
   # NOTE: Android requires adb: sudo apt install adb
   # NOTE: Also requires device with debugging permission connected via USB.
-  - template: chrome-android
+  #- template: chrome-android
 
-#  - template: chromecast
-#    params:
-#      hostname: shaka-test-chromecast-ultra
-#      version: Ultra
+  #- template: chromecast
+  #  params:
+  #    hostname: shaka-test-chromecast-ultra
+  #    version: Ultra
 
-#  - template: chromeos
-#    params:
-#      hostname: shaka-test-chromebook
-#      version: Pixelbook
+  #- template: chromeos
+  #  params:
+  #    hostname: shaka-test-chromebook
+  #    version: Pixelbook
 
-#  NOTE: Tizen nodes require Docker: sudo apt install docker.io
-#  - template: tizen
-#    params:
-#      hostname: shaka-test-tizen
-#      ethaddr: "28:39:5e:0a:78:54"
-#      version: 3
+  # NOTE: Tizen nodes require Docker: sudo apt install docker.io
+  #- template: tizen
+  #  params:
+  #    hostname: shaka-test-tizen
+  #    ethaddr: "28:39:5e:0a:78:54"
+  #    version: 3
