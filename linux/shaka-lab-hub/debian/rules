@@ -35,6 +35,9 @@ override_dh_auto_install:
 	install -m 755 -d "$(PREFIX)/lib/systemd/system"
 	install -m 644 shaka-lab-hub.service "$(PREFIX)/lib/systemd/system/"
 	
+	install -m 755 -d "$(PREFIX)/etc/default"
+	install -m 644 default-config "$(PREFIX)/etc/default/shaka-lab-hub"
+	
 	# If you don't put the service in /lib and symlink it to /etc, debian will
 	# see it as a "config file", and it will not be removed when a package is
 	# uninstalled.
