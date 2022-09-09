@@ -108,7 +108,8 @@ function main() {
           paramName = paramName.substr(1);  // remove leading '?'
           params[paramName] = optionalParam(nodeConfig, paramName);
         } else {
-          params[paramName] = requiredParam(nodeConfig, templateName, paramName);
+          params[paramName] = requiredParam(
+              nodeConfig, templateName, paramName);
         }
       }
     }
@@ -132,7 +133,8 @@ function main() {
     if (genericWebdriverServer) {
       // Preload GenericWebDriverServer and launch Selenium after.
       args.push('-cp');
-      args.push(`${genericWebdriverServerJarPath}:${seleniumStandaloneJarPath}`);
+      args.push(
+          `${genericWebdriverServerJarPath}:${seleniumStandaloneJarPath}`);
       args.push('org.openqa.grid.selenium.GridLauncherV3');
     } else {
       // Launch Selenium directly.
