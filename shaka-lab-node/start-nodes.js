@@ -29,8 +29,8 @@ let exe = '';
 let cmd = '';
 
 if (process.platform == 'win32') {
-  configPath = 'c:/ProgramData/shaka-lab/selenium-node/node-config.yaml';
-  seleniumNodePath = 'c:/ProgramData/shaka-lab/selenium-node';
+  configPath = 'c:/ProgramData/chocolatey/lib/shaka-lab-node';
+  seleniumNodePath = 'c:/ProgramData/chocolatey/lib/shaka-lab-node';
   classPathSeparator = ';';
   exe = '.exe';
   cmd = '.cmd';
