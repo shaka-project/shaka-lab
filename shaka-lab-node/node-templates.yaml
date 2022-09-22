@@ -16,6 +16,9 @@
 
 # Defines templates for how Selenium Nodes can be created.
 # Actual nodes are configured in /etc/shaka-lab-node-config.yaml
+#
+# $exe will be replaced with .exe on Windows and a blank string otherwise.
+# $cmd will be replaced with .cmd on Windows and a blank string otherwise.
 
 chrome:
   capabilities:
@@ -29,13 +32,13 @@ edge:
   generic-webdriver-server: true
   defs:
     genericwebdriver.browser.name: msedge
-    genericwebdriver.backend.exe: ./msedgedriver
+    genericwebdriver.backend.exe: ./msedgedriver$exe
   capabilities:
     browserName: msedge
 
 chrome-android:
   defs:
-    webdriver.chrome.driver: ./chromedriver-android
+    webdriver.chrome.driver: ./chromedriver-android$exe
   capabilities:
     browserName: chrome
     platform: Android
@@ -47,7 +50,7 @@ chromecast:
     - version
   defs:
     genericwebdriver.browser.name: chromecast
-    genericwebdriver.backend.exe: node_modules/.bin/chromecast-webdriver-server
+    genericwebdriver.backend.exe: node_modules/.bin/chromecast-webdriver-server$cmd
     genericwebdriver.backend.params.hostname: $hostname
   capabilities:
     browserName: chromecast
@@ -60,7 +63,7 @@ chromeos:
     - version
   defs:
     genericwebdriver.browser.name: chromeos
-    genericwebdriver.backend.exe: node_modules/.bin/chromeos-webdriver-server
+    genericwebdriver.backend.exe: node_modules/.bin/chromeos-webdriver-server$cmd
     genericwebdriver.backend.params.hostname: $hostname
   capabilities:
     browserName: chromeos
@@ -74,7 +77,7 @@ tizen:
     - version
   defs:
     genericwebdriver.browser.name: tizen
-    genericwebdriver.backend.exe: node_modules/.bin/tizen-webdriver-server
+    genericwebdriver.backend.exe: node_modules/.bin/tizen-webdriver-server$cmd
     genericwebdriver.backend.params.hostname: $hostname
     genericwebdriver.backend.params.wake-on-lan-address: $ethaddr
   capabilities:
@@ -87,13 +90,14 @@ xboxone:
     - hostname
     - username
     - password
+    - ?msbuild  # optional
   defs:
     genericwebdriver.browser.name: xboxone
-    genericwebdriver.backend.exe: node_modules/.bin/xbox-one-webdriver-server
+    genericwebdriver.backend.exe: node_modules/.bin/xbox-one-webdriver-server$cmd
     genericwebdriver.backend.params.hostname: $hostname
     genericwebdriver.backend.params.username: $username
     genericwebdriver.backend.params.password: $password
-    genericwebdriver.backend.params.wake-on-lan-address: $ethaddr
+    genericwebdriver.backend.params.msbuild: $msbuild
   capabilities:
     browserName: xboxone
 

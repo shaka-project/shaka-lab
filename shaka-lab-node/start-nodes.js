@@ -21,9 +21,23 @@ const childProcess = require('child_process');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-// TODO: Generalize paths for Windows
-const configPath = '/etc/shaka-lab-node-config.yaml';
-const seleniumNodePath = '/opt/shaka-lab/selenium-node';
+// Default: linux settings
+let configPath = '/etc/shaka-lab-node-config.yaml';
+let seleniumNodePath = '/opt/shaka-lab/selenium-node';
+let classPathSeparator = ':';
+let exe = '';
+let cmd = '';
+
+if (process.platform == 'win32') {
+  configPath = 'c:/ProgramData/shaka-lab/selenium-node/node-config.yaml';
+  seleniumNodePath = 'c:/ProgramData/shaka-lab/selenium-node';
+  classPathSeparator = ';';
+  exe = '.exe';
+  cmd = '.cmd';
+} else if (process.platform == 'darwin') {
+  // TODO: Install paths for macOS
+}
+
 const templatesPath = `${seleniumNodePath}/node-templates.yaml`;
 const genericWebdriverServerJarPath =
     `${seleniumNodePath}/node_modules/generic-webdriver-server/GenericWebDriverProvider.jar`;
@@ -115,6 +129,10 @@ function main() {
       }
     }
 
+    // Add platform-specific extensions to the params.
+    params['exe'] = exe;
+    params['cmd'] = cmd;
+
     const genericWebdriverServer = template['generic-webdriver-server'];
     const defs = template.defs;
     const capabilities = requiredField(
@@ -135,7 +153,8 @@ function main() {
       // Preload GenericWebDriverServer and launch Selenium after.
       args.push('-cp');
       args.push(
-          `${genericWebdriverServerJarPath}:${seleniumStandaloneJarPath}`);
+          genericWebdriverServerJarPath + classPathSeparator +
+          seleniumStandaloneJarPath);
       args.push('org.openqa.grid.selenium.GridLauncherV3');
     } else {
       // Launch Selenium directly.

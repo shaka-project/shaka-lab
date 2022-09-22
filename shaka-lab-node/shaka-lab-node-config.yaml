@@ -47,3 +47,10 @@ nodes:
   #    hostname: shaka-test-tizen
   #    ethaddr: "28:39:5e:0a:78:54"
   #    version: 3
+
+  # NOTE: Xbox One nodes must be run on Windows, with Visual Studio installed
+  #- template: xboxone
+  #  params:
+  #    hostname: shaka-test-xbox-one
+  #    username: YOUR USERNAME HERE
+  #    password: YOUR PASSWORD HERE
