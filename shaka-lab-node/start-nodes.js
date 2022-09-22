@@ -21,6 +21,7 @@ const childProcess = require('child_process');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
+// TODO: Generalize paths for Windows
 const configPath = '/etc/shaka-lab-node-config.yaml';
 const seleniumNodePath = '/opt/shaka-lab/selenium-node';
 const templatesPath = `${seleniumNodePath}/node-templates.yaml`;

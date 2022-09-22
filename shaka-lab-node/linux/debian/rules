@@ -34,14 +34,14 @@ override_dh_auto_install:
 	
 	install -m 755 -d "$(DESTDIR)/selenium-node"
 	install -m 644 ../../selenium-jar/selenium-server-standalone-3.141.59.jar "$(DESTDIR)/selenium-node/"
-	install -m 644 package.json "$(DESTDIR)/selenium-node/"
+	install -m 644 ../package.json "$(DESTDIR)/selenium-node/"
+	install -m 644 ../start-nodes.js "$(DESTDIR)/selenium-node/"
+	install -m 644 ../node-templates.yaml "$(DESTDIR)/selenium-node/"
 	install -m 755 update-drivers.sh "$(DESTDIR)/selenium-node/"
 	install -m 755 start-nodes.sh "$(DESTDIR)/selenium-node/"
-	install -m 644 start-nodes.js "$(DESTDIR)/selenium-node/"
-	install -m 644 node-templates.yaml "$(DESTDIR)/selenium-node/"
 	
 	install -m 755 -d "$(PREFIX)/etc"
-	install -m 644 shaka-lab-node-config.yaml "$(PREFIX)/etc/"
+	install -m 644 ../shaka-lab-node-config.yaml "$(PREFIX)/etc/"
 	
 	install -m 755 -d "$(PREFIX)/lib/systemd/system"
 	install -m 644 shaka-lab-node.service "$(PREFIX)/lib/systemd/system/"
