@@ -1,0 +1,41 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Node service definition for the tool WinSW: https://github.com/winsw/winsw
+
+id: shaka-lab-node
+name: Shaka Lab Selenium Nodes
+description: Starts configured Selenium nodes for the Shaka Lab.
+executable: C:\Program Files\nodejs\node.exe
+arguments: C:\ProgramData\chocolatey\lib\shaka-lab-node\start-nodes.js
+workingdirectory: C:\ProgramData\shaka-lab-node\
+interactive: true  # Needed to run run GUI apps on desktop
+stopparentprocessfirst: true  # Shut down by killing the parent process
+
+env:
+  # Since the main script and modules live in different places, we need an
+  # environment variable to make it work.
+  - name: NODE_PATH
+    value: C:\ProgramData\shaka-lab-node\node_modules
+  # Since this service runs as a system account, the "home directory" can't be
+  # used by msbuild to cache nuget packages.  To make the Xbox One node work,
+  # cache nuget packages somewhere accessible.
+  # Solution based on https://stackoverflow.com/a/48896487
+  - name: NUGET_PACKAGES
+    value: C:\ProgramData\shaka-lab-node\NugetPackageCache
+
+# Log files for the service will be written to
+# C:\ProgramData\chocolatey\lib\shaka-lab-node\shaka-lab-node-svc.err.log
+log:
+  mode: roll

@@ -24,13 +24,15 @@ const yaml = require('js-yaml');
 // Default: linux settings
 let configPath = '/etc/shaka-lab-node-config.yaml';
 let seleniumNodePath = '/opt/shaka-lab/selenium-node';
+let workingDirectory = '/opt/shaka-lab/selenium-node';
 let classPathSeparator = ':';
 let exe = '';
 let cmd = '';
 
 if (process.platform == 'win32') {
-  configPath = 'c:/ProgramData/chocolatey/lib/shaka-lab-node';
+  configPath = 'c:/ProgramData/shaka-lab-node/node-config.yaml';
   seleniumNodePath = 'c:/ProgramData/chocolatey/lib/shaka-lab-node';
+  workingDirectory = 'c:/ProgramData/shaka-lab-node/';
   classPathSeparator = ';';
   exe = '.exe';
   cmd = '.cmd';
@@ -40,7 +42,7 @@ if (process.platform == 'win32') {
 
 const templatesPath = `${seleniumNodePath}/node-templates.yaml`;
 const genericWebdriverServerJarPath =
-    `${seleniumNodePath}/node_modules/generic-webdriver-server/GenericWebDriverProvider.jar`;
+    `${workingDirectory}/node_modules/generic-webdriver-server/GenericWebDriverProvider.jar`;
 const seleniumStandaloneJarPath =
     `${seleniumNodePath}/selenium-server-standalone-3.141.59.jar`;
 
@@ -94,10 +96,10 @@ function substituteParams(string, params) {
 }
 
 function stopAllProcesses(processes) {
-  for (const process of processes) {
-    if (process.exitCode == null) {
+  for (const child of processes) {
+    if (child.exitCode == null) {
       // Still running.  Stop it.
-      process.kill();
+      child.kill();
     }
   }
 }
@@ -145,7 +147,9 @@ function main() {
     if (defs) {
       for (const key in defs) {
         const value = substituteParams(defs[key], params);
-        args.push(`-D${key}=${value}`);
+        if (value) {
+          args.push(`-D${key}=${value}`);
+        }
       }
     }
 
@@ -187,28 +191,35 @@ function main() {
     const command = args.shift();
 
     // TODO: See if we need to specify additional options on Windows
-    const process = childProcess.spawn(command, args, {
+    const child = childProcess.spawn(command, args, {
       // Run from the package's folder.
-      cwd: seleniumNodePath,
+      cwd: workingDirectory,
       // Ignore stdin, pass stdout and stderr to the parent process.
       stdio: ['ignore', 'inherit', 'inherit'],
+      // Make sure children are attached to the parent.
+      detached: false,
     });
 
-    process.once('error', () => {
+    child.once('error', () => {
       stopAllProcesses(processes);
     });
-    process.once('exit', () => {
+    child.once('exit', () => {
       stopAllProcesses(processes);
     });
 
-    processes.push(process);
+    processes.push(child);
   }
 
+  // Add an explicit handler to kill all processes when _this_ process stops.
+  // This seems to help with service shut down on Windows, which would
+  // otherwise leave the child processes orphaned and running.
+  process.once('exit', () => {
+    stopAllProcesses(processes);
+  });
+
   // Now the nodejs process will remain open until either all subprocesses stop
-  // or until the script itself is killed.  If the script is killed, all
-  // subprocesses will stop, because they are not "detached".  If a subprocess
-  // is killed or otherwise dies, the script will respond by shutting down all
-  // others.
+  // or until the script itself is killed.  If a subprocess is killed or
+  // otherwise dies, the script will respond by shutting down all others.
 }
 
 main();

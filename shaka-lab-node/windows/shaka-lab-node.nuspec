@@ -43,10 +43,15 @@
   <files>
     <!-- this section controls what actually gets packaged into the Chocolatey package -->
     <file src="../../LICENSE.txt" target="./" />
-    <file src="update-drivers.bat" target="./" />
+    <file src="../../selenium-jar/selenium-server-standalone-3.141.59.jar" target="./" />
     <file src="../node-templates.yaml" target="./" />
-    <file src="../shaka-lab-node-config.yaml" target="./node-config.yaml" />
+    <file src="../shaka-lab-node-config.yaml" target="./default-node-config.yaml" />
     <file src="../package.json" target="./" />
     <file src="../start-nodes.js" target="./" />
+    <file src="update-drivers.cmd" target="./" />
+    <file src="WinSW-x64.exe" target="./shaka-lab-node-svc.exe" />
+    <file src="shaka-lab-node-svc.yml" target="./" />
+
+    <file src="chocolatey*.ps1" target="./" />
   </files>
 </package>
