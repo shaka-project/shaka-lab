@@ -15,7 +15,10 @@
 # Runs on install and on upgrade.
 
 # Stop on all errors.
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = "Stop"
+
+$installFolder = "C:\ProgramData\chocolatey\lib\shaka-lab-node"
+$runtimeFolder = "C:\ProgramData\shaka-lab-node"
 
 # In case of a forced reinstall, which would skip the upgrade/uninstall steps,
 # remove the service if it already exists.  Note that Remove-Service isn't
@@ -30,13 +33,11 @@ if ($service) {
 }
 
 # Install default config if none exists.
-$nodeConfigFolder = "C:\ProgramData\shaka-lab-node";
-if (-not(Test-Path -Path $nodeConfigFolder)) {
-  New-Item -ItemType "directory" -Path $nodeConfigFolder
+if (-not(Test-Path -Path $runtimeFolder)) {
+  New-Item -ItemType "directory" -Path $runtimeFolder
 }
-
-$nodeConfigPath = $nodeConfigFolder + "\node-config.yaml"
-$defaultConfig = "$PSScriptRoot\default-node-config.yaml"
+$nodeConfigPath = $runtimeFolder + "\node-config.yaml"
+$defaultConfig = "$installFolder\default-node-config.yaml"
 if (-not(Test-Path -Path $nodeConfigPath)) {
   echo "Installing default config to $nodeConfigPath"
   Copy-Item $defaultConfig -Destination $nodeConfigPath
@@ -44,19 +45,32 @@ if (-not(Test-Path -Path $nodeConfigPath)) {
   echo "Existing config found at $nodeConfigPath"
 }
 
+# Allow the virtual service account to write to the runtime folder.
+$ACL = Get-ACL -Path $runtimeFolder
+$AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+    # This user
+    "NT SERVICE\shaka-lab-node",
+    # Can do anything
+    "FullControl",
+    # And the setting will be inherited by chlidren of the folder.
+    "ContainerInherit,ObjectInherit", "InheritOnly",
+    "Allow")
+$ACL.SetAccessRule($AccessRule)
+$ACL | Set-Acl -Path $runtimeFolder
+
 # Install initial WebDrivers
 echo "Updating WebDrivers..."
-& "$PSScriptRoot\update-drivers.cmd"
+& "$installFolder\update-drivers.cmd"
 
 # Tell chocolatey not to shim any of the executables in this folder.
 # This is done by adding a ".ignore" file next to each one.
 echo "Suppressing Chocolatey shims..."
-Get-ChildItem "$PSScriptRoot\*.exe" | ForEach-Object { New-Item "$_.ignore" -type file -force | Out-Null }
+Get-ChildItem "$installFolder\*.exe" | ForEach-Object { New-Item "$_.ignore" -type file -force | Out-Null }
 
 # Install the service.
 echo "Installing service..."
-& "$PSScriptRoot\shaka-lab-node-svc.exe" install
+& "$installFolder\shaka-lab-node-svc.exe" install
 
 # Start the service.
 echo "Starting service..."
-& "$PSScriptRoot\shaka-lab-node-svc.exe" start
+& "$installFolder\shaka-lab-node-svc.exe" start

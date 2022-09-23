@@ -15,7 +15,7 @@
 # Runs on upgrade and on uninstall.
 
 # Stop on all errors.
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = "Stop"
 
 # Remove the service if it already exists.  Note that Remove-Service isn't
 # available until PowerShell 6, and we can't guarantee that anything more

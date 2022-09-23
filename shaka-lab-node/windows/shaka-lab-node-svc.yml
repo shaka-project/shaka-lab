@@ -14,14 +14,17 @@
 
 # Node service definition for the tool WinSW: https://github.com/winsw/winsw
 
+# NOTE that the upstream documentation for winsw are mistaken.  They use
+# lowercase, but camelcase is required.
+# https://github.com/winsw/winsw/issues/839
+
 id: shaka-lab-node
 name: Shaka Lab Selenium Nodes
 description: Starts configured Selenium nodes for the Shaka Lab.
 executable: C:\Program Files\nodejs\node.exe
 arguments: C:\ProgramData\chocolatey\lib\shaka-lab-node\start-nodes.js
-workingdirectory: C:\ProgramData\shaka-lab-node\
-interactive: true  # Needed to run run GUI apps on desktop
-stopparentprocessfirst: true  # Shut down by killing the parent process
+workingDirectory: C:\ProgramData\shaka-lab-node\
+stopParentProcessFirst: true  # Shut down by killing the parent process
 
 env:
   # Since the main script and modules live in different places, we need an
@@ -35,7 +38,15 @@ env:
   - name: NUGET_PACKAGES
     value: C:\ProgramData\shaka-lab-node\NugetPackageCache
 
+# Run the service as a virtual service account.
+serviceAccount:
+  domain: NT SERVICE
+  user: shaka-lab-node
+
 # Log files for the service will be written to
-# C:\ProgramData\chocolatey\lib\shaka-lab-node\shaka-lab-node-svc.err.log
+# C:\ProgramData\shaka-lab-node\logs\shaka-lab-node-svc.err.log
+# NOTE: If the service account can't write to this path, the wrapper will both
+# crash _AND_ leave orphan child processes.
 log:
+  logPath: C:\ProgramData\shaka-lab-node\logs
   mode: roll
