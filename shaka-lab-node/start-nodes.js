@@ -136,7 +136,7 @@ function main() {
     params['cmd'] = cmd;
 
     const genericWebdriverServer = template['generic-webdriver-server'];
-    const defs = template.defs;
+    const defs = Object.assign(template.defs || {}, nodeConfig.defs || {});
     const capabilities = requiredField(
         template, templatesPath, 'capabilities', `${templateName}.`);
 
@@ -144,12 +144,10 @@ function main() {
     const args = ['java'];
 
     // There may be java definitions to set.
-    if (defs) {
-      for (const key in defs) {
-        const value = substituteParams(defs[key], params);
-        if (value) {
-          args.push(`-D${key}=${value}`);
-        }
+    for (const key in defs) {
+      const value = substituteParams(defs[key], params);
+      if (value) {
+        args.push(`-D${key}=${value}`);
       }
     }
 
