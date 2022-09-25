@@ -26,6 +26,10 @@ adduser \
   --home /opt/shaka-lab/selenium-node \
   --no-create-home
 
+# Grant that user access to docker, to be able to run the Tizen node.
+# Don't fail if docker is not installed.
+usermod -a -G docker shaka-lab-node || true
+
 # Install NVM, which we don't / shouldn't bundle into the deb package.
 # The location of our NVM installation.
 export NVM_DIR=/opt/shaka-lab/nvm
