@@ -62,11 +62,6 @@ $ACL | Set-Acl -Path $runtimeFolder
 echo "Updating WebDrivers..."
 & "$installFolder\update-drivers.cmd"
 
-# Tell chocolatey not to shim any of the executables in this folder.
-# This is done by adding a ".ignore" file next to each one.
-echo "Suppressing Chocolatey shims..."
-Get-ChildItem "$installFolder\*.exe" | ForEach-Object { New-Item "$_.ignore" -type file -force | Out-Null }
-
 # Install the service.
 echo "Installing service..."
 & "$installFolder\shaka-lab-node-svc.exe" install
@@ -74,3 +69,19 @@ echo "Installing service..."
 # Start the service.
 echo "Starting service..."
 & "$installFolder\shaka-lab-node-svc.exe" start
+
+# Register the scheduled WebDriver update task (if not already installed).
+$task = Get-ScheduledTask | Where-Object -FilterScript { $_.TaskName -eq "shaka-lab-node-update" }
+if ($task) {
+  echo "WebDriver update task already registered..."
+} else {
+  echo "Registering WebDriver update task..."
+  $action = New-ScheduledTaskAction -Execute "$installFolder\update-drivers.cmd"
+  $trigger = New-ScheduledTaskTrigger -Daily -At 1am  # local time
+  Register-ScheduledTask `
+      -TaskName shaka-lab-node-update `
+      -Description "Updates WebDrivers nightly for shaka-lab-node" `
+      -Action $action `
+      -User "NT SERVICE\shaka-lab-node" `
+      -Trigger $trigger | Out-Null
+}

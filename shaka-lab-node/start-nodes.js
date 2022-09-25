@@ -46,9 +46,6 @@ const genericWebdriverServerJarPath =
 const seleniumStandaloneJarPath =
     `${seleniumNodePath}/selenium-server-standalone-3.141.59.jar`;
 
-const templates = yaml.load(fs.readFileSync(templatesPath, 'utf8'));
-const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
-
 function requiredField(config, path, field, prefix='') {
   if (!config || !(field in config)) {
     console.error(`Missing required field "${prefix}${field}" in ${path}`);
@@ -57,7 +54,7 @@ function requiredField(config, path, field, prefix='') {
   return config[field];
 }
 
-function loadTemplate(templateName) {
+function loadTemplate(templates, templateName) {
   if (!(templateName in templates)) {
     console.error(
         `Unknown template "${templateName}" in ${configPath},` +
@@ -105,6 +102,9 @@ function stopAllProcesses(processes) {
 }
 
 function main() {
+  const templates = yaml.load(fs.readFileSync(templatesPath, 'utf8'));
+  const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
+
   const hub = requiredField(config, configPath, 'hub');
   const nodeConfigs = requiredField(config, configPath, 'nodes');
   const nodeCommands = [];
@@ -113,7 +113,7 @@ function main() {
   for (const nodeConfig of nodeConfigs) {
     const templateName = requiredField(
         nodeConfig, configPath, 'template', 'nodes[].');
-    const template = loadTemplate(templateName);
+    const template = loadTemplate(templates, templateName);
 
     // Prepare template parameters.
     const params = {};
