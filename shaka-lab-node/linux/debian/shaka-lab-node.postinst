@@ -40,9 +40,6 @@ nvm install 16
 # Give the non-root user ownership of the folder it will update.
 chown -R shaka-lab-node:nogroup /opt/shaka-lab/selenium-node
 
-# Update WebDrivers.
-/opt/shaka-lab/selenium-node/update-drivers.sh
-
 # Enable and start the service.
 systemctl daemon-reload
 systemctl enable shaka-lab-node.service

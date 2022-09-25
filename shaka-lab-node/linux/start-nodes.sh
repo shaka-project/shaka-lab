@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Sets up the environment (NVM & Xvfb), updates drivers, then launches the
-# Selenium nodes (via start-nodes.js).
+# Sets up the environment (NVM & Xvfb), then launches the Selenium nodes (via
+# start-nodes.js).
 
 # Load NVM so we can use our hermetic copy of nodejs.
 export NVM_DIR=/opt/shaka-lab/nvm
