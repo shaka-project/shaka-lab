@@ -58,10 +58,6 @@ $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
 $ACL.SetAccessRule($AccessRule)
 $ACL | Set-Acl -Path $runtimeFolder
 
-# Install initial WebDrivers
-echo "Updating WebDrivers..."
-& "$installFolder\update-drivers.cmd"
-
 # Install the service.
 echo "Installing service..."
 & "$installFolder\shaka-lab-node-svc.exe" install
