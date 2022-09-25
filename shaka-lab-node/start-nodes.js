@@ -17,7 +17,7 @@
 // necessary Selenium node processes.
 
 
-const childProcess = require('child_process');
+const child_process = require('child_process');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
@@ -25,6 +25,7 @@ const yaml = require('js-yaml');
 let configPath = '/etc/shaka-lab-node-config.yaml';
 let seleniumNodePath = '/opt/shaka-lab/selenium-node';
 let workingDirectory = '/opt/shaka-lab/selenium-node';
+let updateDrivers = `${seleniumNodePath}/update-drivers.sh`;
 let classPathSeparator = ':';
 let exe = '';
 let cmd = '';
@@ -33,6 +34,7 @@ if (process.platform == 'win32') {
   configPath = 'c:/ProgramData/shaka-lab-node/node-config.yaml';
   seleniumNodePath = 'c:/ProgramData/chocolatey/lib/shaka-lab-node';
   workingDirectory = 'c:/ProgramData/shaka-lab-node/';
+  updateDrivers = `${seleniumNodePath}/update-drivers.cmd`;
   classPathSeparator = ';';
   exe = '.exe';
   cmd = '.cmd';
@@ -45,6 +47,15 @@ const genericWebdriverServerJarPath =
     `${workingDirectory}/node_modules/generic-webdriver-server/GenericWebDriverProvider.jar`;
 const seleniumStandaloneJarPath =
     `${seleniumNodePath}/selenium-server-standalone-3.141.59.jar`;
+
+const spawnOptions = {
+  // Run from the package's working directory.
+  cwd: workingDirectory,
+  // Ignore stdin, pass stdout and stderr to the parent process.
+  stdio: ['ignore', 'inherit', 'inherit'],
+  // Make sure children are attached to the parent.
+  detached: false,
+};
 
 function requiredField(config, path, field, prefix='') {
   if (!config || !(field in config)) {
@@ -102,6 +113,9 @@ function stopAllProcesses(processes) {
 }
 
 function main() {
+  // Update WebDrivers on startup.
+  child_process.spawnSync(updateDrivers, /* args= */ [], spawnOptions);
+
   const templates = yaml.load(fs.readFileSync(templatesPath, 'utf8'));
   const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
 
@@ -188,15 +202,7 @@ function main() {
   for (const args of nodeCommands) {
     const command = args.shift();
 
-    // TODO: See if we need to specify additional options on Windows
-    const child = childProcess.spawn(command, args, {
-      // Run from the package's folder.
-      cwd: workingDirectory,
-      // Ignore stdin, pass stdout and stderr to the parent process.
-      stdio: ['ignore', 'inherit', 'inherit'],
-      // Make sure children are attached to the parent.
-      detached: false,
-    });
+    const child = child_process.spawn(command, args, spawnOptions);
 
     child.once('error', () => {
       stopAllProcesses(processes);

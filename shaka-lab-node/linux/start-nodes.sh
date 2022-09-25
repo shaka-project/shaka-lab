@@ -21,9 +21,6 @@
 export NVM_DIR=/opt/shaka-lab/nvm
 . "$NVM_DIR/nvm.sh"
 
-# Update WebDrivers.
-/opt/shaka-lab/selenium-node/update-drivers.sh
-
 # Launch Selenium nodes in a headless X session.
 xvfb-run -a node /opt/shaka-lab/selenium-node/start-nodes.js
 
