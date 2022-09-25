@@ -19,7 +19,6 @@
 
 const child_process = require('child_process');
 const fs = require('fs');
-const yaml = require('js-yaml');
 
 // Default: linux settings
 let configPath = '/etc/shaka-lab-node-config.yaml';
@@ -114,7 +113,11 @@ function stopAllProcesses(processes) {
 
 function main() {
   // Update WebDrivers on startup.
+  // This has a side-effect of also installing other requirements, such as
+  // js-yaml, which we don't load until we need it below.
   child_process.spawnSync(updateDrivers, /* args= */ [], spawnOptions);
+
+  const yaml = require('js-yaml');
 
   const templates = yaml.load(fs.readFileSync(templatesPath, 'utf8'));
   const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
