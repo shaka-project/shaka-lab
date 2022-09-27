@@ -19,6 +19,11 @@
 # this will be correct.
 hub: http://127.0.0.1:4444/
 
+# Optional: The local hostname or IP to listen on.
+# For some systems with multiple IPs, you may need this to get the nodes
+# properly registered.
+#host: 192.168.1.55
+
 # The Selenium nodes to create.  Customize this to your lab devices.
 nodes:
   - template: chrome

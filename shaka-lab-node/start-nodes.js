@@ -131,6 +131,7 @@ function main() {
   const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
 
   const hub = requiredField(config, configPath, 'hub');
+  const host = config['host'];
   const nodeConfigs = requiredField(config, configPath, 'nodes');
   const nodeCommands = [];
 
@@ -195,6 +196,13 @@ function main() {
 
     // The hub to register to.
     args.push('-hub', hub);
+
+    // If a local IP/hostname is specified, tell Selenium to listen on that.
+    // For some systems with multiple interfaces, you may need this config to
+    // get nodes properly registered.
+    if (host) {
+      args.push('-host', host);
+    }
 
     // The capabilities this node will declare to the grid.  May include
     // template parameters.
