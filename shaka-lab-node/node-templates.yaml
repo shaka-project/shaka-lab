@@ -28,6 +28,15 @@ firefox:
   capabilities:
     browserName: firefox
 
+safari:
+  capabilities:
+    browserName: safari
+
+safari-tp:
+  capabilities:
+    browserName: safari
+    technologyPreview: true
+
 edge:
   generic-webdriver-server: true
   defs:

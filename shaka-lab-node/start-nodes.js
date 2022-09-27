@@ -38,7 +38,10 @@ if (process.platform == 'win32') {
   exe = '.exe';
   cmd = '.cmd';
 } else if (process.platform == 'darwin') {
-  // TODO: Install paths for macOS
+  configPath = '/opt/homebrew/etc/shaka-lab-node-config.yaml';
+  seleniumNodePath = '/opt/homebrew/opt/shaka-lab-node';
+  workingDirectory = '/opt/homebrew/opt/shaka-lab-node';
+  updateDrivers = `${seleniumNodePath}/update-drivers.sh`;
 }
 
 const templatesPath = `${seleniumNodePath}/node-templates.yaml`;
@@ -94,6 +97,11 @@ function optionalParam(nodeConfig, paramName) {
 }
 
 function substituteParams(string, params) {
+  // Don't touch non-strings.
+  if (typeof string != 'string') {
+    return string;
+  }
+
   for (const key in params) {
     const value = params[key];
     const regex = new RegExp('\\$\\b' + key + '\\b');

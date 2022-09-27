@@ -20,19 +20,11 @@
 # Fail on error.
 set -e
 
-# If run as root (from cron or package postinstall script), the script
-# re-launches itself as the non-root user that owns the folder.
-if [[ "$EUID" == 0 ]]; then
-  exec /bin/su shaka-lab-node -s /bin/bash -c "$0"
-  # NOTE: exec replaces the current running process, and doesn't return.
-fi
-
-# Load NVM so we can use our hermetic copy of nodejs.
-export NVM_DIR=/opt/shaka-lab/nvm
-. "$NVM_DIR/nvm.sh"
+# Load Homebrew.
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Go to the install directory of shaka-lab-node.
-cd /opt/shaka-lab/selenium-node
+cd "$(brew --prefix shaka-lab-node)"
 
 # Update all modules.
 rm -f package-lock.json
