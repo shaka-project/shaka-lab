@@ -1,0 +1,78 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    # Allows for manual triggering.
+    # TODO: Remove once this workflow is tested and working.
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install deps
+        run: |
+          sudo apt install coreutils fakeroot gpg reprepro
+
+      # TODO: Set version number automatically
+      #- name: Set version number
+      #  run: |
+
+      - name: Import GPG key
+        run: |
+          echo ${{ secrets.DEB_GPG_KEY }} | base64 -d | gpg --import
+
+      - name: Build packages
+        run: |
+          cd "$GITHUB_WORKSPACE"/shaka-lab-hub/linux/
+          fakeroot debian/rules binary
+          cd "$GITHUB_WORKSPACE"/shaka-lab-node/linux/
+          fakeroot debian/rules binary
+
+      - name: Stage packages
+        run: |
+          mkdir staging
+          mkdir staging/conf
+          cp distribution/linux/reprepro.conf staging/conf/distributions
+          reprepro --basedir staging includedeb stable shaka-lab-hub/*.deb
+          reprepro --basedir staging includedeb stable shaka-lab-node/*.deb
+          gpg -o public.key --armor --export nomail@shakalab.rocks
+
+      - name: Upload packages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: staging
+
+  deploy:
+    needs: build
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v1
