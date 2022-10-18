@@ -55,7 +55,7 @@ jobs:
           cp distribution/linux/reprepro.conf staging/conf/distributions
           reprepro --basedir staging includedeb stable shaka-lab-hub/*.deb
           reprepro --basedir staging includedeb stable shaka-lab-node/*.deb
-          gpg -o public.key --armor --export nomail@shakalab.rocks
+          gpg -o staging/public.key --armor --export nomail@shakalab.rocks
 
       - name: Upload packages
         uses: actions/upload-pages-artifact@v1
