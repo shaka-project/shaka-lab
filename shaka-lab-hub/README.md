@@ -16,7 +16,7 @@ sudo apt install shaka-lab-hub
 Updates:
 
 ```sh
-sudo apt update && sudo apt upgrade
+sudo apt update && sudo apt -y upgrade
 ```
 
 Configuration:
