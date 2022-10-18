@@ -19,7 +19,12 @@
 # DON'T fail on error.  Always keep going!
 set +e
 
-# Each of these paths can accumulate things after installation (nodejs
-# versions, node modules, webdrivers) that aren't tracked by apt.
-rm -rf /opt/shaka-lab/nvm
-rm -rf /opt/shaka-lab/selenium-node
+action="$1"
+
+if [[ "$action" != "upgrade" ]]; then
+  # Each of these paths can accumulate things after installation (nodejs
+  # versions, node modules, webdrivers) that aren't tracked by apt.
+  # DO NOT remove them on upgrade!
+  rm -rf /opt/shaka-lab/nvm
+  rm -rf /opt/shaka-lab/selenium-node
+fi
