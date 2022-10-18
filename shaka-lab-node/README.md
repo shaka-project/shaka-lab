@@ -137,6 +137,7 @@ TODO: Explain debug logging
 
 ## Special node setup requirements
 
+ - Browser nodes require those browsers to be separately installed.
  - Tizen nodes require Docker, but can run on any OS.
  - Tizen TVs must be configured to accept commands from the IP of the device
    running the Tizen node.
