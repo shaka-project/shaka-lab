@@ -21,6 +21,7 @@ set -e
 
 # Create a non-root user for the service.
 adduser \
+  --quiet \
   --system \
   shaka-lab-hub \
   --home /opt/shaka-lab/selenium-hub \
