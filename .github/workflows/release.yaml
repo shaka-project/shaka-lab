@@ -16,11 +16,7 @@ name: Release
 
 on:
   workflow_dispatch:
-    # Allows for manual triggering.
-    # TODO: Remove once this workflow is tested and working.
-  push:
-    tags:
-      - "*"
+    # Manual triggering.
 
 jobs:
   build:
@@ -31,11 +27,17 @@ jobs:
       - name: Install deps
         run: |
           sudo apt -y install \
-            coreutils debhelper devscripts fakeroot gpg reprepro
+              coreutils debhelper devscripts fakeroot gpg reprepro
 
-      # TODO: Set version number automatically
-      #- name: Set version number
-      #  run: |
+      - name: Set version number
+        run: |
+          export DEBEMAIL="nomail@shakalab.rocks"
+          export DEBFULLNAME="Shaka Lab Team"
+          PACKAGE_VERSION=$(date -u +%Y%m%d-%H%M%S)
+          cd "$GITHUB_WORKSPACE"/shaka-lab-hub/linux/
+          dch --nomultimaint -v "$PACKAGE_VERSION" ""
+          cd "$GITHUB_WORKSPACE"/shaka-lab-node/linux/
+          dch --nomultimaint -v "$PACKAGE_VERSION" ""
 
       - name: Import GPG key
         run: |

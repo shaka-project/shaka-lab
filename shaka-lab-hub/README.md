@@ -5,14 +5,16 @@ The Selenium Hub package is available for Linux only.
 Installation:
 
 ```sh
-# TODO: download package
-sudo dpkg -i shaka-lab-hub*.deb
+curl -L https://shaka-project.github.io/shaka-lab/public.key | \
+    sudo tee /etc/apt/trusted.gpg.d/shaka-lab.asc
+sudo apt update
+sudo apt install shaka-lab-hub
 ```
 
 Updates:
 
 ```sh
-# TODO: Linux updates
+sudo apt update && sudo apt upgrade
 ```
 
 Configuration:

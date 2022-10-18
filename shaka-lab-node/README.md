@@ -8,14 +8,16 @@ The Selenium Node package is available for Linux, Windows, and macOS.
 Installation:
 
 ```sh
-# TODO: download package
-sudo dpkg -i shaka-lab-node*.deb
+curl -L https://shaka-project.github.io/shaka-lab/public.key | \
+    sudo tee /etc/apt/trusted.gpg.d/shaka-lab.asc
+sudo apt update
+sudo apt install shaka-lab-node
 ```
 
 Updates:
 
 ```sh
-# TODO: Linux updates
+sudo apt update && sudo apt upgrade
 ```
 
 Configuration:
