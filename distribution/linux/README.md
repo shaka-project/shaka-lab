@@ -13,11 +13,11 @@ receive automatic updates to their Linux packages.
  - Key size 4096 bits
  - Real name "Shaka Lab"
  - Email "nomail@shakalab.rocks"
+ - No passphrase
 2. Export the secret key
  - `gpg --list-secret-keys nomail@shakalab.rocks`
- - `gpg --export-secret-keys -o key nomail@shakalab.rocks`
- - `base64 < key`
-3. Copy the base64 key into GitHub as a repository secret named `DEB_GPG_KEY`
+ - `gpg -o key --armor --export-secret-key nomail@shakalab.rocks`
+3. Copy the base64 `key` into GitHub as a repository secret named `DEB_GPG_KEY`
 4. Remove the exported secret key file with `rm key`
 
 The `release.yaml` workflow will use the stored GPG key to sign packages.
