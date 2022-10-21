@@ -1,0 +1,18 @@
+# Copyright 2022 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+name: Build and Test PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  environment-hack:
+    environment: debug
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello debug environment"
