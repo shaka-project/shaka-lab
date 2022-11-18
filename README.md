@@ -38,3 +38,4 @@ Everything in this repo is licensed under [Apache license v2.0](LICENSE.txt).
 ## Package Guides
 
  - [Shaka Lab Hub](shaka-lab-hub/README.md) - Selenium grid hub (Linux only)
+ - [Shaka Lab Node](shaka-lab-node/README.md) - Selenium grid nodes
