@@ -35,6 +35,7 @@ const genericWebdriverServerJarPath =
 const seleniumStandaloneJarPath =
     `${shakaLabNodePath}/selenium-server-standalone-3.141.59.jar`;
 
+// Common, repeated options for child_process.spawn().
 const spawnOptions = {
   // Run from the package's working directory.
   cwd: workingDirectory,
@@ -44,6 +45,7 @@ const spawnOptions = {
   detached: false,
 };
 
+// Access a required field from config, and validate its presence.
 function requiredField(config, path, field, prefix='') {
   if (!config || !(field in config)) {
     console.error(`Missing required field "${prefix}${field}" in ${path}`);
@@ -52,6 +54,7 @@ function requiredField(config, path, field, prefix='') {
   return config[field];
 }
 
+// Get a config template, and validate its presence.
 function getTemplate(templates, templateName) {
   if (!(templateName in templates)) {
     console.error(
@@ -63,6 +66,7 @@ function getTemplate(templates, templateName) {
   return templates[templateName];
 }
 
+// Access a required param from a node config, and validate its presence.
 function requiredParam(nodeConfig, templateName, paramName) {
   if (!nodeConfig.params || !(paramName in nodeConfig.params)) {
     console.error(
@@ -74,6 +78,7 @@ function requiredParam(nodeConfig, templateName, paramName) {
   return nodeConfig.params[paramName];
 }
 
+// Access an optional param from a node config, or return a blank default.
 function optionalParam(nodeConfig, paramName) {
   if (nodeConfig.params && paramName in nodeConfig.params) {
     return nodeConfig.params[paramName];
@@ -81,6 +86,7 @@ function optionalParam(nodeConfig, paramName) {
   return '';
 }
 
+// Substitute parameters (such as "$exe") into a config's string value.
 function substituteParams(string, params) {
   // Don't touch non-strings.
   if (typeof string != 'string') {
@@ -95,6 +101,7 @@ function substituteParams(string, params) {
   return string;
 }
 
+// Stop all child processes.
 function stopAllProcesses(processes) {
   for (const child of processes) {
     if (child.exitCode == null) {
@@ -104,6 +111,10 @@ function stopAllProcesses(processes) {
   }
 }
 
+// Read configs and templates, and start Selenium nodes as child processes.
+// This parent process will monitor the child processes, and shut them all down
+// if one fails.  The background service system of the OS will log this and
+// restart this parent process as needed.
 function main() {
   // Update WebDrivers on startup.
   // This has a side-effect of also installing other requirements, such as
