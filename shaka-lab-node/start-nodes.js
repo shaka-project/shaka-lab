@@ -52,7 +52,7 @@ function requiredField(config, path, field, prefix='') {
   return config[field];
 }
 
-function loadTemplate(templates, templateName) {
+function getTemplate(templates, templateName) {
   if (!(templateName in templates)) {
     console.error(
         `Unknown template "${templateName}" in ${configPath},` +
@@ -124,7 +124,7 @@ function main() {
   for (const nodeConfig of nodeConfigs) {
     const templateName = requiredField(
         nodeConfig, configPath, 'template', 'nodes[].');
-    const template = loadTemplate(templates, templateName);
+    const template = getTemplate(templates, templateName);
 
     // Prepare template parameters.
     const params = {};
