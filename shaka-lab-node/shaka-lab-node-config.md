@@ -4,6 +4,7 @@ The node configuration file is called `shaka-lab-node-config.yaml`, and lives
 in a different location per platform:
 
  - Linux: `/etc/shaka-lab-node-config.yaml`
+ - Windows: `c:\ProgramData\shaka-lab-node\node-config.yaml`
 
 A default config is provided on installation, which contains only Chrome, but
 has commented sections for every supported browser.  For the latest version of
@@ -15,6 +16,7 @@ this for reference, please see
 See per-platform instructions for that in the platform-specific guides:
 
  - [Linux](linux/README.md#readme)
+ - [Windows](windows/README.md#readme)
 
 
 ## Host Configuration
