@@ -45,7 +45,14 @@ if (-not(Test-Path -Path $nodeConfigPath)) {
   echo "Existing config found at $nodeConfigPath"
 }
 
+# Install the service.  This also creates the virtual service account.
+echo "Installing service..."
+& "$installFolder\shaka-lab-node-svc.exe" install
+
 # Allow the virtual service account to write to the runtime folder.
+# This must come after service installation, which creates the virtual service
+# account.
+echo "Setting ACL..."
 $ACL = Get-ACL -Path $runtimeFolder
 $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
     # This user
@@ -57,10 +64,6 @@ $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
     "Allow")
 $ACL.SetAccessRule($AccessRule)
 $ACL | Set-Acl -Path $runtimeFolder
-
-# Install the service.
-echo "Installing service..."
-& "$installFolder\shaka-lab-node-svc.exe" install
 
 # Start the service.
 echo "Starting service..."
