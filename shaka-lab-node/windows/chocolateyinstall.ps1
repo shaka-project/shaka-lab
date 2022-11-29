@@ -52,7 +52,7 @@ $AccessRule = New-Object System.Security.AccessControl.FileSystemAccessRule(
     "NT SERVICE\shaka-lab-node",
     # Can do anything
     "FullControl",
-    # And the setting will be inherited by chlidren of the folder.
+    # And the setting will be inherited by children of the folder.
     "ContainerInherit,ObjectInherit", "InheritOnly",
     "Allow")
 $ACL.SetAccessRule($AccessRule)
