@@ -38,6 +38,7 @@
 
     <dependencies>
       <dependency id="nodejs" version="12.0" />
+      <dependency id="openjdk.portable" version="11.0" />
     </dependencies>
   </metadata>
   <files>
