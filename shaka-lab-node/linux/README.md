@@ -19,7 +19,7 @@ TODO: Package distribution
 ## Configuration
 
 The config file is at `/etc/shaka-lab-node-config.yaml`.
-See the [configuration section](#configuration) below for details.
+See the [configuration section](../README.md#configuration) of the general doc.
 
 ## Restarting the service after editing the config
 
