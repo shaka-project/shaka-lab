@@ -35,7 +35,7 @@ class ShakaLabNode < Formula
 
   # Use --with-docker to have Homebrew install Docker from source.
   # Docker is only needed to activate the Tizen node.
-  # Skip that if you already have Docker installed or don't need TIzen.
+  # Skip that if you already have Docker installed or don't need Tizen.
   depends_on "docker" => :optional
 
   # We need at least node v12 installed.

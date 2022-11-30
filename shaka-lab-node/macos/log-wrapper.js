@@ -22,9 +22,9 @@
 // Therefore, the only way to get service output logging with rotation on macos
 // is to have the service itself write the log files and handle signals.
 //
-// This wrapper allows the service (and its child processes) continue logging
-// to stdout and stderr, while leaving the details of logging and signal
-// handling to the wrapper.
+// This wrapper allows the service (and its child processes) to continue
+// logging to stdout and stderr, while leaving the details of logging and
+// signal handling to the wrapper.
 //
 // References:
 //  - https://serverfault.com/q/900499
