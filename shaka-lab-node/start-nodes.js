@@ -247,6 +247,13 @@ function main() {
     args.push('-timeout', '30', '-browserTimeout', '1200');
     args.push('-register', 'true', '-registerCycle', '5000');
 
+    // This allows us to connect to Android browsers over adb from any platform.
+    // Normally, Selenium wipes your capabilities if they don't match the host
+    // OS, causing a bogus registration to the hub.  Since Android is seen as
+    // part of the "Linux" family by Selenium, we need this behavior disabled
+    // to host Android devices on Windows or Mac nodes.
+    args.push('-enablePlatformVerification', 'false');
+
     // The hub to register to.
     args.push('-hub', hub);
 
