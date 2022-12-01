@@ -31,9 +31,14 @@ jobs:
 
       - name: Set version number
         run: |
+          # This uses the "dch" tool from Debian to set the package version in
+          # the Debian package metadata.
+
           export DEBEMAIL="nomail@shakalab.rocks"
           export DEBFULLNAME="Shaka Lab Team"
+
           PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
+
           (
             cd shaka-lab-hub/linux/
             dch --nomultimaint -v "$PACKAGE_VERSION" ""
@@ -45,6 +50,7 @@ jobs:
 
       - name: Import GPG key
         run: |
+          # A GPG key is used to sign the debian packages for distribution.
           echo "${{ secrets.DEB_GPG_KEY }}" | gpg --import
 
       - name: Build packages
@@ -60,6 +66,8 @@ jobs:
 
       - name: Stage packages
         run: |
+          # This uses the reprepro tool to sign packages and build the
+          # necessarily layout for Debian package distribution.
           mkdir staging
           mkdir staging/conf
           cp distribution/linux/reprepro.conf staging/conf/distributions
@@ -74,6 +82,7 @@ jobs:
 
   deploy-linux:
     needs: build-linux
+    # Linux packages are deployed as static content to GitHub Pages.
 
     permissions:
       pages: write
@@ -97,6 +106,7 @@ jobs:
       - name: Set version number
         shell: bash
         run: |
+          # Set the package version by editing the .nuspec file.
           PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
           cd shaka-lab-node/windows/
           sed -e "s@\(<version>\).*\(</version>\)@\1$PACKAGE_VERSION\2@" \
@@ -122,6 +132,8 @@ jobs:
 
   deploy-windows:
     needs: build-windows
+    # Windows packages are deployed to App Engine and served via
+    # express-chocolatey-server.
 
     runs-on: ubuntu-latest
     steps:
@@ -132,6 +144,9 @@ jobs:
 
       - name: Prepare app engine
         run: |
+          # Create a package.json file with the deps for our App Engine
+          # instance (express-chocolatey-server), and a script to start the
+          # server.
           cat >package.json <<EOF
           {
             "dependencies": {
@@ -146,6 +161,7 @@ jobs:
           }
           EOF
 
+          # Create the app.yaml definition for App Engine.
           cat >app.yaml <<EOF
           runtime: nodejs16
           handlers:
@@ -161,14 +177,17 @@ jobs:
 
       - uses: google-github-actions/deploy-appengine@v0
         with:
-          # FIXME: can't yet deploy to the correct project due to org restrictions
-          #project_id: shaka-lab-rocks
+          # TODO: For now, this is the only project we can deploy to, due to
+          # internal Google Cloud Platform restrictions.
           project_id: shaka-player-demo
           version: shaka-lab-chocolatey
           promote: false
 
 
   deploy-macos:
+    # macOS packages are distributed through a tap repo.  Check out the tap
+    # repo instead of the source repo, then import source from the source repo,
+    # and finish by pushing an update to the tap repo.
     runs-on: ubuntu-latest
     steps:
       - name: Check out tap repo
@@ -179,10 +198,14 @@ jobs:
 
       - name: Wipe source and formula folders
         run: |
+          # Source and formula folders in the tap repo are about to be
+          # replaced.
           git rm -rf shaka-lab-source
           git rm -rf Formula
 
       - name: Check out source repo
+        # This puts the source repo contents at the expected location in the
+        # tap repo.
         uses: actions/checkout@v3
         with:
           path: shaka-lab-source
@@ -191,14 +214,19 @@ jobs:
         run: |
           PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
 
+          # Wipe out the internal .git folder from the source repo.
           rm -rf shaka-lab-source/.git
 
+          # Copy the formula to its required location in the tap repo.
           mkdir -p Formula
           cp shaka-lab-source/shaka-lab-node/macos/shaka-lab-node.rb \
              Formula/
+
+          # Set the package version by editing the homebrew formula
           sed -e "s/^\(\s*version\s\+\"\).*\(\"\s*\)$/\1$PACKAGE_VERSION\2/" \
               -i Formula/shaka-lab-node.rb
 
+          # Update the tap repo with a new commit.
           git add Formula/
           git add shaka-lab-source/
           git config user.email shaka-bot@users.noreply.github.com
