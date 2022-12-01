@@ -43,11 +43,7 @@ function main() {
   }
 
   // Extract arguments.
-  const stdoutLogPath = args[0];
-  const stderrLogPath = args[1];
-  const pidPath = args[2];
-  const command = args[3];
-  const commandArgs = args.slice(4);  // may be empty
+  const [stdoutLogPath, stderrLogPath, pidPath, command, ...commandArgs] = args;
 
   // File descriptors for logging.
   let stdoutLogFd = null;
