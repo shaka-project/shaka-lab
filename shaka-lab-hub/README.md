@@ -6,11 +6,20 @@ The Shaka Lab Hub package provides a Selenium grid hub, and is available for
 
 ## Installation
 
-TODO: Package distribution
+```sh
+curl -L https://shaka-project.github.io/shaka-lab/public.key | \
+    sudo tee /etc/apt/trusted.gpg.d/shaka-lab.asc
+echo deb https://shaka-project.github.io/shaka-lab/ stable main | \
+    sudo tee /etc/apt/sources.list.d/shaka-lab.list
+sudo apt update
+sudo apt -y install shaka-lab-hub
+```
 
 ## Updates
 
-TODO: Package distribution
+```sh
+sudo apt update && sudo apt -y upgrade
+```
 
 ## Configuration
 

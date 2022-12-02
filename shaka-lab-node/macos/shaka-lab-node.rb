@@ -23,8 +23,8 @@ class ShakaLabNode < Formula
   license "Apache-2.0"
 
   # Formulae require a URL, but we don't actually have sources to download in
-  # this way.  To satisfy Homebrew, give a URL that never changes and returns
-  # no data.
+  # this way.  Instead, our tap repo includes the sources.  To satisfy
+  # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
   version "1.0.0"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -42,7 +42,25 @@ class ShakaLabNode < Formula
   depends_on "node" => "12"
 
   def install
-    source_root = "#{__dir__}/../.."
+    # Detect our environment.  If we're building from the source repo (with
+    # `brew install ./shaka-lab-node.rb`, we need a different root directory
+    # than if this is installed as a tap.  Tap repos have a very specific
+    # structure and naming scheme which differs from the layout of our
+    # multi-platform source repo.
+
+    # Assume we're installed as a tap.
+    # The full source from this version is at this location in the tap repo.
+    source_root = "#{__dir__}/../shaka-lab-source"
+    unless File.exist? source_root
+      # The source location for the tap repo doesn't exist.
+      # Next, assume that we are building from the source repo.
+      source_root = "#{__dir__}/../.."
+    end
+    unless File.exist? "#{source_root}/selenium-jar"
+      # This doesn't appear to match the layout of the source repo, either.
+      # Throw an error.
+      raise "Unable to deduce shaka-lab formula repo context at #{__dir__}"
+    end
 
     # Main shaka-lab-node files.
     FileUtils.install "#{source_root}/LICENSE.txt", prefix, :mode => 0644

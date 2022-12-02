@@ -14,11 +14,18 @@ platforms, see [the general docs](../README.md#readme).
 
 ## Installation
 
-TODO: Package distribution
+```sh
+brew tap shaka-project/shaka-lab
+brew install shaka-lab-node
+/opt/homebrew/opt/shaka-lab-node/restart-services.sh
+```
 
 ## Updates
 
-TODO: Package distribution
+```sh
+brew update && brew upgrade
+/opt/homebrew/opt/shaka-lab-node/restart-services.sh
+```
 
 ## Configuration
 

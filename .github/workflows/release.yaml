@@ -1,0 +1,242 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    # Manual triggering.
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install deps
+        run: |
+          sudo apt -y install \
+              coreutils debhelper devscripts fakeroot gpg reprepro
+
+      - name: Set version number
+        run: |
+          # This uses the "dch" tool from Debian to set the package version in
+          # the Debian package metadata.
+
+          export DEBEMAIL="nomail@shakalab.rocks"
+          export DEBFULLNAME="Shaka Lab Team"
+
+          PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
+
+          (
+            cd shaka-lab-hub/linux/
+            dch --nomultimaint -v "$PACKAGE_VERSION" ""
+          )
+          (
+            cd shaka-lab-node/linux/
+            dch --nomultimaint -v "$PACKAGE_VERSION" ""
+          )
+
+      - name: Import GPG key
+        run: |
+          # A GPG key is used to sign the debian packages for distribution.
+          echo "${{ secrets.DEB_GPG_KEY }}" | gpg --import
+
+      - name: Build packages
+        run: |
+          (
+            cd shaka-lab-hub/linux/
+            fakeroot debian/rules binary
+          )
+          (
+            cd shaka-lab-node/linux/
+            fakeroot debian/rules binary
+          )
+
+      - name: Stage packages
+        run: |
+          # This uses the reprepro tool to sign packages and build the
+          # necessarily layout for Debian package distribution.
+          mkdir staging
+          mkdir staging/conf
+          cp distribution/linux/reprepro.conf staging/conf/distributions
+          reprepro --basedir staging includedeb stable shaka-lab-hub/*.deb
+          reprepro --basedir staging includedeb stable shaka-lab-node/*.deb
+          gpg -o staging/public.key --armor --export nomail@shakalab.rocks
+
+      - name: Upload packages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: staging
+
+  deploy-linux:
+    needs: build-linux
+    # Linux packages are deployed as static content to GitHub Pages.
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v1
+
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set version number
+        shell: bash
+        run: |
+          # Set the package version by editing the .nuspec file.
+          PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
+          cd shaka-lab-node/windows/
+          sed -e "s@\(<version>\).*\(</version>\)@\1$PACKAGE_VERSION\2@" \
+              -i.bk shaka-lab-node.nuspec
+
+      - name: Build packages
+        shell: bash
+        run: |
+          cd shaka-lab-node/windows/
+          choco pack shaka-lab-node.nuspec
+
+      - name: Stage packages
+        shell: bash
+        run: |
+          mkdir staging
+          cp shaka-lab-node/windows/*.nupkg staging/
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-packages
+          path: staging/
+
+  deploy-windows:
+    needs: build-windows
+    # Windows packages are deployed to App Engine and served via
+    # express-chocolatey-server.
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-packages
+
+      - name: Prepare app engine
+        run: |
+          # Create a package.json file with the deps for our App Engine
+          # instance (express-chocolatey-server), and a script to start the
+          # server.
+          cat >package.json <<EOF
+          {
+            "dependencies": {
+              "express-chocolatey-server": "^1.0.0"
+            },
+            "scripts": {
+              "start": "express-chocolatey-server *.nupkg"
+            },
+            "engines": {
+              "node": "16.x.x"
+            }
+          }
+          EOF
+
+          # Create the app.yaml definition for App Engine.
+          cat >app.yaml <<EOF
+          runtime: nodejs16
+          handlers:
+            - url: /.*
+              secure: always
+              redirect_http_response_code: 301
+              script: auto
+          EOF
+
+      - uses: google-github-actions/auth@v0
+        with:
+          credentials_json: '${{ secrets.APPENGINE_DEPLOY_KEY }}'
+
+      - uses: google-github-actions/deploy-appengine@v0
+        with:
+          # TODO: For now, this is the only project we can deploy to, due to
+          # internal Google Cloud Platform restrictions.
+          project_id: shaka-player-demo
+          version: shaka-lab-chocolatey
+          promote: false
+
+
+  deploy-macos:
+    # macOS packages are distributed through a tap repo.  Check out the tap
+    # repo instead of the source repo, then import source from the source repo,
+    # and finish by pushing an update to the tap repo.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tap repo
+        uses: actions/checkout@v3
+        with:
+          repository: shaka-project/homebrew-shaka-lab
+          fetch-depth: 0  # The entire repo history, so we can push an update
+
+      - name: Wipe source and formula folders
+        run: |
+          # Source and formula folders in the tap repo are about to be
+          # replaced.
+          git rm -rf shaka-lab-source
+          git rm -rf Formula
+
+      - name: Check out source repo
+        # This puts the source repo contents at the expected location in the
+        # tap repo.
+        uses: actions/checkout@v3
+        with:
+          path: shaka-lab-source
+
+      - name: Finish staging tap repo
+        run: |
+          PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
+
+          # Wipe out the internal .git folder from the source repo.
+          rm -rf shaka-lab-source/.git
+
+          # Copy the formula to its required location in the tap repo.
+          mkdir -p Formula
+          cp shaka-lab-source/shaka-lab-node/macos/shaka-lab-node.rb \
+             Formula/
+
+          # Set the package version by editing the homebrew formula
+          sed -e "s/^\(\s*version\s\+\"\).*\(\"\s*\)$/\1$PACKAGE_VERSION\2/" \
+              -i Formula/shaka-lab-node.rb
+
+          # Update the tap repo with a new commit.
+          git add Formula/
+          git add shaka-lab-source/
+          git config user.email shaka-bot@users.noreply.github.com
+          git config user.name "Shaka Bot"
+          git commit -m "Release $PACKAGE_VERSION"
+
+      - name: Push homebrew repo
+        run: |
+          # Remove default authentication headers from GitHub Actions
+          # environment, since we're pushing to a different repo as a different
+          # user.
+          git config --unset-all http.https://github.com/.extraheader
+          git push https://shaka-bot:${{ secrets.HOMEBREW_DEPLOY_TOKEN }}@github.com/shaka-project/homebrew-shaka-lab
