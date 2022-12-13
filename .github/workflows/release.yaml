@@ -26,6 +26,7 @@ jobs:
 
       - name: Install deps
         run: |
+          sudo apt -y update
           sudo apt -y install \
               coreutils debhelper devscripts fakeroot gpg reprepro
 
