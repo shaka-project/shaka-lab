@@ -1,0 +1,6 @@
+# These are static binaries included in our packages.  They do not change, and
+# are taken directly from upstream sources.  READMEs next to each one document
+# their origin and license.
+ignorePaths:
+ - selenium-jar/selenium-server-standalone-3.141.59.jar
+ - shaka-lab-node/windows/WinSW-x64.exe
