@@ -1,0 +1,19 @@
+{% set output_path = '/etc/bind/named.conf.local' %}
+{% set service_reload = 'systemctl reload-or-restart named' %}
+//
+// Do any local configuration here
+//
+
+zone "lab" {
+	type master;
+	file "/etc/bind/db.lab";
+};
+
+{% set reverse_domain = lan_subnet.split('.')[0:3]|reverse()|join('.') %}
+zone "{{ reverse_domain }}.in-addr.arpa" {
+	type master;
+	file "/etc/bind/db.lab.reverse";
+};
+
+// Allow Samba Active Directory Domain Controller to inject DNS records.
+include "/var/lib/samba/bind-dns/named.conf";

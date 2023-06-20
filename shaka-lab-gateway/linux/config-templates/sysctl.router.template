@@ -1,0 +1,11 @@
+{% set output_path = '/etc/sysctl.d/00-router.conf' %}
+{% set service_reload = 'sysctl --system' %}
+{% if lan_ip != lan_router %}
+# Disable routing.  Someone else is the router.
+net.ipv4.ip_forward = 0
+{% else %}
+# Enable routing.  This machine is the router.
+net.ipv4.ip_forward = 1
+{% endif %}
+# Respond to broadcast pings.
+net.ipv4.icmp_echo_ignore_broadcasts = 0

@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Fail on error.
+set -e
+
+user="$1"
+default_shell="/bin/bash"
+default_group_id="2000"  # labusers
+minimum_user_id="3000"
+
+ldap_user_records=$(ldbsearch -H /var/lib/samba/private/sam.ldb \
+  '(&(objectClass=user)(memberOf=cn=labusers,cn=Users,dc=lab,dc=shaka))')
+ldap_user_ids=$(
+  echo "$ldap_user_records" | grep uidNumber | sed -e 's/uidNumber: //')
+ldap_max_user_id=$(echo "$ldap_user_ids" | sort -n | tail -1)
+
+if [ -z "$ldap_max_user_id" ]; then
+  user_id="$minimum_user_id"
+else
+  user_id=$(( ldap_max_user_id + 1 ))
+fi
+
+echo "Computed next user ID: $user_id"
+
+# Show commands.
+set -x
+
+samba-tool user add "$user"
+samba-tool group addmembers labusers "$user"
+
+samba-tool user addunixattrs "$user" "$user_id" \
+  --gid-number "$default_group_id" \
+  --login-shell "$default_shell"

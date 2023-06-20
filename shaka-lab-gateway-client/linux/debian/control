@@ -1,0 +1,32 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+Source: shaka-lab-gateway-client
+Maintainer: Joey Parrish <joeyparrish@google.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9)
+
+Package: shaka-lab-gateway-client
+Architecture: all
+Depends: libnss-ldapd
+Description: Shaka Lab Gateway Client
+ Allows Active Directory users from Shaka Lab Gateway to log in.
+ .
+ **NOTE**: This package may not be as appropriate for your own lab environment
+ as it is for ours.  For the Shaka team, this package is primarily a documented,
+ repeatable, and automated installation process for a critical asset in the lab.
+ Use it in your own setup if you wish, but at your own risk.  If installed
+ naively, this could conflict with existing services on your network.

@@ -1,0 +1,149 @@
+#!/bin/bash
+
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+# It will get necessary base configuration, then set up the LDAP config for
+# authentication of lab users.
+
+# Fail on error
+set -e
+
+
+### PROMPTING ###
+
+# Source the debconf library, which gives us functions to prompt the user.
+. /usr/share/debconf/confmodule
+
+# Prompt the user for the AD admin password.  If the user has followed our
+# README's instructions, this has already been provided and no prompt is
+# necessary.
+
+# NOTE: db_input returns a non-zero exit code when skipping a question, so we
+# ignore its return value with "|| true".
+
+# The "high" argument is a priority for the config.  All of ours are necessary.
+db_input high shaka-lab-gateway-client/active_directory_password || true
+# The "go" command takes all the batched-together questions from "input"
+# commands and displays them, possibly on one screen.
+db_go
+
+# Now we should have all necessary configuration.
+
+# The db_get command will fill config values into the global "RET" variable.
+# Here we extract them into our own variables with useful names.
+db_get shaka-lab-gateway-client/active_directory_password
+active_directory_password="$RET"
+
+
+### LDAP AUTH SETUP ###
+
+backup_config() {
+  # If we don't already have an original backup from the first install, make
+  # one now.  Subsequent installs or updates will not recreate this.
+  if [ ! -e "$1".shaka-lab.orig ]; then
+    cp -a "$1" "$1".shaka-lab.orig
+  fi
+}
+
+# Configure the daemon that talks to LDAP to provide auth services to this
+# machine (nslcd).
+
+backup_config /etc/nslcd.conf
+
+cat <<EOF >/etc/nslcd.conf
+# /etc/nslcd.conf
+# nslcd configuration file. See nslcd.conf(5)
+# for details.
+
+# The user and group nslcd should run as.
+uid nslcd
+gid nslcd
+
+# The location at which the LDAP server(s) should be reachable.
+uri ldaps://dc
+
+# The search base that will be used for all queries.
+base cn=users,dc=lab,dc=shaka
+
+# The LDAP protocol version to use.
+ldap_version 3
+
+# The DN to bind with for normal lookups.
+binddn cn=Administrator,cn=users,dc=lab,dc=shaka
+bindpw $active_directory_password
+
+# The DN used for password modifications by root.
+rootpwmoddn cn=Administrator,cn=users,dc=lab,dc=shaka
+
+# SSL options.
+tls_reqcert never
+tls_cacertfile /etc/ssl/certs/ca-certificates.crt
+
+# The search scope.
+#scope sub
+
+# Flush caches on startup.
+reconnect_invalidate passwd,group,shadow
+
+# Mappings for Samba Active Directory.
+filter passwd (&(objectClass=user)(objectClass=person)(!(objectClass=computer))(uidNumber=*))
+map passwd uid sAMAccountName
+map passwd homeDirectory unixHomeDirectory
+filter group (&(objectClass=group)(gidNumber=*))
+EOF
+
+systemctl restart nslcd
+
+
+mod_nsswitch() {
+  # Modify an entry in nsswitch.conf, which tells the OS where to get various
+  # system information.
+
+  # The database to modify.
+  local database="$1"
+  # A source that should be added if it is not yet present.
+  local desired_source="$2"
+  # The default sources to use if the database entry is completely missing.
+  local default_sources="$3"
+
+  if grep -q "^\\s*$database:.*\\<$desired_source\\>" /etc/nsswitch.conf; then
+    echo "Database $database already sources from $desired_source."
+  elif grep -q "^\\s*$database:" /etc/nsswitch.conf; then
+    echo "Database $database does not source from $desired_source. Adding it."
+    sed -e "s/^\\s*$database:.*/& $desired_source/" -i /etc/nsswitch.conf
+  else
+    echo "Database $database not found. Setting sources \"$default_sources.\""
+    echo "$database: $default_sources" >> /etc/nsswitch.conf
+  fi
+}
+
+# Allow LDAP to provide information for passwd (user accounts), groups, and
+# shadow (user passwords).
+backup_config /etc/nsswitch.conf
+mod_nsswitch passwd ldap "files ldap"
+mod_nsswitch group ldap "files ldap"
+mod_nsswitch shadow ldap "files ldap"
+
+
+# Disable the LDAP caching service.  It not only makes changes at the AD server
+# take time to be reflected, take too long to be reflected here, it also seems
+# to interfere with secondary group membership for AD users.
+systemctl stop nscd
+systemctl disable nscd
+
+
+# Enable the automatic creation of home directories when an AD user logs in.
+pam-auth-update --enable mkhomedir

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Makefile to build the debain package.
+# Makefile to build the debian package.
 
 # Debug the debian build process.
 export DH_VERBOSE = 1

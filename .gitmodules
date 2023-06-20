@@ -1,0 +1,3 @@
+[submodule "shaka-lab-gateway/linux/total-perspective-vortex"]
+	path = shaka-lab-gateway/linux/total-perspective-vortex
+	url = https://github.com/joeyparrish/total-perspective-vortex

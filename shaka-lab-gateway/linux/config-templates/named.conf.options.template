@@ -1,0 +1,30 @@
+{% set output_path = '/etc/bind/named.conf.options' %}
+{% set service_reload = 'systemctl reload-or-restart named' %}
+options {
+	directory "/var/cache/bind";
+
+	dnssec-validation auto;
+
+	auth-nxdomain no;    # conform to RFC1035
+
+	# NO IPV6!  This is an important part of our ability to control
+	# routing and block Google Public DNS.
+	listen-on-v6 { none; };
+
+	forwarders {
+		8.8.8.8;
+		8.8.4.4;
+	};
+	allow-query {
+		{{ lan_subnet }}{{ lan_cidr_prefix }};
+		127.0.0.1;
+	};
+	allow-transfer {
+		127.0.0.1;
+	};
+
+	# Allow Samba Active Directory Domain Controller to inject DNS records.
+	tkey-gssapi-keytab "/var/lib/samba/bind-dns/dns.keytab";
+	minimal-responses yes;
+};
+
