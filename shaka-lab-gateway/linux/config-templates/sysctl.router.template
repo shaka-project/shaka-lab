@@ -1,3 +1,6 @@
+{#
+A config file for kernel parameters.
+-#}
 {% set output_path = '/etc/sysctl.d/00-router.conf' %}
 {% set service_reload = 'sysctl --system' %}
 {% if lan_ip != lan_router %}

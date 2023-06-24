@@ -1,3 +1,7 @@
+{#
+A config file for the DNS server.
+This defines the records for forward lookups (name to IP) for the lab network.
+-#}
 {% set output_path = '/etc/bind/db.lab' %}
 {% set service_reload = 'systemctl reload-or-restart named' %}
 $ORIGIN .

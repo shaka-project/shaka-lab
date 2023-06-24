@@ -1,3 +1,6 @@
+{#
+A config file for the DNS server with a list of top-level server options.
+-#}
 {% set output_path = '/etc/bind/named.conf.options' %}
 {% set service_reload = 'systemctl reload-or-restart named' %}
 options {

@@ -1,3 +1,7 @@
+{#
+A config file for the DHCP server, isc-dhcp-server.
+Tells the server which ethernet interface to listen on.
+-#}
 {% set output_path = '/etc/default/isc-dhcp-server' %}
 # Defaults for isc-dhcp-server (sourced by /etc/init.d/isc-dhcp-server)
 

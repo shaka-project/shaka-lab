@@ -1,3 +1,9 @@
+{#
+A config file for the DHCP server.
+This sets global configs for all hosts, as well as individual records for
+hosts with reserved IPs.  Any device with "ip" and "mac" entries in the
+total-perspective-vortex config file will have reserved IPs.
+-#}
 {% set output_path = '/etc/dhcp/dhcpd.conf' %}
 {% set service_reload = 'dhcpd -q -t && systemctl reload-or-restart isc-dhcp-server' %}
 

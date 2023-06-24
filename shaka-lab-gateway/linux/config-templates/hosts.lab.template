@@ -1,3 +1,7 @@
+{#
+A list of all reserved IPs and names in the lab, in the format of /etc/hosts.
+This can be consumed by other tools, though none are provided in this package.
+-#}
 {% set output_path = '/etc/hosts.lab' %}
 {{ lan_ip }} gateway gateway.lab #shaka-lab
 {% for name, specs in devices.items() %}{{ specs.ip }}	{{ name }} {{ name }}.lab #shaka-lab

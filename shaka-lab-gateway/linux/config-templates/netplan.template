@@ -1,3 +1,6 @@
+{#
+A config file for ethernet interfaces.
+-#}
 {% set output_path = '/etc/netplan/00-gateway.yaml' %}
 {% set service_reload = 'netplan apply' %}
 

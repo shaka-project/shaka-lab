@@ -1,3 +1,6 @@
+{#
+A config file for Samba Active Directory.
+-#}
 {% set output_path = '/etc/samba/smb.conf' %}
 {% set service_reload = 'systemctl restart samba-ad-dc.service' %}
 # Global parameters
