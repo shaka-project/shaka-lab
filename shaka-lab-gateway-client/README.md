@@ -5,7 +5,7 @@ Lab Gateway to log in.
 
 **NOTE**: Exactly one Linux device on your lab network must install the
 [`shaka-lab-gateway`](https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme)
-package for devices with the client package to connect to.
+package.  Devices with the client package will connect to that gateway.
 
 
 ## Installation
