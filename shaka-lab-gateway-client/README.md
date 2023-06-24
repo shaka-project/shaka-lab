@@ -3,12 +3,6 @@
 The Shaka Lab Gateway Client package allows Active Directory users from Shaka
 Lab Gateway to log in.
 
-**NOTE**: This package may not be as appropriate for your own lab environment
-as it is for ours.  For the Shaka team, this package is primarily a documented,
-repeatable, and automated installation process for a critical asset in the lab.
-Use it in your own setup if you wish, but at your own risk.  If installed
-naively, this could conflict with existing services on your network.
-
 **NOTE**: Exactly one Linux device on your lab network must install the
 [`shaka-lab-gateway`](https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme)
 package for devices with the client package to connect to.
