@@ -108,6 +108,13 @@ EOF
 systemctl restart nslcd
 
 
+# Disable the LDAP caching service.  It not only makes changes at the AD server
+# take too long to be reflected here, it also seems to interfere with secondary
+# group membership for AD users.
+systemctl stop nscd
+systemctl disable nscd
+
+
 mod_nsswitch() {
   # Modify an entry in nsswitch.conf, which tells the OS where to get various
   # system information.
@@ -136,13 +143,6 @@ backup_config /etc/nsswitch.conf
 mod_nsswitch passwd ldap "files ldap"
 mod_nsswitch group ldap "files ldap"
 mod_nsswitch shadow ldap "files ldap"
-
-
-# Disable the LDAP caching service.  It not only makes changes at the AD server
-# take time to be reflected, take too long to be reflected here, it also seems
-# to interfere with secondary group membership for AD users.
-systemctl stop nscd
-systemctl disable nscd
 
 
 # Enable the automatic creation of home directories when an AD user logs in.
