@@ -15,10 +15,10 @@ repeatable, and automated installation process for a critical asset in the lab.
 Use it in your own setup if you wish, but at your own risk.  If installed
 naively, this could conflict with existing services on your network.
 
-**NOTE**: To allow Active Directory users to log in, install the
+**NOTE**: To allow Active Directory users to log in on a device, install the
 [`shaka-lab-gateway-client`](https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway-client#readme)
-package.  To allow AD users to log into the gateway device itself, that device
-must still have the client package installed.
+package.  This includes the gateway device itself.  To allow AD users to log
+into the gateway, that device must also have the client package installed.
 
 
 ## Installation
