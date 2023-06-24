@@ -1,0 +1,5 @@
+debhelper-build-stamp
+files
+shaka-lab-browsers
+shaka-lab-browsers.substvars
+*.debhelper

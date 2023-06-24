@@ -25,6 +25,8 @@ For details on config files, see [shaka-lab-node-config.md](shaka-lab-node-confi
 ## Special node setup requirements
 
  - Browser nodes require those browsers to be separately installed.
+   - See the [`shaka-lab-browsers`](../shaka-lab-browsers/README.md#readme)
+     package to simplify setup
  - Tizen nodes require Docker, but can run on any OS.
  - Tizen TVs must be configured to accept commands from the IP of the device
    running the Tizen node.

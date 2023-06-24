@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Source: shaka-lab-node
-Maintainer: Joey Parrish <joeyparrish@google.com>
-Section: misc
-Priority: optional
-Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 9)
+# Runs on install and on upgrade.
 
-Package: shaka-lab-node
-Architecture: all
-Depends: adduser, curl, default-jre-headless | java-runtime-headless, systemd, xvfb
-Suggests: adb, docker.io
-Recommends: shaka-lab-browsers
-Description: Shaka Lab Node
- Selenium grid nodes for the Shaka Lab
+# Stop on all errors
+$ErrorActionPreference = "Stop"
+
+# These browser packages are not allowed as "dependencies" in chocolatey for
+# some reason.  So we install them each separately in this install script.
+
+choco install -y firefox
+
+# Chrome is downloaded from a URL which is not versioned, so it is not
+# possible for the chocolatey package maintainer for googlechrome to keep
+# checksums up-to-date.  Therefore we have to use --ignore-checksums.
+choco install -y googlechrome --ignore-checksums
+
+choco install -y adb

@@ -37,5 +37,7 @@ Everything in this repo is licensed under [Apache license v2.0](LICENSE.txt).
 
 ## Package Guides
 
- - [Shaka Lab Hub](shaka-lab-hub/README.md) - Selenium grid hub (Linux only)
- - [Shaka Lab Node](shaka-lab-node/README.md) - Selenium grid nodes
+ - [Shaka Lab Hub](shaka-lab-hub/README.md#readme): Selenium grid hub (Linux only)
+ - [Shaka Lab Node](shaka-lab-node/README.md#readme): Selenium grid nodes
+ - [Shaka Lab Recommended Settings](shaka-lab-recommended-settings/README.md#readme): Recommended OS settings for lab devices
+ - [Shaka Lab Browsers](shaka-lab-browsers/README.md#readme): All major browsers, simplifies Selenium node setup

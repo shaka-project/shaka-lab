@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2022 Google LLC
+ 
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+      http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Shaka Lab Recommended Settings - Chocolately Package Definition
+-->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>shaka-lab-recommended-settings</id>
+    <title>shaka-lab-recommended-settings (Install)</title>
+    <version>1.0.0</version>
+
+    <owners>joeyparrish@google.com</owners>
+    <authors>joeyparrish@google.com</authors>
+
+    <packageSourceUrl>https://github.com/shaka-project/shaka-lab</packageSourceUrl>
+    <projectUrl>https://github.com/shaka-project/shaka-lab</projectUrl>
+    <projectSourceUrl>https://github.com/shaka-project/shaka-lab</projectSourceUrl>
+
+    <copyright>2022 Google LLC</copyright>
+    <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <tags>shaka-lab-recommended-settings shaka-lab</tags>
+    <summary>Shaka Lab Recommended Settings</summary>
+    <description>Recommended OS settings for the Shaka Lab</description>
+
+    <dependencies>
+      <dependency id="vim" />
+    </dependencies>
+  </metadata>
+  <files>
+    <!-- this section controls what actually gets packaged into the Chocolatey package -->
+    <file src="../../LICENSE.txt" target="./" />
+    <file src="chocolatey*.ps1" target="./" />
+  </files>
+</package>

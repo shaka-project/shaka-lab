@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Source: shaka-lab-node
+Source: shaka-lab-recommended-settings
 Maintainer: Joey Parrish <joeyparrish@google.com>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
 Build-Depends: debhelper (>= 9)
 
-Package: shaka-lab-node
+Package: shaka-lab-recommended-settings
 Architecture: all
-Depends: adduser, curl, default-jre-headless | java-runtime-headless, systemd, xvfb
-Suggests: adb, docker.io
-Recommends: shaka-lab-browsers
-Description: Shaka Lab Node
- Selenium grid nodes for the Shaka Lab
+Pre-Depends: shaka-lab-recommended-settings
+Depends: aptitude, arping, debconf-utils, dialog, net-tools, openssh-server, plocate, smartmontools, software-properties-common, tcpdump, vim
+Description: Shaka Lab Recommended Settings
+ Depends on recommended packages and configures recommended settings for the
+ Shaka Lab

@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+
+# Fail on error
+set -e
+
+# Reload sshd after installing new sshd configs.
+systemctl reload-or-restart sshd
+
+# Configure additional apt repositories for third-party browser packages.
+# This makes it possible to then install the shaka-lab-browsers metapackage,
+# which depends on browser packages from these repos.
+
+# Install the package signing key from Google Chrome.
+curl -L https://dl.google.com/linux/linux_signing_key.pub \
+    | gpg --dearmor > /etc/apt/trusted.gpg.d/google-chrome.gpg
+# Configure the package repo that Chrome comes from.
+cat <<EOF >/etc/apt/sources.list.d/google-chrome.list
+deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
+EOF
+
+# Configure the package repo where we can get Firefox stable (not LTS as
+# packaged by Ubuntu official repos).
+add-apt-repository -n -y ppa:mozillateam/ppa
+# Make sure the PPA version overrides the Ubuntu official version.
+cat <<EOF >/etc/apt/preferences.d/mozillateamppa
+Package: firefox*
+Pin: release o=LP-PPA-mozillateam
+Pin-Priority: 501
+EOF
+
+# Install the package signing key from Microsoft Edge.
+curl -L https://packages.microsoft.com/keys/microsoft.asc \
+    | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft-edge.gpg
+# Configure the package repo that Edge comes from.
+cat <<EOF >/etc/apt/sources.list.d/microsoft-edge.list
+deb [arch=amd64] https://packages.microsoft.com/repos/edge/ stable main
+EOF
+
+# Update the package list.
+apt update
