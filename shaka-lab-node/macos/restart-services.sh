@@ -45,7 +45,7 @@ restart_service shaka-lab-node-service
 if [ ! -f /etc/newsyslog.d/shaka-lab-node.conf ]; then
   echo "Configuring service log rotation (using sudo)"
   sudo tee /etc/newsyslog.d/shaka-lab-node.conf >/dev/null <<EOF
-# path                                     mode  count  size  when  flags pid_file
-/opt/homebrew/var/log/shaka-lab-node.*.log 644   10     10240 *     Z     /opt/homebrew/var/run/shaka-lab-node.pid
+# path                                        mode  count  size  when  flags pid_file
+$(brew --prefix)/var/log/shaka-lab-node.*.log 644   10     10240 *     Z     $(brew --prefix)/var/run/shaka-lab-node.pid
 EOF
 fi

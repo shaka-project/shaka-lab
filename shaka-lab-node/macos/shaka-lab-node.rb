@@ -82,6 +82,12 @@ class ShakaLabNode < Formula
     FileUtils.install "#{source_root}/shaka-lab-node/macos/stop-services.sh", prefix, :mode => 0755
     FileUtils.install "#{source_root}/shaka-lab-node/macos/restart-services.sh", prefix, :mode => 0755
 
+    # The service definitions need hard-coded paths, and the Homebrew prefix
+    # varies.  So replace "$HOMEBREW_PREFIX" in these plist files with the
+    # current prefix (in the HOMEBREW_PREFIX variable).
+    inreplace prefix/"shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    inreplace prefix/"shaka-lab-node-update.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+
     # Service logs go to /opt/homebrew/var/log
     FileUtils.mkdir_p var/"log"
 
