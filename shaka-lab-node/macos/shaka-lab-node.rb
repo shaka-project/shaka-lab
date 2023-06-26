@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# macOS Homebrew package definition for for Shaka Lab Node.
+# macOS Homebrew package definition for Shaka Lab Node.
 
 # Homebrew docs: https://docs.brew.sh/Formula-Cookbook
 #                https://rubydoc.brew.sh/Formula
