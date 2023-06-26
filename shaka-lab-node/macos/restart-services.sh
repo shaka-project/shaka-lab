@@ -20,6 +20,7 @@ restart_service() {
 
   # Link the service into the user's LaunchAgent folder, so that it is
   # automatically loaded on login.
+  mkdir -p ~/Library/LaunchAgents
   ln -sf "$INSTALL_PATH/plists/$NAME.plist" ~/Library/LaunchAgents/
 
   # Load the service now if it's not loaded yet.
