@@ -201,9 +201,9 @@ jobs:
         run: |
           # Source, formula, and cask folders in the tap repo are about to be
           # replaced.
-          git rm -rf shaka-lab-source
-          git rm -rf Formula
-          git rm -rf Casks
+          git rm -rf shaka-lab-source || true
+          git rm -rf Formula || true
+          git rm -rf Casks || true
 
       - name: Check out source repo
         # This puts the source repo contents at the expected location in the
