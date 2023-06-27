@@ -20,7 +20,7 @@ restart_service() {
 
   # Link the service into the user's LaunchAgent folder, so that it is
   # automatically loaded on login.
-  ln -sf "$INSTALL_PATH/$NAME.plist" ~/Library/LaunchAgents/
+  ln -sf "$INSTALL_PATH/plists/$NAME.plist" ~/Library/LaunchAgents/
 
   # Load the service now if it's not loaded yet.
   local LIST="$(launchctl list | grep "$NAME")"

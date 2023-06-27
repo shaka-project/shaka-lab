@@ -76,17 +76,22 @@ class ShakaLabNode < Formula
       FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", etc, :mode => 0644
     end
 
-    # Service definitions.
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-service.plist", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update.plist", prefix, :mode => 0644
+    # Service definitions.  Homebrew's service infrastructure will only let us
+    # install one service per package, and we have both a background service
+    # and a cron job.  Putting our plist files into a subfolder allows us to
+    # bypass Homebrew's checks for plists.  This avoids a misleading message
+    # from Homebrew with the wrong instructions to start the services.
+    FileUtils.mkdir_p prefix/"plists"
+    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-service.plist", prefix/"plists", :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update.plist", prefix/"plists", :mode => 0644
     FileUtils.install "#{source_root}/shaka-lab-node/macos/stop-services.sh", prefix, :mode => 0755
     FileUtils.install "#{source_root}/shaka-lab-node/macos/restart-services.sh", prefix, :mode => 0755
 
     # The service definitions need hard-coded paths, and the Homebrew prefix
     # varies.  So replace "$HOMEBREW_PREFIX" in these plist files with the
     # current prefix (in the HOMEBREW_PREFIX variable).
-    inreplace prefix/"shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
-    inreplace prefix/"shaka-lab-node-update.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    inreplace prefix/"plists/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    inreplace prefix/"plists/shaka-lab-node-update.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
     # Service logs go to /opt/homebrew/var/log
     FileUtils.mkdir_p var/"log"
@@ -95,24 +100,20 @@ class ShakaLabNode < Formula
     FileUtils.mkdir_p var/"run"
   end
 
-  # When Homebrew sees that we have installed plist files, it will issue a
-  # "caveat" message with instructions on how to start the service.  Those
-  # instructions will fail.  We don't use Homebrew's service infrastructure
-  # because it will only let us install one service per package, and we have
-  # both a background service and a cron job.
+  # The output of this method is printed to the user after installation.
   #
-  # We can't suppresss Homebrew's "caveat" message, but we can add one of our
-  # own.  This gets printed before the message we can't control.
+  # We have to tell the user what to do to start the services because Homebrew
+  # runs installation commands in a sandbox, so we can't start the service
+  # automatically during installation.
   def caveats
-    <<~EOS
+    output = <<~EOS
       ******* ATTENTION *******
-      Please run #{opt_prefix}/restart-services.sh
-      This can't be done for you because of sandboxing.
-      ******* ********* *******
+      Start services; please run:    #{opt_prefix}/restart-services.sh
 
-      Also, please ignore the mention of "brew services" below.
-      Our services don't fit homebrew's expectations,
-      so the command below doesn't work.
+      These tasks can't be done for you because of sandboxing.
+      ******* ********* *******
     EOS
+
+    return output
   end
 end
