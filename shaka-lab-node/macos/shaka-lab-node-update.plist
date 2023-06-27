@@ -24,7 +24,7 @@
 
     <key>ProgramArguments</key>
     <array>
-      <string>/opt/homebrew/opt/shaka-lab-node/update-drivers.sh</string>
+      <string>$HOMEBREW_PREFIX/opt/shaka-lab-node/update-drivers.sh</string>
     </array>
 
     <key>RunAtLoad</key>

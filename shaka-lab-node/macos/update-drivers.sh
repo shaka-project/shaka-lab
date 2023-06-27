@@ -21,7 +21,7 @@
 set -e
 
 # Load Homebrew.
-eval "$(/opt/homebrew/bin/brew shellenv)"
+eval "$(brew shellenv)"
 
 # Go to the install directory of shaka-lab-node.
 cd "$(brew --prefix shaka-lab-node)"
