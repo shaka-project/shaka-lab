@@ -5,7 +5,8 @@ in a different location per platform:
 
  - Linux: `/etc/shaka-lab-node-config.yaml`
  - Windows: `c:\ProgramData\shaka-lab-node\node-config.yaml`
- - macOS: `/opt/homebrew/etc/shaka-lab-node-config.yaml`
+ - macOS (Arm): `/opt/homebrew/etc/shaka-lab-node-config.yaml`
+ - macOS (Intel): `/usr/local/etc/shaka-lab-node-config.yaml`
 
 A default config is provided on installation, which contains only Chrome, but
 has commented sections for every supported browser.  For the latest version of

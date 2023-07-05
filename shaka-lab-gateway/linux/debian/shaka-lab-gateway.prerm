@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,21 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update all WebDrivers.  Runs after package installation, on service startup,
-# and again nightly.
+# Pre-remove script.  Runs as root before package removal.
 
-# Fail on error.
-set -e
+# DON'T fail on error.  Always keep going!
+set +e
 
-# Load Homebrew.
-eval "$(brew shellenv)"
-
-# Go to the install directory of shaka-lab-node.
-cd "$(brew --prefix shaka-lab-node)"
-
-# Update all modules.
-rm -f package-lock.json
-npm install
-
-# Update all WebDrivers.
-./node_modules/.bin/webdriver-installer .
+# If the user not upgrading the package:
+if [ "$1" != "upgrade" ]; then
+  # Stop and disable services configured by this package.
+  for i in named isc-dhcp-server samba-ad-dc; do
+    systemctl stop $i
+    systemctl disable $i
+  done
+  systemctl daemon-reload
+fi

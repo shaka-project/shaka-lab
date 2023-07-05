@@ -1,0 +1,241 @@
+#!/bin/bash
+
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+# It will get necessary base configuration, then set up a config generator and
+# necessary services: DHCP, DNS, AD.
+
+# Fail on error
+set -e
+
+
+### PROMPTING ###
+
+# Source the debconf library, which gives us functions to prompt the user.
+. /usr/share/debconf/confmodule
+
+# Prompt the user for several important pieces of configuration.  If the user
+# has followed our README's instructions, these have already been provided and
+# no prompt is necessary.
+
+# NOTE: db_input returns a non-zero exit code when skipping a question, so we
+# ignore its return value with "|| true".
+
+# The "high" argument is a priority for the config.  All of ours are necessary.
+db_input high shaka-lab-gateway/lan_interface || true
+db_input high shaka-lab-gateway/wan_interface || true
+db_input high shaka-lab-gateway/lan_network || true
+db_input high shaka-lab-gateway/lan_ip || true
+# The "go" command takes all the batched-together questions from "input"
+# commands and displays them, possibly on one screen.
+db_go
+
+db_input high shaka-lab-gateway/lan_router || true
+db_input high shaka-lab-gateway/dhcp_start || true
+db_input high shaka-lab-gateway/dhcp_end || true
+db_go
+
+db_input high shaka-lab-gateway/active_directory_password || true
+db_go
+
+# Now we should have all necessary configuration.
+
+# The db_get command will fill config values into the global "RET" variable.
+# Here we extract them into our own variables with useful names.
+db_get shaka-lab-gateway/lan_interface
+lan_interface="$RET"
+db_get shaka-lab-gateway/wan_interface
+wan_interface="$RET"
+db_get shaka-lab-gateway/lan_network
+lan_network="$RET"
+db_get shaka-lab-gateway/lan_ip
+lan_ip="$RET"
+db_get shaka-lab-gateway/lan_router
+lan_router="$RET"
+db_get shaka-lab-gateway/dhcp_start
+dhcp_start="$RET"
+db_get shaka-lab-gateway/dhcp_end
+dhcp_end="$RET"
+db_get shaka-lab-gateway/active_directory_password
+active_directory_password="$RET"
+
+
+### ACTIVE DIRECTORY SETUP ###
+
+backup_config() {
+  # If we don't already have an original backup from the first install, make
+  # one now.  Subsequent installs or updates will not recreate this.
+  if [ ! -e "$1".shaka-lab.orig ]; then
+    cp -a "$1" "$1".shaka-lab.orig
+  fi
+}
+
+# These actions only occur if the Samba AD service is not enabled yet.
+# It is normally not enabled, but this package configures it in preference to
+# other ways of running Samba.
+if ! systemctl is-enabled samba-ad-dc.service &>/dev/null; then
+  # Stop and disable Samba.
+  systemctl stop nmbd
+  systemctl stop smbd
+  systemctl stop winbind
+  systemctl disable smbd
+  systemctl disable nmbd
+  systemctl disable winbind
+
+  # Wipe all Samba configs and databases.
+  for i in $(smbd -b | egrep "LOCKDIR|STATEDIR|CACHEDIR|PRIVATE_DIR" | cut -f 2 -d :); do
+    find $i -name '*.tdb' -or -name '*.ldb'
+  done | sort | uniq | xargs rm
+  backup_config /etc/samba/smb.conf
+  rm /etc/samba/smb.conf
+
+  # Reconfigure Samba as an Active Directory Domain Controller.
+  samba-tool domain provision \
+    --domain=LAB \
+    --realm=LAB.SHAKA \
+    --use-rfc2307 \
+    --server-role=dc \
+    --dns-backend=BIND9_DLZ \
+    --host-ip=$lan_ip \
+    --adminpass=$active_directory_password
+
+  # Set Samba AD user policies: no password age or complexity requirements.
+  samba-tool domain passwordsettings set --history-length=0
+  samba-tool domain passwordsettings set --complexity=off
+  samba-tool domain passwordsettings set --min-pwd-age 0
+  samba-tool domain passwordsettings set --max-pwd-age 0
+
+  # Create AD groups.
+  samba-tool group add labusers
+  samba-tool group addunixattrs labusers 2000
+
+  samba-tool group add labadmins
+  samba-tool group addunixattrs labadmins 2001
+
+  # Enable the Samba AD service.
+  systemctl unmask samba-ad-dc.service
+  systemctl enable samba-ad-dc.service
+
+  # Configure Kerberos based on the AD setup in Samba.
+  cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+fi
+
+
+### CONFIG GENERATOR SETUP ###
+
+# If we haven't configured total-perspective-vortex (the config generator), do
+# that now.  After this, the user can edit their config file at any time, and
+# re-run total-perspective-vortex as documented in the README.md file.
+if [ ! -e /etc/total-perspective-vortex/config.yaml ]; then
+  # The lan_network parameter is a compact representation of the network, such
+  # as "192.168.0.0/16".  We want to expand it into several parts that we will
+  # use in our configs, such as the cidr prefix ("/16"), the netmask
+  # ("255.255.255.0"), etc.  For this, we use the tool "subnetcalc".
+  subnetcalc_output=$(subnetcalc "$lan_network")
+  # The output has many lines of the form:
+  #   Network     = 192.168.0.0 / 16
+  #   Netmask     = 255.255.0.0
+  # etc.
+
+  # Here we extract the various pieces we need from that output.
+  lan_netmask=$(
+      echo "$subnetcalc_output" | grep ^Netmask | sed -e 's/.* = //')
+  lan_broadcast=$(
+      echo "$subnetcalc_output" | grep ^Broadcast | sed -e 's/.* = //')
+  subnetcalc_network=$(
+      echo "$subnetcalc_output" | grep ^Network | sed -e 's/.* = //')
+  # The Network line's value contains two other pieces we need to split.
+  lan_subnet=$(echo "$subnetcalc_network" | sed -e 's@ / .*@@')
+  lan_cidr_prefix=$(echo "$subnetcalc_network" | sed -e 's@.* / @@')
+
+  # Now we write a config file that Total Perspective Vortex will use to fill
+  # in various other config files from templates.
+  cat > /etc/total-perspective-vortex/config.yaml <<EOF
+# total-perspective-vortex config file for the lab.
+
+# There are only three reserved names:
+#  - output_path
+#  - output_mode
+#  - service_reload
+# See /usr/share/doc/total-perspective-vortex/README.md for more details.
+
+lan_subnet: $lan_subnet
+lan_cidr_prefix: /$lan_cidr_prefix
+lan_netmask: $lan_netmask
+lan_ip: $lan_ip
+lan_broadcast: $lan_broadcast
+lan_interface: $lan_interface
+wan_interface: $wan_interface
+lan_dhcp_ip_start: $dhcp_start
+lan_dhcp_ip_end: $dhcp_end
+lan_router: $lan_router
+
+# Delete the empty devices dictionary below, and fill in your lab devices.
+# Each will have a DNS entry and a reserved IP address from the DHCP server.
+# These IPs should not be inside the range of lan_dhcp_ip_start and
+# lan_dchp_ip_end above.  Ex:
+#
+# devices:
+#   shaka-test-linux:
+#     ip: 192.168.0.201
+#     mac: "AA:BB:CC:DD:EE:FF"
+#
+#   shaka-test-windows:
+#     ip: 192.168.0.202
+#     mac: "AA:BB:CC:DD:EE:FF"
+
+devices: {}
+EOF
+fi
+
+
+# Wipe out any network config set by the Ubuntu/Debian installer.
+rm -f /etc/netplan/00-installer-config*
+
+
+# Enable any potentially-disabled services we are about to configure.
+systemctl enable named
+systemctl enable isc-dhcp-server
+
+
+# Generate the service configurations we need.  This will also restart
+# services.
+total-perspective-vortex
+
+
+# Trust the Samba TLS certificate.  This can't be done until after the Samba AD
+# service is started for the first time, which total-perspective-vortex does.
+# Wait up to 60 seconds for the file to exist and be non-empty.
+wait_time=0
+while (( wait_time < 60 )); do
+  sleep 1
+  wait_time=$(( wait_time + 1 ))
+  if [ -s /var/lib/samba/private/tls/ca.pem ]; then
+    break
+  fi
+done
+cp /var/lib/samba/private/tls/ca.pem \
+   /usr/local/share/ca-certificates/samba-ca.crt
+update-ca-certificates
+
+
+# Set permissions for the configs and templates of Total Perspective Vortex.
+# This happens last, after services have been started, and LDAP is able to
+# resolve this Active Directory group "labadmins".  Users in that group have
+# permission to modify all configs.
+chown -R root.labadmins /etc/total-perspective-vortex
+chmod 2664 /etc/total-perspective-vortex/templates/*
+chmod 2664 /etc/total-perspective-vortex/config.yaml

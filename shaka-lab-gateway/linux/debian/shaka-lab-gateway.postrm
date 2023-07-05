@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,21 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update all WebDrivers.  Runs after package installation, on service startup,
-# and again nightly.
+# Post-remove script.  Runs as root before package removal.
 
-# Fail on error.
-set -e
+# DON'T fail on error.  Always keep going!
+set +e
 
-# Load Homebrew.
-eval "$(brew shellenv)"
+# If the user wants to not just remove, but "purge" the package...
+if [ "$1" = "purge" -a -e /usr/share/debconf/confmodule ]; then
+  # Source the debconf library.
+  . /usr/share/debconf/confmodule
 
-# Go to the install directory of shaka-lab-node.
-cd "$(brew --prefix shaka-lab-node)"
+  # Remove all debconf configuration associated with this package.
+  db_purge
 
-# Update all modules.
-rm -f package-lock.json
-npm install
-
-# Update all WebDrivers.
-./node_modules/.bin/webdriver-installer .
+  # Remove total-perspective-vortex configurations.
+  rm -rf /etc/total-perspective-vortex
+fi

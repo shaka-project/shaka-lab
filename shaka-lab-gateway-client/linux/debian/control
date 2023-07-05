@@ -1,6 +1,4 @@
-#!/bin/bash
-
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,21 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update all WebDrivers.  Runs after package installation, on service startup,
-# and again nightly.
+Source: shaka-lab-gateway-client
+Maintainer: Joey Parrish <joeyparrish@google.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9)
 
-# Fail on error.
-set -e
-
-# Load Homebrew.
-eval "$(brew shellenv)"
-
-# Go to the install directory of shaka-lab-node.
-cd "$(brew --prefix shaka-lab-node)"
-
-# Update all modules.
-rm -f package-lock.json
-npm install
-
-# Update all WebDrivers.
-./node_modules/.bin/webdriver-installer .
+Package: shaka-lab-gateway-client
+Architecture: all
+Depends: libnss-ldapd
+Description: Shaka Lab Gateway Client
+ Allows Active Directory users from Shaka Lab Gateway to log in.
+ .
+ **NOTE**: Exactly one Linux device on your lab network must install the
+ shaka-lab-gateway package.  Devices with the client package will connect to
+ that gateway.

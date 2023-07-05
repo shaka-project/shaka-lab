@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# macOS Homebrew package definition for for Shaka Lab Node.
+# macOS Homebrew package definition for Shaka Lab Node.
 
 # Homebrew docs: https://docs.brew.sh/Formula-Cookbook
 #                https://rubydoc.brew.sh/Formula
@@ -28,10 +28,6 @@ class ShakaLabNode < Formula
   url "http://www.gstatic.com/generate_204"
   version "1.0.0"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-
-  # Use --with-java to have Homebrew install Java from source.
-  # Skip that if you already have Oracle Java installed.
-  depends_on "java" => :optional
 
   # Use --with-docker to have Homebrew install Docker from source.
   # Docker is only needed to activate the Tizen node.
@@ -76,11 +72,22 @@ class ShakaLabNode < Formula
       FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", etc, :mode => 0644
     end
 
-    # Service definitions.
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-service.plist", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update.plist", prefix, :mode => 0644
+    # Service definitions.  Homebrew's service infrastructure will only let us
+    # install one service per package, and we have both a background service
+    # and a cron job.  Putting our plist files into a subfolder allows us to
+    # bypass Homebrew's checks for plists.  This avoids a misleading message
+    # from Homebrew with the wrong instructions to start the services.
+    FileUtils.mkdir_p prefix/"plists"
+    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-service.plist", prefix/"plists", :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update.plist", prefix/"plists", :mode => 0644
     FileUtils.install "#{source_root}/shaka-lab-node/macos/stop-services.sh", prefix, :mode => 0755
     FileUtils.install "#{source_root}/shaka-lab-node/macos/restart-services.sh", prefix, :mode => 0755
+
+    # The service definitions need hard-coded paths, and the Homebrew prefix
+    # varies.  So replace "$HOMEBREW_PREFIX" in these plist files with the
+    # current prefix (in the HOMEBREW_PREFIX variable).
+    inreplace prefix/"plists/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    inreplace prefix/"plists/shaka-lab-node-update.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
     # Service logs go to /opt/homebrew/var/log
     FileUtils.mkdir_p var/"log"
@@ -89,24 +96,43 @@ class ShakaLabNode < Formula
     FileUtils.mkdir_p var/"run"
   end
 
-  # When Homebrew sees that we have installed plist files, it will issue a
-  # "caveat" message with instructions on how to start the service.  Those
-  # instructions will fail.  We don't use Homebrew's service infrastructure
-  # because it will only let us install one service per package, and we have
-  # both a background service and a cron job.
+  # The output of this method is printed to the user after installation.  Here
+  # we warn the user if Java needs to be installed, and we tell them how to
+  # start the services.
   #
-  # We can't suppresss Homebrew's "caveat" message, but we can add one of our
-  # own.  This gets printed before the message we can't control.
+  # We _could_ depend on a Java formula directly, but that would involve
+  # installing OpenJDK, including nonsense like X11 libraries (which Mac
+  # doesn't use).
+  #
+  # What is preferable is to install Oracle's JDK as a binary, which is only
+  # available in Homebrew as a "cask".  But a "formula" (this package) can't
+  # depend on a "cask".  So instead, we have to inform the user if Java is
+  # missing and recommend that they install the cask to solve it.
+  #
+  # We have to tell the user what to do to start the services because Homebrew
+  # runs installation commands in a sandbox, so we can't start the service
+  # automatically during installation.
   def caveats
-    <<~EOS
+    output = <<~EOS
       ******* ATTENTION *******
-      Please run #{opt_prefix}/restart-services.sh
-      This can't be done for you because of sandboxing.
-      ******* ********* *******
-
-      Also, please ignore the mention of "brew services" below.
-      Our services don't fit homebrew's expectations,
-      so the command below doesn't work.
     EOS
+
+    # Here we use ruby's native system method (Kernel.system) instead of
+    # Homebrew's (system) so that we can get an exit code instead of failing.
+    unless Kernel.system "java", "--version", :out=>["/dev/null"], :err=>["/dev/null"]
+      output += <<~EOS
+        Java not found; please run:    brew install --cask oracle-jdk
+
+      EOS
+    end
+
+    output += <<~EOS
+      Start services; please run:    #{opt_prefix}/restart-services.sh
+
+      These tasks can't be done for you because of sandboxing.
+      ******* ********* *******
+    EOS
+
+    return output
   end
 end

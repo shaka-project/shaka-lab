@@ -40,9 +40,18 @@ if (process.platform == 'win32') {
   exe = '.exe';
   cmd = '.cmd';
 } else if (process.platform == 'darwin') {
-  configPath = '/opt/homebrew/etc/shaka-lab-node-config.yaml';
-  shakaLabNodePath = '/opt/homebrew/opt/shaka-lab-node';
-  workingDirectory = '/opt/homebrew/opt/shaka-lab-node';
+  // Homebrew can be installed at an arbitrary location, and even the default
+  // varies by processor type.  (/opt/homebrew for Arm and /usr/local for
+  // Intel.)
+  const prefixProcess = child_process.spawnSync('brew', ['--prefix'], {
+    stdio: ['ignore', 'pipe', 'inherit'],
+    encoding: 'utf8',
+  });
+  const prefix = prefixProcess.stdout.trim();
+
+  configPath = `${prefix}/etc/shaka-lab-node-config.yaml`;
+  shakaLabNodePath = `${prefix}/opt/shaka-lab-node`;
+  workingDirectory = `${prefix}/opt/shaka-lab-node`;
   updateDrivers = `${shakaLabNodePath}/update-drivers.sh`;
 }
 

@@ -1,0 +1,41 @@
+Template: shaka-lab-gateway/lan_interface
+Type: string
+Description: LAN network interface:
+ What is the name of the network interface for your LAN?  (ex: eth0)
+
+Template: shaka-lab-gateway/wan_interface
+Type: string
+Description: WAN network interface:
+ What is the name of the network interface for your WAN?  (ex: eth1)
+ Leave this blank if you only have one interface.
+
+Template: shaka-lab-gateway/lan_network
+Type: string
+Description: LAN network block:
+ What is the network block of your LAN?
+ (ex: 192.168.0.0/16 or 192.168.0.0/255.255.0.0)
+
+Template: shaka-lab-gateway/lan_ip
+Type: string
+Description: LAN IP:
+ What is this device's LAN IP address?  (ex: 192.168.0.1)
+
+Template: shaka-lab-gateway/lan_router
+Type: string
+Description: LAN router:
+ What is the IP address of this LAN's router?  (May differ from this device.)
+
+Template: shaka-lab-gateway/dhcp_start
+Type: string
+Description: DHCP range start:
+ What is the start of the DHCP IP range for your LAN?  (ex: 192.168.0.100)
+
+Template: shaka-lab-gateway/dhcp_end
+Type: string
+Description: DHCP range end:
+ What is the end of the DHCP IP range for your LAN?  (ex: 192.168.0.199)
+
+Template: shaka-lab-gateway/active_directory_password
+Type: password
+Description: Active Directory password:
+ Choose a password for your Active Directory Administrator account.
