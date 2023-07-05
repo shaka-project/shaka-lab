@@ -41,3 +41,18 @@ Everything in this repo is licensed under [Apache license v2.0](LICENSE.txt).
  - [Shaka Lab Node](shaka-lab-node/README.md#readme): Selenium grid nodes
  - [Shaka Lab Gateway](shaka-lab-gateway/README.md#readme): Lab gateway (DHCP, DNS, AD, routing)
  - [Shaka Lab Gateway Client](shaka-lab-gateway-client/README.md#readme): Central lab user login
+
+
+## Distribution Systems
+
+Here you can find documentation for the various packge distribution systems
+used, and their setup on GitHub.  You can read these to understand how packages
+get distributed, or to help you debug issues with distribution.
+
+If you want to deploy packages from a fork, you will need to read these and
+follow the setup steps in each document.  Without those steps, the release
+workflow will not work.
+
+ - [Linux distribution](distribution/linux/README.md#readme)
+ - [Windows distribution](distribution/windows/README.md#readme)
+ - [macOS distribution](distribution/macos/README.md#readme)
