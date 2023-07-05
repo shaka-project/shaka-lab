@@ -180,8 +180,8 @@ jobs:
         with:
           # TODO: For now, this is the only project we can deploy to, due to
           # internal Google Cloud Platform restrictions.
-          project_id: shaka-player-demo
-          version: shaka-lab-chocolatey
+          project_id: '${{ secrets.APPENGINE_PROJECT_ID }}'
+          version: '${{ secrets.APPENGINE_PROJECT_VERSION }}'
           promote: false
 
 

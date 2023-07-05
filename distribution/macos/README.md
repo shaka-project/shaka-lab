@@ -20,8 +20,9 @@ update notifications from Homebrew for their macOS packages.
    `repo` scope enabled.
 3. Copy the PAT into GitHub as a secret on this repository named
    `HOMEBREW_DEPLOY_TOKEN`.
-4. Set the GitHub secret `HOMEBREW_TAP_REPO` to the repository where the
-   homebrew tap will be deployed.  For example, we are using
+4. Create a GitHub repository secret named `HOMEBREW_TAP_REPO` with the name of
+   the repository where the homebrew tap will be deployed.  For example, we are
+   using
    [`shaka-project/homebrew-shaka-lab`](https://github.com/shaka-project/homebrew-shaka-lab).
 
 The `release.yaml` workflow will use the stored PAT to push to the homebrew tap
