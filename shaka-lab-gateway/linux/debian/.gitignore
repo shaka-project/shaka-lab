@@ -1,0 +1,5 @@
+debhelper-build-stamp
+files
+shaka-lab-gateway
+shaka-lab-gateway.substvars
+*.debhelper

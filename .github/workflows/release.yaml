@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Install deps
         run: |
@@ -40,14 +42,11 @@ jobs:
 
           PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
 
-          (
-            cd shaka-lab-hub/linux/
-            dch --nomultimaint -v "$PACKAGE_VERSION" ""
-          )
-          (
-            cd shaka-lab-node/linux/
-            dch --nomultimaint -v "$PACKAGE_VERSION" ""
-          )
+          for linux_package in shaka-*/linux; do
+            dch --nomultimaint \
+                -c "$linux_package/debian/changelog" \
+                -v "$PACKAGE_VERSION" ""
+          done
 
       - name: Import GPG key
         run: |
@@ -56,14 +55,12 @@ jobs:
 
       - name: Build packages
         run: |
-          (
-            cd shaka-lab-hub/linux/
-            fakeroot debian/rules binary
-          )
-          (
-            cd shaka-lab-node/linux/
-            fakeroot debian/rules binary
-          )
+          for linux_package in shaka-*/linux; do
+            (
+              cd "$linux_package"
+              fakeroot debian/rules binary
+            )
+          done
 
       - name: Stage packages
         run: |
@@ -72,8 +69,7 @@ jobs:
           mkdir staging
           mkdir staging/conf
           cp distribution/linux/reprepro.conf staging/conf/distributions
-          reprepro --basedir staging includedeb stable shaka-lab-hub/*.deb
-          reprepro --basedir staging includedeb stable shaka-lab-node/*.deb
+          reprepro --basedir staging includedeb stable shaka-*/*.deb
           gpg -o staging/public.key --armor --export nomail@shakalab.rocks
 
       - name: Upload packages

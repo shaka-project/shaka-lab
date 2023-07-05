@@ -1,0 +1,4 @@
+Template: shaka-lab-gateway-client/active_directory_password
+Type: password
+Description: Active Directory password:
+ The password of your Active Directory Administrator account.

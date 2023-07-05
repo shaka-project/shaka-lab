@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Fail on error.
+set -e
+
+user="$1"
+
+# Show commands.
+set -x
+
+samba-tool group addmembers labadmins "$user"

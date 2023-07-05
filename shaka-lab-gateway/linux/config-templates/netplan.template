@@ -1,0 +1,51 @@
+{#
+A config file for ethernet interfaces.
+-#}
+{% set output_path = '/etc/netplan/00-gateway.yaml' %}
+{% set service_reload = 'netplan apply' %}
+
+network:
+  version: 2
+  ethernets:
+{%- if lan_ip != lan_router %}
+{#- This section sets up the interfaces for this gateway if it is _NOT_ the
+    network router.  It provides DHCP and DNS for the lab network, but traffic
+    is routed through another device. #}
+    # LAN interface:
+    {{ lan_interface }}:
+      dhcp4: false
+      ignore-carrier: true
+      addresses: [{{ lan_ip }}{{ lan_cidr_prefix}}]
+      nameservers:
+        addresses: [127.0.0.1]
+        search: [lab]
+      routes:
+        - to: default
+          via: {{ lan_router }}
+          metric: 100
+          on-link: true
+    {%- if wan_interface %}
+
+    # Secondary interface (unused):
+    {{ wan_interface }}:
+      optional: true
+      dhcp4: false
+    {%- endif %}
+{% else %}
+{#- This section sets up the interfaces for this gateway to be an actual router,
+    connected to the outside world via a second interface, and routing traffic
+    on behalf of the lab network devices. #}
+    # LAN interface:
+    {{ lan_interface }}:
+      dhcp4: false
+      ignore-carrier: true
+      addresses: [{{ lan_ip }}{{ lan_cidr_prefix}}]
+      nameservers:
+        addresses: [127.0.0.1]
+        search: [lab]
+
+    # WAN interface:
+    {{ wan_interface }}:
+      dhcp4: true
+      ignore-carrier: true
+{% endif %}

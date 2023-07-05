@@ -1,0 +1,47 @@
+{#
+A config file for the DHCP server.
+This sets global configs for all hosts, as well as individual records for
+hosts with reserved IPs.  Any device with "ip" and "mac" entries in the
+total-perspective-vortex config file will have reserved IPs.
+-#}
+{% set output_path = '/etc/dhcp/dhcpd.conf' %}
+{% set service_reload = 'dhcpd -q -t && systemctl reload-or-restart isc-dhcp-server' %}
+
+default-lease-time 3600;
+max-lease-time 3600;
+one-lease-per-client on;
+
+# The ddns-updates-style parameter controls whether or not the server will
+# attempt to do a DNS update when a lease is confirmed. We default to the
+# behavior of the version 2 packages ('none', since DHCP v2 didn't
+# have support for DDNS.)
+ddns-update-style none;
+
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+authoritative;
+
+log-facility local7;
+allow unknown-clients;
+use-host-decl-names on;
+
+subnet {{ lan_subnet }} netmask {{ lan_netmask }} {
+	range {{ lan_dhcp_ip_start }} {{ lan_dhcp_ip_end }};
+	option routers {{ lan_router }};
+	option broadcast-address {{ lan_broadcast }};
+	option subnet-mask {{ lan_netmask }};
+	option domain-name-servers {{ lan_ip }};
+	option domain-name "lab";
+	ddns-domainname "lab.";
+	ddns-rev-domainname "in-addr.arpa.";
+}
+
+{% for name, specs in devices.items() %}
+{% if specs.mac %}
+host {{ name }}.lab {
+	hardware ethernet {{ specs.mac }};
+	fixed-address {{ specs.ip }};
+	ddns-hostname "{{ name }}";
+}
+{% endif %}
+{% endfor %}

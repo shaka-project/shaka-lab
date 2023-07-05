@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,25 +24,20 @@ include /usr/share/dpkg/pkg-info.mk
 
 # Where we will install things.
 export PREFIX = $(PWD)/debian/$(DEB_SOURCE)
-export DESTDIR = $(PREFIX)/opt/shaka-lab
 
 # How "dh" helpers will install the package contents to a staging area.
 override_dh_auto_install:
-	install -m 755 -d "$(DESTDIR)/shaka-lab-hub"
-	install -m 644 ../../selenium-jar/selenium-server-standalone-3.141.59.jar "$(DESTDIR)/shaka-lab-hub/"
-	install -m 755 start-hub.sh "$(DESTDIR)/shaka-lab-hub/"
-	
-	install -m 755 -d "$(PREFIX)/lib/systemd/system"
-	install -m 644 shaka-lab-hub.service "$(PREFIX)/lib/systemd/system/"
-	
-	install -m 755 -d "$(PREFIX)/etc/default"
-	install -m 644 default-config "$(PREFIX)/etc/default/shaka-lab-hub"
-	
-	# If you don't put the service in /lib and symlink it to /etc, debian will
-	# see it as a "config file", and it will not be removed when a package is
-	# uninstalled.
-	install -m 755 -d "$(PREFIX)/etc/systemd/system"
-	ln -sf /lib/systemd/system/shaka-lab-hub.service "$(PREFIX)/etc/systemd/system/"
+	install -m 755 -d "$(PREFIX)/usr/bin"
+	install -m 755 total-perspective-vortex/total-perspective-vortex "$(PREFIX)/usr/bin/"
+	install -m 755 total-perspective-vortex/list-dynamic-leases.py "$(PREFIX)/usr/bin/list-dynamic-leases"
+	install -m 755 -d "$(PREFIX)/usr/sbin"
+	install -m 755 labuser-tools/* "$(PREFIX)/usr/sbin/"
+	install -m 755 -d "$(PREFIX)/usr/share/doc/total-perspective-vortex"
+	install -m 644 total-perspective-vortex/README.md "$(PREFIX)/usr/share/doc/total-perspective-vortex/"
+	install -m 2775 -d "$(PREFIX)/etc/total-perspective-vortex"
+	install -m 2775 -d "$(PREFIX)/etc/total-perspective-vortex/templates"
+	install -m 664 config-templates/* "$(PREFIX)/etc/total-perspective-vortex/templates/"
+	rm "$(PREFIX)/etc/total-perspective-vortex/templates/README.md"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.
