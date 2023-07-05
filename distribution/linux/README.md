@@ -19,6 +19,8 @@ automatic updates to their Linux packages.
  - `gpg -o key --armor --export-secret-key nomail@shakalab.rocks`
 3. Copy the base64 `key` into GitHub as a repository secret named `DEB_GPG_KEY`
 4. Remove the exported secret key file with `rm key`
+5. Configure GitHub Pages for the repo by setting the deployment source to
+   "GitHub Actions".
 
 The `release.yaml` workflow will use the stored GPG key to sign packages, which
 will be distributed through GitHub Pages (`github.io`) on this repository.
