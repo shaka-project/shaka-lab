@@ -174,10 +174,8 @@ jobs:
 
       - uses: google-github-actions/deploy-appengine@v0
         with:
-          # TODO: For now, this is the only project we can deploy to, due to
-          # internal Google Cloud Platform restrictions.
-          project_id: shaka-player-demo
-          version: shaka-lab-chocolatey
+          project_id: '${{ secrets.APPENGINE_PROJECT_ID }}'
+          version: '${{ secrets.APPENGINE_PROJECT_VERSION }}'
           promote: false
 
 
@@ -190,7 +188,7 @@ jobs:
       - name: Check out tap repo
         uses: actions/checkout@v3
         with:
-          repository: shaka-project/homebrew-shaka-lab
+          repository: '${{ secrets.HOMEBREW_TAP_REPO }}'
           fetch-depth: 0  # The entire repo history, so we can push an update
 
       - name: Wipe source and formula folders
@@ -236,4 +234,4 @@ jobs:
           # environment, since we're pushing to a different repo as a different
           # user.
           git config --unset-all http.https://github.com/.extraheader
-          git push https://shaka-bot:${{ secrets.HOMEBREW_DEPLOY_TOKEN }}@github.com/shaka-project/homebrew-shaka-lab
+          git push https://shaka-bot:${{ secrets.HOMEBREW_DEPLOY_TOKEN }}@github.com/${{ secrets.HOMEBREW_TAP_REPO }}

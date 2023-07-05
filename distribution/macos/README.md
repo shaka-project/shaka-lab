@@ -16,10 +16,14 @@ update notifications from Homebrew for their macOS packages.
 1. Create a tap repo (`homebrew-shaka-lab`).
 2. Create a GitHub Personal Access Token (PAT) for a user authorized on the
    `homebrew-shaka-lab` repo.  For example, we are using
-   [`shaka-bot`](https://github.com/shaka-bot)
+   [`shaka-bot`](https://github.com/shaka-bot).  The access token must have the
+   `repo` scope enabled.
 3. Copy the PAT into GitHub as a secret on this repository named
    `HOMEBREW_DEPLOY_TOKEN`.
+4. Create a GitHub repository secret named `HOMEBREW_TAP_REPO` with the name of
+   the repository where the homebrew tap will be deployed.  For example, we are
+   using
+   [`shaka-project/homebrew-shaka-lab`](https://github.com/shaka-project/homebrew-shaka-lab).
 
 The `release.yaml` workflow will use the stored PAT to push to the homebrew tap
-repository at
-[shaka-project/homebrew-shaka-lab](https://github.com/shaka-project/homebrew-shaka-lab).
+repository.
