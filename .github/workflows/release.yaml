@@ -103,23 +103,29 @@ jobs:
       - name: Set version number
         shell: bash
         run: |
-          # Set the package version by editing the .nuspec file.
           PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
-          cd shaka-lab-node/windows/
-          sed -e "s@\(<version>\).*\(</version>\)@\1$PACKAGE_VERSION\2@" \
-              -i.bk shaka-lab-node.nuspec
+
+          for windows_package in shaka-*/windows; do
+            # Set the package version by editing the .nuspec file.
+            sed -e "s@\(<version>\).*\(</version>\)@\1$PACKAGE_VERSION\2@" \
+                -i.bk "$windows_package"/*.nuspec
+          done
 
       - name: Build packages
         shell: bash
         run: |
-          cd shaka-lab-node/windows/
-          choco pack shaka-lab-node.nuspec
+          for windows_package in shaka-*/windows; do
+            (
+              cd "$windows_package"
+              choco pack *.nuspec
+            )
+          done
 
       - name: Stage packages
         shell: bash
         run: |
           mkdir staging
-          cp shaka-lab-node/windows/*.nupkg staging/
+          cp shaka-*/windows/*.nupkg staging/
 
       - name: Upload packages
         uses: actions/upload-artifact@v3
@@ -193,10 +199,11 @@ jobs:
 
       - name: Wipe source and formula folders
         run: |
-          # Source and formula folders in the tap repo are about to be
+          # Source, formula, and cask folders in the tap repo are about to be
           # replaced.
-          git rm -rf shaka-lab-source
-          git rm -rf Formula
+          git rm -rf shaka-lab-source || true
+          git rm -rf Formula || true
+          git rm -rf Casks || true
 
       - name: Check out source repo
         # This puts the source repo contents at the expected location in the
@@ -212,17 +219,26 @@ jobs:
           # Wipe out the internal .git folder from the source repo.
           rm -rf shaka-lab-source/.git
 
-          # Copy the formula to its required location in the tap repo.
+          # Recreate Formula and Casks folders.
           mkdir -p Formula
+          mkdir -p Casks
+
+          # Copy formulae and casks to their required locations in the tap repo.
           cp shaka-lab-source/shaka-lab-node/macos/shaka-lab-node.rb \
              Formula/
+          cp shaka-lab-source/shaka-lab-browsers/macos/shaka-lab-browsers.rb \
+             shaka-lab-source/shaka-lab-recommended-settings/macos/shaka-lab-recommended-settings.rb \
+             Casks/
 
-          # Set the package version by editing the homebrew formula
-          sed -e "s/^\(\s*version\s\+\"\).*\(\"\s*\)$/\1$PACKAGE_VERSION\2/" \
-              -i Formula/shaka-lab-node.rb
+          # Set the package version by editing the homebrew formulae and casks
+          for i in Formula/* Casks/*; do
+            sed -e "s/^\(\s*version\s\+\"\).*\(\"\s*\)$/\1$PACKAGE_VERSION\2/" \
+                -i "$i"
+          done
 
           # Update the tap repo with a new commit.
           git add Formula/
+          git add Casks/
           git add shaka-lab-source/
           git config user.email shaka-bot@users.noreply.github.com
           git config user.name "Shaka Bot"

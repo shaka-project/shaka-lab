@@ -12,17 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Source: shaka-lab-node
-Maintainer: Joey Parrish <joeyparrish@google.com>
-Section: misc
-Priority: optional
-Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 9)
+# Runs on uninstall.
 
-Package: shaka-lab-node
-Architecture: all
-Depends: adduser, curl, default-jre-headless | java-runtime-headless, systemd, xvfb
-Suggests: adb, docker.io
-Recommends: shaka-lab-browsers
-Description: Shaka Lab Node
- Selenium grid nodes for the Shaka Lab
+# Stop on all errors
+$ErrorActionPreference = "Stop"
+
+choco uninstall -y firefox
+
+choco uninstall -y googlechrome
+
+choco uninstall -y adb
