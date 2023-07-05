@@ -30,7 +30,7 @@ sudo apt remove -y shaka-lab-recommended-settings
 
 ## Specific Settings and Dependencies
 
-Dependencies:
+Dependencies installed with this package:
  - aptitude (console apt frontend)
  - arping (network debugging tool)
  - debconf-utils (debian configuration tools)
@@ -42,7 +42,7 @@ Dependencies:
  - tcpdump (network debugging/sniffing tool)
  - vim (text editor)
 
-Settings:
+Settings configured automatically by this package:
  - Configure SSH server:
    - Disable root login
    - Enable port-forwarding

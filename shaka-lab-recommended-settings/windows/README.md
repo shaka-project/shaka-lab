@@ -34,11 +34,11 @@ choco uninstall -y shaka-lab-recommended-settings
 
 ## Specific Settings and Dependencies
 
-Dependencies:
+Dependencies installed with this package:
  - vim (text editor)
 
-Settings:
- - Install and start SSH server
+Settings configured automatically by this package:
+ - Install and start Microsoft SSH server
  - Configure SSH server:
    - Use PowerShell as the login shell
    - Disable SSH keys shared across all admin accounts

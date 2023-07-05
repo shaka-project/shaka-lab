@@ -40,7 +40,10 @@ or default values.
 
 ## Specific Settings and Dependencies
 
-Settings:
+Dependencies installed with this package:
+ - None
+
+Settings configured automatically by this package:
  - Remote access:
    - Enable SSH for all users
    - Enable VNC
