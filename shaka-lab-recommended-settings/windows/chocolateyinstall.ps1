@@ -89,7 +89,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Nam
 echo "`nInstalling all Windows and driver updates now...`n"
 Install-PackageProvider -Name NuGet -Scope CurrentUser -Force | Out-Null
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
 Install-Module PSWindowsUpdate -Scope CurrentUser
 # NOTE: Needs admin rights
 Install-WindowsUpdate -Confirm:$false
