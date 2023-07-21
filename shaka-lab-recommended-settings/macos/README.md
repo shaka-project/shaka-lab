@@ -62,4 +62,5 @@ Settings configured automatically by this package:
    - Update apps automtically
    - Allow the App Store to reboot the machine when required for updates
  - Misc:
+   - Enable time sync with Apple servers
    - Allow unsigned binaries (necessary for shaka-lab-node and WebDriver)
