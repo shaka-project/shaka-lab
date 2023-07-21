@@ -108,13 +108,13 @@ if ! systemctl is-enabled samba-ad-dc.service &>/dev/null; then
     --realm=LAB.SHAKA \
     --use-rfc2307 \
     --server-role=dc \
-    --dns-backend=BIND9_DLZ \
+    --dns-backend=NONE \
     --host-ip=$lan_ip \
     --adminpass=$active_directory_password
 
   # Set Samba AD user policies: no password age or complexity requirements.
-  samba-tool domain passwordsettings set --history-length=0
-  samba-tool domain passwordsettings set --complexity=off
+  samba-tool domain passwordsettings set --history-length 0
+  samba-tool domain passwordsettings set --complexity off
   samba-tool domain passwordsettings set --min-pwd-age 0
   samba-tool domain passwordsettings set --max-pwd-age 0
 

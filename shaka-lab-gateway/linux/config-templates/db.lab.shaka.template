@@ -1,0 +1,45 @@
+{#
+A config file for the DNS server.
+This defines the records for forward lookups (name to IP) for the lab network.
+-#}
+{% set output_path = '/etc/bind/db.lab.shaka' %}
+{% set service_reload = 'systemctl reload-or-restart named' %}
+$ORIGIN .
+$TTL 86400	; 1 day
+lab.shaka		IN SOA	dns.lab.shaka. shaka.lab.shaka. (
+				1263527841 ; serial
+				10800      ; refresh (3 hours)
+				3600       ; retry (1 hour)
+				604800     ; expire (1 week)
+				38400      ; minimum (10 hours 40 minutes)
+				)
+			NS	gateway.lab.shaka.
+
+$ORIGIN lab.shaka.
+
+; Short names to refer to this gateway and the network router
+dc          A {{ lan_ip }}
+dns         A {{ lan_ip }}
+dhcp        A {{ lan_ip }}
+gateway     A {{ lan_ip }}
+ldap        A {{ lan_ip }}
+router      A {{ lan_router }}
+
+; Special SRV records for Active Directory services
+_ldap._tcp                 SRV   0   0  389 gateway.lab.shaka.
+_ldap._udp                 SRV   0   0  389 gateway.lab.shaka.
+_ldap._tcp.dc._msdcs       SRV   0   0  389 gateway.lab.shaka.
+_ldap._tcp.pdc._msdcs      SRV   0   0  389 gateway.lab.shaka.
+_kerberos._tcp             SRV   0   0   88 gateway.lab.shaka.
+_kerberos._udp             SRV   0   0   88 gateway.lab.shaka.
+_kerberos._tcp.dc._msdcs   SRV   0   0   88 gateway.lab.shaka.
+_kpasswd._tcp              SRV   0   0  464 gateway.lab.shaka.
+_kpasswd._udp              SRV   0   0  464 gateway.lab.shaka.
+
+$TTL 300	; 5 minutes
+
+; Records for local network devices
+
+{% for name, specs in devices.items() %}
+{{ name }}	A	{{ specs.ip }}
+{% endfor %}

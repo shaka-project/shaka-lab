@@ -18,7 +18,7 @@ network:
       addresses: [{{ lan_ip }}{{ lan_cidr_prefix}}]
       nameservers:
         addresses: [127.0.0.1]
-        search: [lab]
+        search: [lab.shaka]
       routes:
         - to: default
           via: {{ lan_router }}
@@ -42,7 +42,7 @@ network:
       addresses: [{{ lan_ip }}{{ lan_cidr_prefix}}]
       nameservers:
         addresses: [127.0.0.1]
-        search: [lab]
+        search: [lab.shaka]
 
     # WAN interface:
     {{ wan_interface }}:

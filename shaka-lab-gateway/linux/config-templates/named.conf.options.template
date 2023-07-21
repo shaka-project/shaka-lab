@@ -26,8 +26,6 @@ options {
 		127.0.0.1;
 	};
 
-	# Allow Samba Active Directory Domain Controller to inject DNS records.
-	tkey-gssapi-keytab "/var/lib/samba/bind-dns/dns.keytab";
 	minimal-responses yes;
 };
 

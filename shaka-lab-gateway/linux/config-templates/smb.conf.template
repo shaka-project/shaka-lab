@@ -5,7 +5,10 @@ A config file for Samba Active Directory.
 {% set service_reload = 'systemctl restart samba-ad-dc.service' %}
 # Global parameters
 [global]
-	netbios name = LAB-GATEWAY
+	# Only serve on the LAN IP:
+	interfaces = {{ lan_ip }}
+	bind interfaces only = yes
+	netbios name = GATEWAY
 	realm = LAB.SHAKA
 	server role = active directory domain controller
 	server services = s3fs, rpc, nbt, wrepl, ldap, cldap, kdc, drepl, winbindd, ntp_signd, kcc, dnsupdate

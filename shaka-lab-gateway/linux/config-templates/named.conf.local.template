@@ -8,16 +8,13 @@ to server DNS records for.
 // Do any local configuration here
 //
 
-zone "lab" {
+zone "lab.shaka" {
 	type master;
-	file "/etc/bind/db.lab";
+	file "/etc/bind/db.lab.shaka";
 };
 
 {% set reverse_domain = lan_subnet.split('.')[0:3]|reverse()|join('.') %}
 zone "{{ reverse_domain }}.in-addr.arpa" {
 	type master;
-	file "/etc/bind/db.lab.reverse";
+	file "/etc/bind/db.lab.shaka.reverse";
 };
-
-// Allow Samba Active Directory Domain Controller to inject DNS records.
-include "/var/lib/samba/bind-dns/named.conf";
