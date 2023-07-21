@@ -22,7 +22,7 @@ Build-Depends: debhelper (>= 9)
 Package: shaka-lab-recommended-settings
 Architecture: all
 Pre-Depends: shaka-lab-recommended-settings
-Depends: aptitude, arping, debconf-utils, dialog, net-tools, openssh-server, plocate, smartmontools, software-properties-common, tcpdump, vim
+Depends: aptitude, arping, debconf-utils, dialog, net-tools, openssh-server, plocate | mlocate, smartmontools, software-properties-common, tcpdump, vim
 Description: Shaka Lab Recommended Settings
  Depends on recommended packages and configures recommended settings for the
  Shaka Lab
