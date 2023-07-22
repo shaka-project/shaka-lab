@@ -34,6 +34,14 @@ cask "shaka-lab-recommended-settings" do
   stage_only true
 
   postflight do
+    # Enable time sync
+    system_command "/usr/sbin/systemsetup", args: [
+      "-setusingnetworktime", "on",
+    ], sudo: true
+    system_command "/usr/sbin/systemsetup", args: [
+      "-setnetworktimeserver", "time.apple.com",
+    ], sudo: true
+
     # Enable SSH
     system_command "/usr/sbin/systemsetup", args: [
       "-setremotelogin", "on",
