@@ -14,13 +14,13 @@ This is the macOS package.
 ```sh
 brew tap shaka-project/shaka-lab
 brew tap homebrew/cask-versions
-brew install --cask shaka-lab-browsers
+brew install shaka-lab-browsers
 ```
 
 ## Updates
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade shaka-lab-browsers
 ```
 
 **NOTE**: This package does not control the update of any browsers.
@@ -31,7 +31,7 @@ if configured to do so.
 ## Uninstallation
 
 ```sh
-brew uninstall --cask shaka-lab-browsers
+brew uninstall shaka-lab-browsers
 brew autoremove
 ```
 

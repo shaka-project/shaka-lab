@@ -219,26 +219,19 @@ jobs:
           # Wipe out the internal .git folder from the source repo.
           rm -rf shaka-lab-source/.git
 
-          # Recreate Formula and Casks folders.
-          mkdir -p Formula
+          # Recreate Cask folders.
           mkdir -p Casks
 
-          # Copy formulae and casks to their required locations in the tap repo.
-          cp shaka-lab-source/shaka-lab-node/macos/shaka-lab-node.rb \
-             Formula/
-          cp shaka-lab-source/shaka-lab-browsers/macos/shaka-lab-browsers.rb \
-             shaka-lab-source/shaka-lab-recommended-settings/macos/shaka-lab-recommended-settings.rb \
-             shaka-lab-source/shaka-lab-gateway-client/macos/shaka-lab-gateway-client.rb \
-             Casks/
+          # Copy all casks to their required locations in the tap repo.
+          cp shaka-lab-source/*/macos/*.rb Casks/
 
-          # Set the package version by editing the homebrew formulae and casks
-          for i in Formula/* Casks/*; do
+          # Set the package version by editing the homebrew casks
+          for i in Casks/*; do
             sed -e "s/^\(\s*version\s\+\"\).*\(\"\s*\)$/\1$PACKAGE_VERSION\2/" \
                 -i "$i"
           done
 
           # Update the tap repo with a new commit.
-          git add Formula/
           git add Casks/
           git add shaka-lab-source/
           git config user.email shaka-bot@users.noreply.github.com

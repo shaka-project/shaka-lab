@@ -21,7 +21,7 @@ restart_service() {
   # Link the service into the user's LaunchAgent folder, so that it is
   # automatically loaded on login.
   mkdir -p ~/Library/LaunchAgents
-  ln -sf "$INSTALL_PATH/plists/$NAME.plist" ~/Library/LaunchAgents/
+  ln -sf "$INSTALL_PATH/$NAME.plist" ~/Library/LaunchAgents/
 
   # Load the service now if it's not loaded yet.
   local LIST="$(launchctl list | grep "$NAME")"
@@ -39,14 +39,3 @@ restart_service() {
 # Restart both services.
 restart_service shaka-lab-node-update
 restart_service shaka-lab-node-service
-
-# Configure log rotation.  10MB files (10240), compress with gzip (flag Z).
-# This needs to happen here.  It can't be done inside the Homebrew formula
-# because of sandboxing.  We must write files in a global location.
-if [ ! -f /etc/newsyslog.d/shaka-lab-node.conf ]; then
-  echo "Configuring service log rotation (using sudo)"
-  sudo tee /etc/newsyslog.d/shaka-lab-node.conf >/dev/null <<EOF
-# path                                        mode  count  size  when  flags pid_file
-$(brew --prefix)/var/log/shaka-lab-node.*.log 644   10     10240 *     Z     $(brew --prefix)/var/run/shaka-lab-node.pid
-EOF
-fi

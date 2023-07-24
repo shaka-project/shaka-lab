@@ -17,37 +17,36 @@ platforms, see [the general docs](../README.md#readme).
 ```sh
 brew tap shaka-project/shaka-lab
 brew install shaka-lab-node
-$(brew --prefix)/opt/shaka-lab-node/restart-services.sh
+/opt/shaka-lab-node/restart-services.sh
 ```
 
 ## Updates
 
 ```sh
-brew update && brew upgrade
-$(brew --prefix)/opt/shaka-lab-node/restart-services.sh
+brew update && brew upgrade shaka-lab-node
+/opt/shaka-lab-node/restart-services.sh
 ```
 
 ## Configuration
 
-The config file is at `/opt/homebrew/etc/shaka-lab-node-config.yaml` on Arm and
-`/usr/local/etc/shaka-lab-node-config.yaml` on Intel.
+The config file is at `/etc/shaka-lab-node-config.yaml`.
 See the [configuration section](../README.md#configuration) of the general doc.
 
 ## Restarting the service after editing the config
 
 ```sh
-$(brew --prefix)/opt/shaka-lab-node/restart-services.sh
+/opt/shaka-lab-node/restart-services.sh
 ```
 
 ## Tailing logs
 
 ```sh
-tail -f $(brew --prefix)/var/log/shaka-lab-node.err.log
+tail -f /opt/shaka-lab-node/logs/stderr.log
 ```
 
 ## Uninstallation
 
 ```sh
-$(brew --prefix)/opt/shaka-lab-node/stop-services.sh
+/opt/shaka-lab-node/stop-services.sh
 brew uninstall shaka-lab-node
 ```
