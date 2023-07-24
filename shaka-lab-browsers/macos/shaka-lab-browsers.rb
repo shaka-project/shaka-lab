@@ -32,6 +32,9 @@ cask "shaka-lab-browsers" do
   # We don't install anything.  We only depend on other casks.
   stage_only true
 
+  # Signal that this package does not need upgrading through "brew upgrade".
+  auto_updates true
+
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
@@ -74,6 +77,16 @@ cask "shaka-lab-browsers" do
       puts "*** NOTE: Safari Technology Preview could not be installed. ***"
       puts "*** Safari TP install requires the latest version of macOS. ***"
     end
+  end
+
+  postflight do
+    # Take Firefox out of quarantine.  I'm not sure why this is only needed for
+    # Firefox and not Chrome or Edge.  Without this, the first time
+    # shaka-lab-node tries to start Firefox, a dialog box pops up from the OS
+    # and must be interacted with before tests can run for the first time.
+    system_command "/usr/bin/xattr", args: [
+      "-d", "com.apple.quarantine", "/Applications/Firefox.app",
+    ]
   end
 
   depends_on cask: "firefox"
