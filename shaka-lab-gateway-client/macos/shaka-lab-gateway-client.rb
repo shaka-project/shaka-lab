@@ -35,6 +35,7 @@ cask "shaka-lab-gateway-client" do
   postflight do
     # Commands to join the domain will fail if we're already in it, so check.
     domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`
+    puts "Current domain = \"#{domain}\""
 
     if domain == "lab.shaka"
       puts "Already a member of the Shaka Lab domain."
@@ -61,6 +62,7 @@ cask "shaka-lab-gateway-client" do
   uninstall_preflight do
     # Commands to leave the domain will fail if we're not in it, so check.
     domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`
+    puts "Current domain = \"#{domain}\""
 
     if domain == "lab.shaka"
       puts "Leaving the Shaka Lab domain via Shaka Lab Gateway."
