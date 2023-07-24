@@ -36,7 +36,7 @@ cask "shaka-lab-gateway-client" do
     # Commands to join the domain will fail if we're already in it, so check.
     domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`
 
-    if domain == ""
+    if domain == "lab.shaka"
       puts "Already a member of the Shaka Lab domain."
     else
       # Perform a one-time time sync, since this is critical for joining AD.
