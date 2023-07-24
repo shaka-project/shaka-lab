@@ -33,7 +33,9 @@ cask "shaka-lab-recommended-settings" do
   # settings.
   stage_only true
 
-  postflight do
+  # Use preflight so that if the commands fail, the package is not considered
+  # installed.
+  preflight do
     # Enable time sync
     system_command "/usr/sbin/systemsetup", args: [
       "-setusingnetworktime", "on",

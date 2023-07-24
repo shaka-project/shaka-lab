@@ -32,7 +32,9 @@ cask "shaka-lab-gateway-client" do
   # We don't install anything.  We only invoke OS tools to configure AD login.
   stage_only true
 
-  postflight do
+  # Use preflight so that if the commands fail, the package is not considered
+  # installed.
+  preflight do
     # Commands to join the domain will fail if we're already in it, so check.
     domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`.strip
     puts "Current domain = \"#{domain}\""
