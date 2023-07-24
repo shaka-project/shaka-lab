@@ -228,6 +228,7 @@ jobs:
              Formula/
           cp shaka-lab-source/shaka-lab-browsers/macos/shaka-lab-browsers.rb \
              shaka-lab-source/shaka-lab-recommended-settings/macos/shaka-lab-recommended-settings.rb \
+             shaka-lab-source/shaka-lab-gateway-client/macos/shaka-lab-gateway-client.rb \
              Casks/
 
           # Set the package version by editing the homebrew formulae and casks
