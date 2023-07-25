@@ -18,19 +18,19 @@ This is the macOS package.
 
 ```sh
 brew tap shaka-project/shaka-lab
-brew install --cask shaka-lab-recommended-settings
+brew install shaka-lab-recommended-settings
 ```
 
 ## Updates
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade shaka-lab-recommended-settings
 ```
 
 ## Uninstallation
 
 ```sh
-brew uninstall --cask shaka-lab-recommended-settings
+brew uninstall shaka-lab-recommended-settings
 brew autoremove
 ```
 

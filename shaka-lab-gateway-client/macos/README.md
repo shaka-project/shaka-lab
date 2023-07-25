@@ -21,13 +21,13 @@ to join the domain.
 
 ```sh
 brew tap shaka-project/shaka-lab
-brew install --cask shaka-lab-gateway-client
+brew install shaka-lab-gateway-client
 ```
 
 ## Updates
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade shaka-lab-gateway-client
 ```
 
 ## Configuration
@@ -47,6 +47,6 @@ Directory Administrator password used to set up the Gateway.  This is necessary
 to leave the domain.
 
 ```sh
-brew uninstall --cask shaka-lab-gateway-client
+brew uninstall shaka-lab-gateway-client
 brew autoremove
 ```

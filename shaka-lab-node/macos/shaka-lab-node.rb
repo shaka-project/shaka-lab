@@ -14,125 +14,121 @@
 
 # macOS Homebrew package definition for Shaka Lab Node.
 
-# Homebrew docs: https://docs.brew.sh/Formula-Cookbook
-#                https://rubydoc.brew.sh/Formula
+# Homebrew docs: https://docs.brew.sh/Cask-Cookbook
+#                https://rubydoc.brew.sh/Cask/Cask.html
 
-class ShakaLabNode < Formula
-  desc "Shaka Lab Node - Selenium grid nodes for the Shaka Lab"
+cask "shaka-lab-node" do
+  name "Shaka Lab Node"
   homepage "https://github.com/shaka-project/shaka-lab"
-  license "Apache-2.0"
+  desc "Selenium grid nodes for the Shaka Lab"
 
-  # Formulae require a URL, but we don't actually have sources to download in
+  # Casks require a URL, but we don't actually have sources to download in
   # this way.  Instead, our tap repo includes the sources.  To satisfy
   # Homebrew, give a URL that never changes and returns no data.
   url "http://www.gstatic.com/generate_204"
   version "1.0.0"
   sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-  # Use --with-docker to have Homebrew install Docker from source.
-  # Docker is only needed to activate the Tizen node.
-  # Skip that if you already have Docker installed or don't need Tizen.
-  depends_on "docker" => :optional
+  # Casks can't have optional dependencies, so note to the user that Tizen can
+  # enhance this package, if available.
+  caveats "[Optional] To run a Tizen node, you also need Docker."
 
-  # We need at least node v12 installed.
-  depends_on "node" => "12"
+  # We need a working JDK, at least v14.
+  # NOTE: We can't express a specific version in a Cask's dependencies.
+  depends_on cask: "oracle-jdk"
 
-  def install
-    # Detect our environment.  If we're building from the source repo (with
-    # `brew install ./shaka-lab-node.rb`, we need a different root directory
-    # than if this is installed as a tap.  Tap repos have a very specific
-    # structure and naming scheme which differs from the layout of our
-    # multi-platform source repo.
+  # We need node.js, at least v12.
+  # NOTE: We can't express a specific version in a Cask's dependencies.
+  depends_on formula: "node"
 
-    # Assume we're installed as a tap.
-    # The full source from this version is at this location in the tap repo.
-    source_root = "#{__dir__}/../shaka-lab-source"
-    unless File.exist? source_root
-      # The source location for the tap repo doesn't exist.
-      # Next, assume that we are building from the source repo.
-      source_root = "#{__dir__}/../.."
+  # Tell homebrew that we won't "install" anything.  We do, just not using the
+  # primitives for Casks, which are oriented around app bundles.
+  stage_only true
+
+  # The path from the Cask definition to the full shaka-lab source.
+  # We install files from there.
+  source_root = "#{__dir__}/../shaka-lab-source"
+
+  # The destination folder of most shaka-lab-node files.  This must be
+  # user-writeable, since brew does not run as root.  We will create symlinks
+  # later for convenience.
+  destination = "#{HOMEBREW_PREFIX}/opt/shaka-lab-node"
+
+  # Use preflight so that if the commands fail, the package is not considered
+  # installed.
+  preflight do
+    # NOTE: The inreplace command for Formulae is not available in Casks.
+    # Since it is very simple, we replicate it here to keep the installation
+    # code more readable.
+    def inreplace(path, original_text, new_text)
+      contents = File.read(path)
+      contents.gsub!(original_text, new_text)
+      File.open(path, "w") {|f| f.write(contents)}
     end
-    unless File.exist? "#{source_root}/selenium-jar"
-      # This doesn't appear to match the layout of the source repo, either.
-      # Throw an error.
-      raise "Unable to deduce shaka-lab formula repo context at #{__dir__}"
-    end
+
+    # Create the destination directory.
+    FileUtils.mkdir_p destination
 
     # Main shaka-lab-node files.
-    FileUtils.install "#{source_root}/LICENSE.txt", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/node-templates.yaml", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/package.json", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/start-nodes.js", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/log-wrapper.js", prefix, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/update-drivers.sh", prefix, :mode => 0755
+    FileUtils.install "#{source_root}/LICENSE.txt", destination, :mode => 0644
+    FileUtils.install "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/node-templates.yaml", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/package.json", destination, :mode => 0644
+    FileUtils.install "#{source_root}/shaka-lab-node/start-nodes.js", destination, :mode => 0644
+    FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*"), destination, :mode => 0644
 
-    # Config file goes in /opt/homebrew/etc.  Don't overwrite it!
-    unless File.exist? etc/"shaka-lab-node-config.yaml"
-      FileUtils.install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", etc, :mode => 0644
+    # Mark the shell scripts as executable.
+    FileUtils.chmod 0755, Dir.glob("#{destination}/*.sh")
+
+    # Don't overwrite the config file if it already exists!
+    # This file will be left in tact during uninstall.
+    unless File.exist? "/etc/shaka-lab-node-config.yaml"
+      # Use sudo to create the initial config file in /etc, owned by this user.
+      system_command "/usr/bin/install", args: [
+        "-m", "0644",
+        "-o", Process.uid,
+        "-g", Process.gid,
+        "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml",
+        "/etc/",
+      ], sudo: true
     end
 
-    # Service definitions.  Homebrew's service infrastructure will only let us
-    # install one service per package, and we have both a background service
-    # and a cron job.  Putting our plist files into a subfolder allows us to
-    # bypass Homebrew's checks for plists.  This avoids a misleading message
-    # from Homebrew with the wrong instructions to start the services.
-    FileUtils.mkdir_p prefix/"plists"
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-service.plist", prefix/"plists", :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update.plist", prefix/"plists", :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/stop-services.sh", prefix, :mode => 0755
-    FileUtils.install "#{source_root}/shaka-lab-node/macos/restart-services.sh", prefix, :mode => 0755
+    # Certain files need hard-coded paths to node.js, which is installed under
+    # a variable Homebrew prefix.  So replace the string "$HOMEBREW_PREFIX"
+    # with the current prefix (in the HOMEBREW_PREFIX variable).
+    inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    inreplace "#{destination}/update-drivers.sh", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
-    # The service definitions need hard-coded paths, and the Homebrew prefix
-    # varies.  So replace "$HOMEBREW_PREFIX" in these plist files with the
-    # current prefix (in the HOMEBREW_PREFIX variable).
-    inreplace prefix/"plists/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
-    inreplace prefix/"plists/shaka-lab-node-update.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    # Service logs go here, so make sure the folder exists:
+    FileUtils.mkdir_p "#{destination}/logs"
 
-    # Service logs go to /opt/homebrew/var/log
-    FileUtils.mkdir_p var/"log"
+    # Symlink the log rotation config file into its required location.
+    system_command "/bin/ln", args: [
+      "-sf", "#{destination}/shaka-lab-node-logrotate.conf",
+      "/etc/newsyslog.d/",
+    ], sudo: true
 
-    # Service PID file goes to /opt/homebrew/var/run
-    FileUtils.mkdir_p var/"run"
+    # Symlink the installation folder into /opt.
+    system_command "/bin/ln", args: [
+      "-sf", "#{destination}",
+      "/opt/",
+    ], sudo: true
+
+    # Now start/restart the services.
+    puts "Restarting services..."
+    system_command "#{destination}/restart-services.sh"
+    puts "Done!"
   end
 
-  # The output of this method is printed to the user after installation.  Here
-  # we warn the user if Java needs to be installed, and we tell them how to
-  # start the services.
-  #
-  # We _could_ depend on a Java formula directly, but that would involve
-  # installing OpenJDK, including nonsense like X11 libraries (which Mac
-  # doesn't use).
-  #
-  # What is preferable is to install Oracle's JDK as a binary, which is only
-  # available in Homebrew as a "cask".  But a "formula" (this package) can't
-  # depend on a "cask".  So instead, we have to inform the user if Java is
-  # missing and recommend that they install the cask to solve it.
-  #
-  # We have to tell the user what to do to start the services because Homebrew
-  # runs installation commands in a sandbox, so we can't start the service
-  # automatically during installation.
-  def caveats
-    output = <<~EOS
-      ******* ATTENTION *******
-    EOS
+  uninstall_preflight do
+    # Remove the main installation.
+    FileUtils.remove_entry_secure(destination)
 
-    # Here we use ruby's native system method (Kernel.system) instead of
-    # Homebrew's (system) so that we can get an exit code instead of failing.
-    unless Kernel.system "java", "--version", :out=>["/dev/null"], :err=>["/dev/null"]
-      output += <<~EOS
-        Java not found; please run:    brew install --cask oracle-jdk
-
-      EOS
-    end
-
-    output += <<~EOS
-      Start services; please run:    #{opt_prefix}/restart-services.sh
-
-      These tasks can't be done for you because of sandboxing.
-      ******* ********* *******
-    EOS
-
-    return output
+    # Clean up our root-owned symlinks.
+    system_command "/bin/rm", args: [
+      "-f",
+      "/etc/newsyslog.d/shaka-lab-node-logrotate.conf",
+      "/opt/shaka-lab-node",
+    ], sudo: true
   end
 end

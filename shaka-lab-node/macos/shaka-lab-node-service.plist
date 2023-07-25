@@ -26,17 +26,17 @@
     <array>
       <!-- The log wrapper works around issues with log rotation / launchd. -->
       <string>$HOMEBREW_PREFIX/bin/node</string>
-      <string>$HOMEBREW_PREFIX/opt/shaka-lab-node/log-wrapper.js</string>
-      <string>$HOMEBREW_PREFIX/var/log/shaka-lab-node.out.log</string>
-      <string>$HOMEBREW_PREFIX/var/log/shaka-lab-node.err.log</string>
-      <string>$HOMEBREW_PREFIX/var/run/shaka-lab-node.pid</string>
+      <string>/opt/shaka-lab-node/log-wrapper.js</string>
+      <string>/opt/shaka-lab-node/logs/stdout.log</string>
+      <string>/opt/shaka-lab-node/logs/stderr.log</string>
+      <string>/opt/shaka-lab-node/shaka-lab-node.pid</string>
       <!-- This is the service started by the wrapper. -->
       <string>$HOMEBREW_PREFIX/bin/node</string>
-      <string>$HOMEBREW_PREFIX/opt/shaka-lab-node/start-nodes.js</string>
+      <string>/opt/shaka-lab-node/start-nodes.js</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>$HOMEBREW_PREFIX/opt/shaka-lab-node</string>
+    <string>/opt/shaka-lab-node</string>
 
     <key>RunAtLoad</key>
     <true/>
