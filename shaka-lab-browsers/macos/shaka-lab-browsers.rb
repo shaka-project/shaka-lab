@@ -80,12 +80,19 @@ cask "shaka-lab-browsers" do
   end
 
   postflight do
-    # Take Firefox out of quarantine.  I'm not sure why this is only needed for
-    # Firefox and not Chrome or Edge.  Without this, the first time
-    # shaka-lab-node tries to start Firefox, a dialog box pops up from the OS
-    # and must be interacted with before tests can run for the first time.
+    # Take all browsers out of quarantine.  This has been found necessary for
+    # Firefox and Chrome at least in some cases.
+    # Without this, the first time shaka-lab-node tries to start a browers, a
+    # dialog box may pop up from the OS and must be interacted with before
+    # tests can run for the first time.
     system_command "/usr/bin/xattr", args: [
       "-d", "com.apple.quarantine", "/Applications/Firefox.app",
+    ]
+    system_command "/usr/bin/xattr", args: [
+      "-d", "com.apple.quarantine", "/Applications/Google Chrome.app",
+    ]
+    system_command "/usr/bin/xattr", args: [
+      "-d", "com.apple.quarantine", "/Applications/Microsoft Edge.app",
     ]
   end
 
