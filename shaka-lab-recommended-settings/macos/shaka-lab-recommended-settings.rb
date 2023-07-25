@@ -33,6 +33,9 @@ cask "shaka-lab-recommended-settings" do
   # settings.
   stage_only true
 
+  # Signal that this package does not need upgrading through "brew upgrade".
+  auto_updates true
+
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
@@ -50,9 +53,9 @@ cask "shaka-lab-recommended-settings" do
     ], sudo: true
 
     # Enable SSH for all users, not just admins
-    system_command "/usr/sbin/dseditgroup", args: [
-      "-o", "delete", "-t", "group", "com.apple.access_ssh",
-    ], sudo: true
+    # (This fails if run twice, so ignore failures here.  system_command
+    # doesn't let us ignore failures, so use Kernel.system.)
+    Kernel.system "/usr/bin/sudo", "/usr/sbin/dseditgroup", "-o", "delete", "-t", "group", "com.apple.access_ssh", :out=>["/dev/null"], :err=>["/dev/null"]
 
     # Enable VNC
     system_command "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart", args: [

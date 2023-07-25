@@ -32,6 +32,9 @@ cask "shaka-lab-gateway-client" do
   # We don't install anything.  We only invoke OS tools to configure AD login.
   stage_only true
 
+  # Signal that this package does not need upgrading through "brew upgrade".
+  auto_updates true
+
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
