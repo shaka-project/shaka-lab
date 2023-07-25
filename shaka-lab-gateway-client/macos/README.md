@@ -12,11 +12,6 @@ package.  Devices with the client package will connect to that gateway.
 ## Pre-requisites
 
  - Get Homebrew: [https://brew.sh/#install](https://brew.sh/#install)
- - You must grant full disk access to Terminal before proceeding.  Without this
-   step, the package installation script is unable to make certain changes to
-   OS settings.
-   - [Disk access instructions](https://www.alfredapp.com/help/troubleshooting/indexing/terminal-full-disk-access/)
-   - [Backup of disk access instructions](https://web.archive.org/web/20221216173704/https://www.alfredapp.com/help/troubleshooting/indexing/terminal-full-disk-access/) if the first link goes offline
 
 ## Installation
 
