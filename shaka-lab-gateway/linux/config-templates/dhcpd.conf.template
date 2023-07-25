@@ -31,14 +31,14 @@ subnet {{ lan_subnet }} netmask {{ lan_netmask }} {
 	option broadcast-address {{ lan_broadcast }};
 	option subnet-mask {{ lan_netmask }};
 	option domain-name-servers {{ lan_ip }};
-	option domain-name "lab";
-	ddns-domainname "lab.";
+	option domain-name "lab.shaka";
+	ddns-domainname "lab.shaka.";
 	ddns-rev-domainname "in-addr.arpa.";
 }
 
 {% for name, specs in devices.items() %}
 {% if specs.mac %}
-host {{ name }}.lab {
+host {{ name }}.lab.shaka {
 	hardware ethernet {{ specs.mac }};
 	fixed-address {{ specs.ip }};
 	ddns-hostname "{{ name }}";
