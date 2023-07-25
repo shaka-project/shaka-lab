@@ -32,7 +32,9 @@ cask "shaka-lab-browsers" do
   # We don't install anything.  We only depend on other casks.
   stage_only true
 
-  postflight do
+  # Use preflight so that if the commands fail, the package is not considered
+  # installed.
+  preflight do
     # Enable the "develop" menu for Safari
     system_command "/usr/bin/defaults", args: [
       "write", "com.apple.Safari.SandboxBroker", "ShowDevelopMenu",
