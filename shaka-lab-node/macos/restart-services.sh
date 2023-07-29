@@ -37,12 +37,12 @@ restart_service() {
 
   # User-linked service definitions must be owned by that user.
   # The underlying file,
-  chown $GUI_USER /Library/LaunchDaemons/"$NAME.plist"
+  chown $GUI_USER $GUI_HOME/Library/LaunchAgents/"$NAME.plist"
   # and the link itself.
-  chown -h $GUI_USER /Library/LaunchDaemons/"$NAME.plist"
+  chown -h $GUI_USER $GUI_HOME/Library/LaunchAgents/"$NAME.plist"
 
   # Load the service now if it's not loaded yet.
-  local LIST="$(launchctl list | grep "$NAME")"
+  local LIST="$(sudo -u $GUI_USER launchctl list | grep "$NAME")"
   if [ -z "$LIST" ]; then
     if sudo -u $GUI_USER launchctl load $GUI_HOME/Library/LaunchAgents/"$NAME.plist"; then
       echo "Loaded $NAME"
