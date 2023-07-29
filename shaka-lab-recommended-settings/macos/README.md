@@ -64,3 +64,5 @@ Settings configured automatically by this package:
  - Misc:
    - Enable time sync with Apple servers
    - Allow unsigned binaries (necessary for shaka-lab-node and WebDriver)
+   - Enable autologin for the current user (necessary for shaka-lab-node to run
+     typical GUI browsers)
