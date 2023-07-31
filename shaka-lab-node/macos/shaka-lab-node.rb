@@ -49,58 +49,85 @@ cask "shaka-lab-node" do
   # We install files from there.
   source_root = "#{__dir__}/../shaka-lab-source"
 
-  # The destination folder of most shaka-lab-node files.  This must be
-  # user-writeable, since brew does not run as root.  We will create symlinks
-  # later for convenience.
-  destination = "#{HOMEBREW_PREFIX}/opt/shaka-lab-node"
+  # The destination folder of most shaka-lab-node files.
+  destination = "/opt/shaka-lab-node"
 
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
     # NOTE: The inreplace command for Formulae is not available in Casks.
     # Since it is very simple, we replicate it here to keep the installation
-    # code more readable.
-    def inreplace(path, original_text, new_text)
+    # code more readable.  This version can also write to files owned by root.
+    def sudo_inreplace(path, original_text, new_text)
       contents = File.read(path)
       contents.gsub!(original_text, new_text)
-      File.open(path, "w") {|f| f.write(contents)}
+
+      temp_file = Tempfile.new('shaka-lab-node-install-')
+      begin
+        temp_file.write(contents)
+        temp_file.flush
+        system_command "/bin/cp", args: [temp_file.path, path], sudo: true
+      ensure
+        temp_file.close
+        temp_file.unlink
+      end
+    end
+
+    # NOTE: This utility runs /usr/bin/install, but through sudo.  It is
+    # similar to FileUtils.install, but give us the ability to install files as
+    # root.
+    def sudo_install(source, destination, mode: "0644")
+      system_command "/usr/bin/install", args: [
+        "-m", mode, source, destination,
+      ], sudo: true
+    end
+
+    # NOTE: Similar to FileUtils.mkdir_p, but through sudo.
+    def sudo_mkdir_p(path)
+      system_command "/bin/mkdir", args: ["-p", path], sudo: true
     end
 
     # Create the destination directory.
-    FileUtils.mkdir_p destination
+    sudo_mkdir_p destination
 
     # Main shaka-lab-node files.
-    FileUtils.install "#{source_root}/LICENSE.txt", destination, :mode => 0644
-    FileUtils.install "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", destination, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/node-templates.yaml", destination, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/package.json", destination, :mode => 0644
-    FileUtils.install "#{source_root}/shaka-lab-node/start-nodes.js", destination, :mode => 0644
-    FileUtils.install Dir.glob("#{source_root}/shaka-lab-node/macos/*"), destination, :mode => 0644
-
+    sudo_install "#{source_root}/LICENSE.txt", destination
+    sudo_install "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", destination
+    sudo_install "#{source_root}/shaka-lab-node/node-templates.yaml", destination
+    sudo_install "#{source_root}/shaka-lab-node/package.json", destination
+    sudo_install "#{source_root}/shaka-lab-node/start-nodes.js", destination
+    for path in Dir.glob("#{source_root}/shaka-lab-node/macos/*") do
+      sudo_install path, destination
+    end
     # Mark the shell scripts as executable.
-    FileUtils.chmod 0755, Dir.glob("#{destination}/*.sh")
+    for path in Dir.glob("#{source_root}/shaka-lab-node/macos/*.sh") do
+      sudo_install path, destination, mode: "0755"
+    end
 
     # Don't overwrite the config file if it already exists!
     # This file will be left in tact during uninstall.
     unless File.exist? "/etc/shaka-lab-node-config.yaml"
-      # Use sudo to create the initial config file in /etc, owned by this user.
-      system_command "/usr/bin/install", args: [
-        "-m", "0644",
-        "-o", Process.uid,
-        "-g", Process.gid,
-        "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml",
-        "/etc/",
-      ], sudo: true
+      sudo_install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", "/etc/"
     end
 
     # Certain files need hard-coded paths to node.js, which is installed under
     # a variable Homebrew prefix.  So replace the string "$HOMEBREW_PREFIX"
     # with the current prefix (in the HOMEBREW_PREFIX variable).
-    inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
-    inreplace "#{destination}/update-drivers.sh", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    sudo_inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    sudo_inreplace "#{destination}/update-drivers.sh", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
     # Service logs go here, so make sure the folder exists:
-    FileUtils.mkdir_p "#{destination}/logs"
+    sudo_mkdir_p "#{destination}/logs"
+
+    # Get the user currently logged in on the GUI.
+    GUI_USER = `stat -f "%Su" /dev/console`.strip
+
+    # Make the destination directory owned by the logged-in GUI user.
+    # Make sure the service account can write to all the necessary locations in
+    # the installation to do updates and logging:
+    system_command "/usr/sbin/chown", args: [
+      "-R", GUI_USER, destination,
+    ], sudo: true
 
     # Symlink the log rotation config file into its required location.
     system_command "/bin/ln", args: [
@@ -108,27 +135,22 @@ cask "shaka-lab-node" do
       "/etc/newsyslog.d/",
     ], sudo: true
 
-    # Symlink the installation folder into /opt.
-    system_command "/bin/ln", args: [
-      "-sf", "#{destination}",
-      "/opt/",
-    ], sudo: true
-
     # Now start/restart the services.
     puts "Restarting services..."
-    system_command "#{destination}/restart-services.sh"
+    system_command "#{destination}/restart-services.sh", sudo: true
     puts "Done!"
   end
 
   uninstall_preflight do
-    # Remove the main installation.
-    FileUtils.remove_entry_secure(destination)
+    puts "Stopping services..."
+    system_command "#{destination}/stop-services.sh", sudo: true
+    puts "Done!"
 
-    # Clean up our root-owned symlinks.
+    # Remove the main installation and symlinks.
     system_command "/bin/rm", args: [
-      "-f",
+      "-rf",
+      "#{destination}",
       "/etc/newsyslog.d/shaka-lab-node-logrotate.conf",
-      "/opt/shaka-lab-node",
     ], sudo: true
   end
 end

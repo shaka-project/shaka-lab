@@ -22,16 +22,19 @@ cask "shaka-lab-recommended-settings" do
   homepage "https://github.com/shaka-project/shaka-lab"
   desc "Recommended OS settings for a Shaka Lab environment"
 
-  # Casks require a URL, but we don't actually have sources to download in
-  # this way.  Instead, our tap repo includes the sources.  To satisfy
-  # Homebrew, give a URL that never changes and returns no data.
-  url "http://www.gstatic.com/generate_204"
-  version "1.0.0"
-  sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  # This Cask actually downloads a third-party tool called kcpassword, which is
+  # necessary to set the current user for autologin.  Autologin is necessary
+  # for test automation in browsers.  The tool is small and isn't expected to
+  # change much, so we just pin this version.  The URL and sha256 are taken
+  # from https://github.com/xfreebird/homebrew-utils/blob/master/kcpassword.rb
+  url "https://github.com/xfreebird/kcpassword/archive/1.1.0.tar.gz"
+  sha256 "318afc8f1dadf4bcce60b7f83dc4009d37ec45124c04cb0346c762aaa1b2d6d5"
 
-  # We don't install anything.  We only depend on other casks and set OS
-  # settings.
-  stage_only true
+  # This is the version of shaka-lab-recommended-settings itself, not the
+  # kcpassword source above.
+  version "1.0.0"
+
+  binary "kcpassword-1.1.0/kcpassword"
 
   # Signal that this package does not need upgrading through "brew upgrade".
   auto_updates true
@@ -138,6 +141,24 @@ cask "shaka-lab-recommended-settings" do
     system_command "/usr/bin/defaults", args: [
       "write", "/Library/Preferences/com.apple.commerce.plist",
       "AutoUpdateRestartRequired", "-bool", "true",
+    ], sudo: true
+  end
+
+  # These commands depend on kcpassword, so they go into postflight.
+  postflight do
+    # Prompt for the user's password to enable autologin
+    require 'io/console'
+    puts "Enabling autologin..."
+    password = IO::console.getpass "Enter user password: "
+
+    # Enable autologin, part 1: Write obfuscated password read by logind
+    system_command "#{HOMEBREW_PREFIX}/bin/kcpassword", args: [
+      password,
+    ], sudo: true
+    # Enable autologin, part 2: Set the username read by logind
+    system_command "/usr/bin/defaults", args: [
+      "write", "/Library/Preferences/com.apple.loginwindow",
+      "autoLoginUser", ENV['USER'],
     ], sudo: true
   end
 end

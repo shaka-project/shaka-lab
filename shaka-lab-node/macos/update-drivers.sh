@@ -23,6 +23,9 @@ set -e
 # Set PATH to include node, npm, and other homebrew executables.
 export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 
+# Force npm to write its cache here.
+export HOME="/opt/shaka-lab-node"
+
 # Go to the install directory of shaka-lab-node.
 cd /opt/shaka-lab-node
 

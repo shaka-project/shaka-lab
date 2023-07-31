@@ -13,5 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-launchctl stop shaka-lab-node-update
-launchctl stop shaka-lab-node-service
+# Run this script as root if you're not already.
+if [[ "$EUID" != "0" ]]; then
+  exec sudo "$0"
+fi
+
+# Get the user currently logged in on the GUI.
+GUI_USER=$(stat -f "%Su" /dev/console)
+GUI_HOME=$(eval "echo ~$GUI_USER")
+
+# Stop and unload the services.
+sudo -u $GUI_USER launchctl unload $GUI_HOME/Library/LaunchAgents/shaka-lab-node-update.plist
+sudo -u $GUI_USER launchctl unload $GUI_HOME/Library/LaunchAgents/shaka-lab-node-service.plist
+
+# Unlink the service definitions.
+rm -f $GUI_HOME/Library/LaunchAgents/shaka-lab-node-update.plist
+rm -f $GUI_HOME/Library/LaunchAgents/shaka-lab-node-service.plist
