@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+
+# Fail on error
+set -e
+
+
+### PROMPTING ###
+
+# Source the debconf library, which gives us functions to prompt the user.
+. /usr/share/debconf/confmodule
+
+# Prompt the user for necessary configuration.  If the user has followed our
+# README's instructions, this has already been provided and no prompt is
+# necessary.
+
+# NOTE: db_input returns a non-zero exit code when skipping a question, so we
+# ignore its return value with "|| true".
+
+# The "high" argument is a priority for the config.  All of ours are necessary.
+db_input high shaka-lab-certs/dns_zone || true
+db_input high shaka-lab-certs/google_domains_token || true
+db_input high shaka-lab-certs/cert_host || true
+
+# The "go" command takes all the batched-together questions from "input"
+# commands and displays them, possibly on one screen.
+db_go
+
+# Now we should have all necessary configuration.
+
+# The db_get command will fill config values into the global "RET" variable.
+# Here we extract them into our own variables with useful names.
+db_get shaka-lab-certs/dns_zone
+DNS_ZONE="$RET"
+db_get shaka-lab-certs/google_domains_token
+GOOGLE_DOMAINS_TOKEN="$RET"
+db_get shaka-lab-certs/cert_host
+CERT_HOST="$RET"
+
+
+### INSTALLATION ###
+
+# Install the authentication plugin for Google Domains.
+if python3 -c "import certbot_dns_google_domains" &>/dev/null; then
+  echo "Certbot authentication plugin for Google Domains already installed."
+else
+  echo "Installing certbot authentication plugin for Google Domains."
+  pip3 install certbot-dns-google-domains
+fi
+
+if [ ! -e /etc/letsencrypt/google-domains.ini ]; then
+  # Configure the authentication plugin.
+  touch /etc/letsencrypt/google-domains.ini
+  chmod 600 /etc/letsencrypt/google-domains.ini
+  cat <<EOF >/etc/letsencrypt/google-domains.ini
+dns_google_domains_access_token = $GOOGLE_DOMAINS_TOKEN
+dns_google_domains_zone = $DNS_ZONE
+EOF
+fi
+
+# Create a "runner" group using the exact GID used by the Docker image we use
+# for the GitHub Actions Runner.  Ignore failures if the group already exists
+# or the GID is already in use.
+groupadd -g 121 runner &>/dev/null || true
+
+# Set permissions on letsencrypt:
+chmod 755 /etc/letsencrypt/{archive,live}
+
+# Create a deployment hook script for letsencrypt to set the appropriate
+# permissions on new keys and certs:
+cat <<EOF >/etc/letsencrypt/renewal-hooks/deploy/shaka-lab-certs.sh
+#!/bin/bash
+
+# World-readable
+chmod 644 /etc/letsencrypt/archive/$CERT_HOST/{cert,chain,fullchain}*
+# Group-readable
+chmod 640 /etc/letsencrypt/archive/$CERT_HOST/privkey*
+# Set the group
+chown root:121 /etc/letsencrypt/archive/$CERT_HOST/*
+EOF
+chmod 744 /etc/letsencrypt/renewal-hooks/deploy/shaka-lab-certs.sh
+
+if [ -d "/etc/letsencrypt/archive/$CERT_HOST/" ]; then
+  echo "Certs for this domain already exist.  Not calling certbot."
+else
+  # Get your initial certificate.  After this, certbot will automatically renew
+  # the cert before it expires.
+  certbot certonly \
+    -n \
+    --email shaka-lab@github.io --agree-tos \
+    --authenticator dns-google-domains \
+    --dns-google-domains-credentials /etc/letsencrypt/google-domains.ini \
+    --domains "$CERT_HOST"
+fi

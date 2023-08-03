@@ -1,0 +1,14 @@
+Template: shaka-lab-certs/dns_zone
+Type: string
+Description: Lab DNS zone:
+ What is the DNS zone for your lab domain?  (ex: mylab.foo)
+
+Template: shaka-lab-certs/google_domains_token
+Type: password
+Description: Google Domains ACME DNS API token:
+ What is the ACME DNS API token for your domain on Google Domains?
+
+Template: shaka-lab-certs/cert_host
+Type: string
+Description: Certificate hostname:
+ What is the hostname for your lab certificate?  (ex: testrunner.mylab.foo)
