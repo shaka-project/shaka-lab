@@ -22,6 +22,12 @@ Build-Depends: debhelper (>= 9)
 Package: shaka-lab-browsers
 Architecture: all
 Pre-Depends: shaka-lab-recommended-settings
-Depends: adb, firefox, google-chrome-stable, microsoft-edge-stable, scrcpy
+# NOTE: Setting a minimum version for Firefox will forbid usage of the "snap"
+# package.  The snap version of Firefox will not work for our test
+# infrastructure, but it has a version number like "1.1" instead of a Firefox
+# release version like "116".  The settings in shaka-lab-recommended-settings
+# will allow installation of Firefox directly from Mozilla's PPA instead, so
+# this dependency should be satisfiable.
+Depends: adb, firefox (>= 100), google-chrome-stable, microsoft-edge-stable, scrcpy
 Description: Shaka Lab Browsers
  A meta-package to install all major browsers for the Shaka Lab

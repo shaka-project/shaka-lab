@@ -48,3 +48,4 @@ Settings configured automatically by this package:
    - Enable port-forwarding
  - Disable prompting for service restarts, always restart affected services
  - Configure additional apt repositories to install major browsers
+ - Prefer Mozila PPA for Firefox over Ubuntu snap package

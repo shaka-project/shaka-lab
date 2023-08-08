@@ -43,6 +43,10 @@ Package: firefox*
 Pin: release o=LP-PPA-mozillateam
 Pin-Priority: 501
 EOF
+# Make sure that unattended upgrades pull from this alternate repo, as well.
+cat <<EOF >/etc/apt/apt.conf.d/51unattended-upgrades-firefox
+Unattended-Upgrade::Allowed-Origins:: "LP-PPA-mozillateam:\${distro_codename}";
+EOF
 
 # Install the package signing key from Microsoft Edge.
 curl -L https://packages.microsoft.com/keys/microsoft.asc \
