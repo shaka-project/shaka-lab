@@ -31,6 +31,7 @@ cd /D "C:\ProgramData\shaka-lab-node"
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 :: Install the latest packages.
+del package-lock.json
 call npm install
 if %errorlevel% neq 0 exit /b %errorlevel%
 
