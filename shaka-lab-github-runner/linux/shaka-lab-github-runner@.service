@@ -1,0 +1,10 @@
+[Unit]
+Description=Shaka Lab GitHub Runner #%i
+After=docker.service
+Requires=docker.service
+PartOf=shaka-lab-github-runners.target
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStart=/opt/shaka-lab/shaka-lab-github-runner/start-runner.sh %i
