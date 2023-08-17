@@ -34,9 +34,8 @@ export NVM_DIR=/opt/shaka-lab/nvm
 # Go to the install directory of shaka-lab-node.
 cd /opt/shaka-lab/shaka-lab-node
 
-# Update all modules.
-rm -f package-lock.json
-npm install
+# Update all modules to the latest version allowed by package.json.
+npm update
 
 # Update all WebDrivers.
 ./node_modules/.bin/webdriver-installer .

@@ -30,9 +30,8 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 cd /D "C:\ProgramData\shaka-lab-node"
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-:: Install the latest packages.
-del package-lock.json
-call npm install
+:: Update all modules to the latest version allowed by package.json.
+call npm update
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 :: Update all drivers.
