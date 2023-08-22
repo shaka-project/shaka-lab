@@ -1,0 +1,37 @@
+Template: shaka-lab-github-runner/scope
+Type: select
+Choices: repo, org
+Description: GitHub Actions Runner Scope
+ Choose "repo" to attach to one repository, or "org" to attach to a GitHub
+ organization.
+
+Template: shaka-lab-github-runner/scope_name
+Type: string
+Description: ${description}
+ ${extended_description}
+
+Template: shaka-lab-github-runner/scope_name_repo
+Type: string
+Description: GitHub Repository URL
+ The repository URL to attach your runners to.
+
+Template: shaka-lab-github-runner/scope_name_org
+Type: string
+Description: GitHub Organization
+ The GitHub organization to attach your runners to.
+
+Template: shaka-lab-github-runner/access_token
+Type: password
+Description: GitHub Access Token
+ A GitHub Personal Access Token with "repo" scope for repositories, or
+ "admin:org" scope for organizations.
+
+Template: shaka-lab-github-runner/labels
+Type: string
+Description: GitHub Runner Labels
+ Labels for this runner, which workflows can use to select it.
+
+Template: shaka-lab-github-runner/number_of_runners
+Type: string
+Description: Number of runner instances
+ The number of runner instances to launch in parallel.

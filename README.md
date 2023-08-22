@@ -43,6 +43,8 @@ Everything in this repo is licensed under [Apache license v2.0](LICENSE.txt).
  - [Shaka Lab Node](shaka-lab-node/README.md#readme): Selenium grid nodes
  - [Shaka Lab Gateway](shaka-lab-gateway/README.md#readme): Lab gateway (DHCP, DNS, AD, routing)
  - [Shaka Lab Gateway Client](shaka-lab-gateway-client/README.md#readme): Central lab user login
+ - [Shaka Lab Certs](shaka-lab-certs/README.md#readme): Automated certificates for HTTPS-based testing
+ - [Shaka Lab GitHub Runner](shaka-lab-github-runner/README.md#readme): Self-hosted GitHub Actions runners
 
 
 ## Distribution Systems

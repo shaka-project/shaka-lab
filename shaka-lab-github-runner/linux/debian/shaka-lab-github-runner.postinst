@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+
+# Fail on error
+set -e
+
+
+### PROMPTING ###
+
+# Source the debconf library, which gives us functions to prompt the user.
+. /usr/share/debconf/confmodule
+
+# Prompt the user for necessary configuration.  If the user has followed our
+# README's instructions, this has already been provided and no prompt is
+# necessary.
+
+# NOTE: db_input returns a non-zero exit code when skipping a question, so we
+# ignore its return value with "|| true".
+
+# The "high" argument is a priority for the config.  All of ours are necessary.
+db_input high shaka-lab-github-runner/scope || true
+
+# The "go" command takes all the batched-together questions from "input"
+# commands and displays them, possibly on one screen.
+db_go
+
+# The db_get command will fill config values into the global "RET" variable.
+# Here we extract the first config into our own variable.
+db_get shaka-lab-github-runner/scope
+RUNNER_SCOPE="$RET"
+
+
+# The next prompt's description should depend on the chosen scope.  We use
+# db_metaget to extract another field from the template, then db_subst to
+# overwrite the description of scope_name based on that.  With this, we can
+# better explain what we need based on scope.
+if [[ "$RUNNER_SCOPE" == "repo" ]]; then
+  db_metaget shaka-lab-github-runner/scope_name_repo description
+  SCOPE_NAME_DESCRIPTION=$RET
+  db_metaget shaka-lab-github-runner/scope_name_repo extended_description
+  SCOPE_NAME_EXTENDED_DESCRIPTION=$RET
+else
+  db_metaget shaka-lab-github-runner/scope_name_org description
+  SCOPE_NAME_DESCRIPTION=$RET
+  db_metaget shaka-lab-github-runner/scope_name_org extended_description
+  SCOPE_NAME_EXTENDED_DESCRIPTION=$RET
+fi
+db_subst shaka-lab-github-runner/scope_name \
+    description "$SCOPE_NAME_DESCRIPTION"
+db_subst shaka-lab-github-runner/scope_name \
+    extended_description "$SCOPE_NAME_EXTENDED_DESCRIPTION"
+
+# Now we prompt for scope_name, with a better description of what we need based
+# on scope.
+db_input high shaka-lab-github-runner/scope_name || true
+db_go
+
+# Now we prompt for the rest of our configs.
+db_input high shaka-lab-github-runner/access_token || true
+db_input high shaka-lab-github-runner/labels || true
+db_input high shaka-lab-github-runner/number_of_runners || true
+db_go
+
+# Now we should have all necessary configuration.
+
+# Get the rest of our configs extracted into useful variable names.
+db_get shaka-lab-github-runner/scope_name
+RUNNER_SCOPE_NAME="$RET"
+db_get shaka-lab-github-runner/access_token
+ACCESS_TOKEN="$RET"
+db_get shaka-lab-github-runner/labels
+LABELS="$RET"
+db_get shaka-lab-github-runner/number_of_runners
+NUMBER_OF_RUNNERS="$RET"
+
+
+### INSTALLATION ###
+
+# The config file has a key that varies based on the scope.
+if [[ "$RUNNER_SCOPE" == "repo" ]]; then
+  # Repo scopes need a repo URL set.
+  RUNNER_SCOPE_NAME_KEY="REPO_URL"
+else
+  # Org scopes need an org name set.
+  RUNNER_SCOPE_NAME_KEY="ORG_NAME"
+fi
+
+# Create the docker environment file with all the critical configs for the
+# docker image.
+touch /etc/shaka-lab-github-runner.env
+chmod 600 /etc/shaka-lab-github-runner.env
+cat <<EOF >/etc/shaka-lab-github-runner.env
+# Package configuration for shaka-lab-github-runner.  These are environment
+# variables that are applied to every instance.
+#
+# Please DO NOT EDIT!  Use dpkg-reconfigure shaka-lab-github-runner instead.
+RUNNER_SCOPE=$RUNNER_SCOPE
+$RUNNER_SCOPE_NAME_KEY=$RUNNER_SCOPE_NAME
+LABELS=$LABELS
+ACCESS_TOKEN=$ACCESS_TOKEN
+EOF
+
+# Compute a list of instances based on the desired number of runners.
+INSTANCE_LIST=()
+for i in $(seq 1 $NUMBER_OF_RUNNERS); do
+  INSTANCE_LIST+=(shaka-lab-github-runner@$i.service)
+done
+
+# Create a systemd target that depends on each templated instance.
+# The service template is static and part of the package, but this target
+# definition is dynamic and created after installation and configuration.
+cat <<EOF >/etc/systemd/system/shaka-lab-github-runners.target
+# Meta service to start several instances of the shaka-lab-github-runner@
+# template.  See shaka-lab-github-runner@.service for details.
+#
+# Please DO NOT EDIT!  Use dpkg-reconfigure shaka-lab-github-runner instead.
+
+[Unit]
+Description=Shaka Lab GitHub Runners (meta)
+# Important!  Use "Wants" (not "Requires"), or else a job completing in one
+# instance will trigger the shut down of all other instances!
+Wants=${INSTANCE_LIST[@]}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload service definitions, enable the new target, and start it.
+systemctl daemon-reload
+systemctl enable shaka-lab-github-runners.target
+systemctl start shaka-lab-github-runners.target
