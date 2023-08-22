@@ -21,9 +21,21 @@ PREFIX="shaka-lab-github-runner"
 INSTANCE="$1"
 HOSTNAME=$(hostname)
 
-# Using $INSTANCE in a numeric equals with [ ] (not [[ ]]) is a way to check
-# that $INSTANCE is a number.  Non-numeric values will fail this check.
-if [ "$INSTANCE" -eq "$INSTANCE" ] &>/dev/null; then
+function is_number() {
+  # An easy way to check if a variable contains a number is using [ ] and -eq.
+  # If [ "$X" -eq "$X" ], then $X contains a number.
+  # Typically, [[ ]] is recommended over [ ], for very good reasons.  But you
+  # can only use this numeric equality trick with [ ].  With [[ ]], -eq behaves
+  # differently.
+  local ARG="$1"
+  if [ "$ARG" -eq "$ARG" ] &>/dev/null; then
+    return 0  # Success: it is a number
+  else
+    return 1  # Failure: it isn't a number
+  fi
+}
+
+if is_number "$INSTANCE"; then
   # It's a number!
   true
 else
