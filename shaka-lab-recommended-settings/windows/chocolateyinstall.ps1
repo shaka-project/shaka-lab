@@ -98,6 +98,11 @@ try {
   # NOTE: Needs admin rights
   Install-WindowsUpdate -Confirm:$false
 } catch {
+  # Print the caught exception as an error.
+  # -ErrorAction 'Continue' changes Write-Error's default behavior of
+  # triggering our $ErrorActionPreference setting to stop execution.
   Write-Error $Error[0] -ErrorAction 'Continue'
+
+  # Print advice to the user.
   echo "`nWindows update failed.  Please install updates through the UI.`n"
 }
