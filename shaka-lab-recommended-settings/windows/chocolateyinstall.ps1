@@ -91,6 +91,18 @@ Install-PackageProvider -Name NuGet -Scope CurrentUser -Force | Out-Null
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
 Install-Module PSWindowsUpdate -Scope CurrentUser
-# NOTE: Needs admin rights
-Install-WindowsUpdate -Confirm:$false
 
+# Try to install updates, but don't fail this package installation if Windows
+# Update fails.  That is out of our control.
+try {
+  # NOTE: Needs admin rights
+  Install-WindowsUpdate -Confirm:$false
+} catch {
+  # Print the caught exception as an error.
+  # -ErrorAction 'Continue' changes Write-Error's default behavior of
+  # triggering our $ErrorActionPreference setting to stop execution.
+  Write-Error $Error[0] -ErrorAction 'Continue'
+
+  # Print advice to the user.
+  echo "`nWindows update failed.  Please install updates through the UI.`n"
+}
