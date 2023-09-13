@@ -41,6 +41,10 @@ override_dh_auto_install:
 	# uninstalled.
 	install -m 755 -d "$(PREFIX)/etc/systemd/system"
 	ln -sf /lib/systemd/system/shaka-lab-github-runner@.service "$(PREFIX)/etc/systemd/system/"
+	
+	# Install a script to clean up Docker images so it doesn't fill up the disk.
+	install -m 755 -d "$(PREFIX)/etc/cron.daily"
+	install -m 755 docker-cleanup "$(PREFIX)/etc/cron.daily/"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.
