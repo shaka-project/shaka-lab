@@ -176,7 +176,18 @@ function main() {
   // Update WebDrivers on startup.
   // This has a side-effect of also installing other requirements, such as
   // js-yaml, which we don't load until we need it below.
-  child_process.spawnSync(updateDrivers, /* args= */ [], spawnOptions);
+  const updateProcess = child_process.spawnSync(
+      updateDrivers, /* args= */ [], spawnOptions);
+  if (updateProcess.status) {
+    throw new Error(
+        `Driver update failed with exit code ${updateProcess.status}`);
+  }
+  if (updateProcess.error) {
+    // Hopefully this error object has enough context without us needing to
+    // write a custom message or wrap the Error object in any way.  We haven't
+    // triggered this in the wild yet.
+    throw updateProcess.error;
+  }
 
   const yaml = require('js-yaml');
 

@@ -39,8 +39,10 @@ net start shaka-lab-node
 
 ## Tailing logs
 
-```sh
-powershell -command "Get-Content c:/ProgramData/shaka-lab-node/logs/shaka-lab-node-svc.err.log -Wait"
+In powershell:
+
+```ps1
+Get-Content c:/ProgramData/shaka-lab-node/logs/shaka-lab-node-svc.err.log -Wait
 ```
 
 ## Uninstallation

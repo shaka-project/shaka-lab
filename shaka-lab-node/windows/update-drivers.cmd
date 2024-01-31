@@ -34,6 +34,13 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 call npm update
 if %errorlevel% neq 0 exit /b %errorlevel%
 
+:: Sometimes, msedgedriver hangs and the old version must be killed to update it.
+:: Kill all the common drivers just in case.
+C:\Windows\System32\taskkill.exe /IM msedgedriver.exe /F 2>&1
+C:\Windows\System32\taskkill.exe /IM chromedriver.exe /F 2>&1
+C:\Windows\System32\taskkill.exe /IM chromedriver-android.exe /F 2>&1
+C:\Windows\System32\taskkill.exe /IM geckodriver.exe /F 2>&1
+
 :: Update all drivers.
 call node_modules/.bin/webdriver-installer.cmd .
 if %errorlevel% neq 0 exit /b %errorlevel%
