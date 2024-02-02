@@ -31,6 +31,11 @@ adduser \
 # Don't fail if docker is not installed.
 usermod -a -G docker shaka-lab-node || true
 
+# Grant that user access to plugdev, to be able to talk to USB-connected
+# Android devices via adb.
+# Don't fail if the plugdev group does not exist.
+usermod -a -G plugdev shaka-lab-node || true
+
 # Install NVM, which we don't / shouldn't bundle into the deb package.
 # The location of our NVM installation.
 export NVM_DIR=/opt/shaka-lab/nvm
