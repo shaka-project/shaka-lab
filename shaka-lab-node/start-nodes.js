@@ -30,6 +30,7 @@ let updateDrivers = `${shakaLabNodePath}/update-drivers.sh`;
 let classPathSeparator = ':';
 let exe = '';
 let cmd = '';
+let javaCommand = 'java';
 
 if (process.platform == 'win32') {
   configPath = 'c:/ProgramData/shaka-lab-node/shaka-lab-node-config.yaml';
@@ -39,6 +40,7 @@ if (process.platform == 'win32') {
   classPathSeparator = ';';
   exe = '.exe';
   cmd = '.cmd';
+  javaCommand = 'C:/ProgramData/chocolatey/bin/java.exe';
 } else if (process.platform == 'darwin') {
   configPath = '/etc/shaka-lab-node-config.yaml';
   shakaLabNodePath = '/opt/shaka-lab-node';
@@ -161,7 +163,11 @@ function stopAllProcesses(processes) {
   for (const child of processes) {
     if (child.exitCode == null) {
       // Still running.  Stop it.
-      child.kill();
+      try {
+        child.kill();
+      } catch (error) {
+        // Ignore errors if the process is already dead.
+      }
     }
   }
 }
@@ -231,7 +237,7 @@ function main() {
         template, templatesPath, 'capabilities', `${templateName}.`);
 
     // We always start with the "java" command.
-    const args = ['java'];
+    const args = [javaCommand];
 
     // There may be java definitions to set.
     for (const key in defs) {
@@ -294,11 +300,13 @@ function main() {
 
     const child = child_process.spawn(command, args, spawnOptions);
 
-    child.once('error', () => {
+    child.once('error', (event) => {
+      console.log('Child process errored.', event);
       stopAllProcesses(processes);
       process.exit(1);
     });
-    child.once('exit', () => {
+    child.once('exit', (event) => {
+      console.log('Child process exited.', event);
       stopAllProcesses(processes);
       process.exit(1);
     });
@@ -311,6 +319,7 @@ function main() {
   // Without this, there is no way to shut down a service on macOS explicitly
   // without the keepAlive setting starting it again.
   process.once('SIGTERM', () => {
+    console.log('Received SIGTERM.  Quitting.');
     process.exit(0);
   });
 
@@ -318,6 +327,7 @@ function main() {
   // This seems to help with service shut down on Windows, which would
   // otherwise leave the child processes orphaned and running.
   process.once('exit', () => {
+    console.log('Exit event.');
     stopAllProcesses(processes);
   });
 
