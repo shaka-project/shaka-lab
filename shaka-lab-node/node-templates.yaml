@@ -52,47 +52,72 @@ chrome-android:
     browserName: chrome
     platform: Android
 
+# https://github.com/shaka-project/generic-webdriver-server/tree/main/backends/chromecast#supported-parameters
 chromecast:
   generic-webdriver-server: true
   params:
     - hostname
     - version
+    - receiver-app-id
+    - idle-timeout-seconds
   defs:
     genericwebdriver.browser.name: chromecast
     genericwebdriver.backend.exe: node_modules/.bin/chromecast-webdriver-server$cmd
     genericwebdriver.backend.params.hostname: $hostname
+    genericwebdriver.backend.params.receiver-app-id: $receiver-app-id
+    genericwebdriver.backend.params.idle-timeout-seconds: $idle-timeout-seconds
+    genericwebdriver.backend.params.connection-timeout-seconds: $connection-timeout-seconds
   capabilities:
     browserName: chromecast
     version: $version
 
+# https://github.com/shaka-project/generic-webdriver-server/tree/main/backends/chromeos#supported-parameters
 chromeos:
   generic-webdriver-server: true
   params:
     - hostname
     - version
+    - username
+    - private-key
+    - fetch-private-key
+    - private-key-url
   defs:
     genericwebdriver.browser.name: chromeos
     genericwebdriver.backend.exe: node_modules/.bin/chromeos-webdriver-server$cmd
     genericwebdriver.backend.params.hostname: $hostname
+    genericwebdriver.backend.params.username: $username
+    genericwebdriver.backend.params.private-key: $private-key
+    genericwebdriver.backend.params.fetch-private-key: $fetch-private-key
+    genericwebdriver.backend.params.private-key-url: $private-key-url
   capabilities:
     browserName: chromeos
     version: $version
 
+# https://github.com/shaka-project/generic-webdriver-server/tree/main/backends/tizen#supported-parameters
 tizen:
   generic-webdriver-server: true
   params:
     - hostname
     - ?ethaddr  # optional
     - version
+    - local-tizen-studio
+    - tizen-studio-docker-image
+    - tizen-studio-path
+    - tizen-studio-author-profile
   defs:
     genericwebdriver.browser.name: tizen
     genericwebdriver.backend.exe: node_modules/.bin/tizen-webdriver-server$cmd
     genericwebdriver.backend.params.hostname: $hostname
     genericwebdriver.backend.params.wake-on-lan-address: $ethaddr
+    genericwebdriver.backend.params.local-tizen-studio: $local-tizen-studio
+    genericwebdriver.backend.params.tizen-studio-docker-image: $tizen-studio-docker-image
+    genericwebdriver.backend.params.tizen-studio-path: $tizen-studio-path
+    genericwebdriver.backend.params.tizen-studio-author-profile: $tizen-studio-author-profile
   capabilities:
     browserName: tizen
     version: $version
 
+# https://github.com/shaka-project/generic-webdriver-server/tree/main/backends/xboxone#supported-parameters
 xboxone:
   generic-webdriver-server: true
   params:
