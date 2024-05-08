@@ -58,8 +58,8 @@ chromecast:
   params:
     - hostname
     - version
-    - receiver-app-id
-    - idle-timeout-seconds
+    - ?receiver-app-id  # optional
+    - ?idle-timeout-seconds  # optional
   defs:
     genericwebdriver.browser.name: chromecast
     genericwebdriver.backend.exe: node_modules/.bin/chromecast-webdriver-server$cmd
@@ -77,10 +77,10 @@ chromeos:
   params:
     - hostname
     - version
-    - username
-    - private-key
-    - fetch-private-key
-    - private-key-url
+    - ?username  # optional
+    - ?private-key  # optional
+    - ?fetch-private-key  # optional
+    - ?private-key-url  # optional
   defs:
     genericwebdriver.browser.name: chromeos
     genericwebdriver.backend.exe: node_modules/.bin/chromeos-webdriver-server$cmd
@@ -100,10 +100,10 @@ tizen:
     - hostname
     - ?ethaddr  # optional
     - version
-    - local-tizen-studio
-    - tizen-studio-docker-image
-    - tizen-studio-path
-    - tizen-studio-author-profile
+    - ?local-tizen-studio  # optional
+    - ?tizen-studio-docker-image  # optional
+    - ?tizen-studio-path  # optional
+    - ?tizen-studio-author-profile  # optional
   defs:
     genericwebdriver.browser.name: tizen
     genericwebdriver.backend.exe: node_modules/.bin/tizen-webdriver-server$cmd
