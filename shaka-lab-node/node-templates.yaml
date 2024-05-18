@@ -60,6 +60,8 @@ chromecast:
     - version
     - ?receiver-app-id  # optional
     - ?idle-timeout-seconds  # optional
+    - ?connection-timeout-seconds  # optional
+    - ?redirect=true  # optional, default true
   defs:
     genericwebdriver.browser.name: chromecast
     genericwebdriver.backend.exe: node_modules/.bin/chromecast-webdriver-server$cmd
@@ -67,6 +69,7 @@ chromecast:
     genericwebdriver.backend.params.receiver-app-id: $receiver-app-id
     genericwebdriver.backend.params.idle-timeout-seconds: $idle-timeout-seconds
     genericwebdriver.backend.params.connection-timeout-seconds: $connection-timeout-seconds
+    genericwebdriver.backend.params.redirect: $redirect
   capabilities:
     browserName: chromecast
     version: $version

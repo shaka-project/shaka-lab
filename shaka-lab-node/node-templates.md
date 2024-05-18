@@ -89,7 +89,9 @@ xboxone:
 Here, the template has parameters `hostname`, `username`, `password`, and
 `msbuild`.  The `?` in `?msbuild` indicates that it is an optional parameter.
 The property definitions passed to Selenium then reference those as variables,
-such as `$hostname`, `$username`, etc.
+such as `$hostname`, `$username`, etc.  An optional parameter can also have a
+default value.  For example, to have an optional parameter named `redirect`
+that defaults to `true`, you would specify `?redirect=true`.
 
 
 ## Built-in Variables
