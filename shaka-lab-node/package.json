@@ -1,7 +1,7 @@
 {
   "private": true,
   "dependencies": {
-    "chromecast-webdriver-server": "^1",
+    "chromecast-webdriver-server": "^2",
     "chromeos-webdriver-server": "^1",
     "generic-webdriver-server": "^1",
     "js-yaml": "^4",

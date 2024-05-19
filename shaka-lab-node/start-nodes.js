@@ -120,17 +120,31 @@ function requiredParam(nodeConfig, templateName, paramName) {
 }
 
 /**
+ * @param {string} paramSpec
+ * @return {[string, string]}
+ */
+function parseOptionalParamSpec(paramSpec) {
+  // remove leading '?', split by optional '='
+  const paramSpecParts = paramSpec.substr(1).split('=');
+
+  const paramName = paramSpecParts.shift();
+  const defaultValue = paramSpecParts.length ? paramSpecParts.join('=') : '';
+  return [paramName, defaultValue];
+}
+
+/**
  * Access an optional param from a node config, or return a blank default.
  *
  * @param {Object} nodeConfig
  * @param {string} paramName
+ * @param {string} defaultValue
  * @return {string}
  */
-function optionalParam(nodeConfig, paramName) {
+function optionalParam(nodeConfig, paramName, defaultValue) {
   if (nodeConfig.params && paramName in nodeConfig.params) {
     return nodeConfig.params[paramName];
   }
-  return '';
+  return defaultValue;
 }
 
 /**
@@ -218,8 +232,11 @@ function main() {
         const optional = paramName.startsWith('?');
 
         if (optional) {
-          paramName = paramName.substr(1);  // remove leading '?'
-          params[paramName] = optionalParam(nodeConfig, paramName);
+          let defaultValue;
+          [paramName, defaultValue] = parseOptionalParamSpec(paramName);
+
+          params[paramName] = optionalParam(
+              nodeConfig, paramName, defaultValue);
         } else {
           params[paramName] = requiredParam(
               nodeConfig, templateName, paramName);
@@ -298,6 +315,7 @@ function main() {
   for (const args of nodeCommands) {
     const command = args.shift();
 
+    console.log('Spawning child process:', args);
     const child = child_process.spawn(command, args, spawnOptions);
 
     child.once('error', (event) => {
