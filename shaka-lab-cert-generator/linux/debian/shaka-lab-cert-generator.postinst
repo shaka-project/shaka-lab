@@ -32,10 +32,11 @@ set -e
 # NOTE: db_input returns a non-zero exit code when skipping a question, so we
 # ignore its return value with "|| true".
 
-# The "high" argument is a priority for the config.  All of ours are necessary.
-db_input high shaka-lab-certs/dns_zone || true
-db_input high shaka-lab-certs/google_domains_token || true
-db_input high shaka-lab-certs/cert_host || true
+# The "high" argument is a priority for the config.  This option is necessary.
+db_input high shaka-lab-cert-generator/cert_host || true
+
+# This option is not necessary, so we give the "low" priority for the config.
+db_input low shaka-lab-cert-generator/certbot_args || true
 
 # The "go" command takes all the batched-together questions from "input"
 # commands and displays them, possibly on one screen.
@@ -45,65 +46,87 @@ db_go
 
 # The db_get command will fill config values into the global "RET" variable.
 # Here we extract them into our own variables with useful names.
-db_get shaka-lab-certs/dns_zone
-DNS_ZONE="$RET"
-db_get shaka-lab-certs/google_domains_token
-GOOGLE_DOMAINS_TOKEN="$RET"
-db_get shaka-lab-certs/cert_host
+db_get shaka-lab-cert-generator/cert_host
 CERT_HOST="$RET"
+db_get shaka-lab-cert-generator/certbot_args
+CERTBOT_ARGS="$RET"
 
 
 ### INSTALLATION ###
 
-# Install the authentication plugin for Google Domains.
-if python3 -c "import certbot_dns_google_domains" &>/dev/null; then
-  echo "Certbot authentication plugin for Google Domains already installed."
-else
-  echo "Installing certbot authentication plugin for Google Domains."
-  pip3 install certbot-dns-google-domains
-fi
+# Create a folder for optional SSH configuration to transfer the certificates
+# to another machine.
+mkdir -p /opt/shaka-lab/shaka-lab-cert-generator
 
-if [ ! -e /etc/letsencrypt/google-domains.ini ]; then
-  # Configure the authentication plugin.
-  touch /etc/letsencrypt/google-domains.ini
-  chmod 600 /etc/letsencrypt/google-domains.ini
-  cat <<EOF >/etc/letsencrypt/google-domains.ini
-dns_google_domains_access_token = $GOOGLE_DOMAINS_TOKEN
-dns_google_domains_zone = $DNS_ZONE
-EOF
+chown root:root /opt/shaka-lab
+chmod 755 /opt/shaka-lab
+
+chown root:root /opt/shaka-lab/shaka-lab-cert-generator
+chmod 755 /opt/shaka-lab/shaka-lab-cert-generator
+
+# If there isn't one yet, generate an SSH key to authenticate to another
+# machine.  This is for convenience when an SSH config is added later.
+if [[ ! -f /opt/shaka-lab/shaka-lab-cert-generator/cert-host-id ]]; then
+  ssh-keygen \
+    -q \
+    -f /opt/shaka-lab/shaka-lab-cert-generator/cert-host-id \
+    -N ''
 fi
 
 # Create a "runner" group using the exact GID used by the Docker image we use
 # for the GitHub Actions Runner.  Ignore failures if the group already exists
-# or the GID is already in use.
+# or the GID is already in use.  This provides compatibility with
+# `shaka-lab-github-runner`.
 groupadd -g 121 runner &>/dev/null || true
 
-# Set permissions on letsencrypt:
-chmod 755 /etc/letsencrypt/{archive,live}
-
 # Create a deployment hook script for letsencrypt to set the appropriate
-# permissions on new keys and certs:
+# permissions on new keys and certs and optionally transfer them to another
+# device:
 cat <<EOF >/etc/letsencrypt/renewal-hooks/deploy/shaka-lab-certs.sh
 #!/bin/bash
 
+set -e
+
+# World-readable
+chmod 755 /etc/letsencrypt/{archive,live}
 # World-readable
 chmod 644 /etc/letsencrypt/archive/$CERT_HOST/{cert,chain,fullchain}*
 # Group-readable
 chmod 640 /etc/letsencrypt/archive/$CERT_HOST/privkey*
 # Set the group
 chown root:121 /etc/letsencrypt/archive/$CERT_HOST/*
+
+# Transfer the certs to another machine is configured to do so:
+if [[ -f /opt/shaka-lab/shaka-lab-cert-generator/ssh.config ]]; then
+  echo ""
+  echo "Attempting to transfer certs..."
+
+  if ! scp -F /opt/shaka-lab/shaka-lab-cert-generator/ssh.config \\
+      -r /etc/letsencrypt/{live,archive} \\
+      cert-host:/etc/letsencrypt/; then
+    echo ""
+    echo "*****"
+    echo "Warning: transfer of certs failed!"
+    echo "*****"
+    echo "Please check the SSH config."
+    exit 0
+  fi
+fi
 EOF
 chmod 744 /etc/letsencrypt/renewal-hooks/deploy/shaka-lab-certs.sh
 
 if [ -d "/etc/letsencrypt/archive/$CERT_HOST/" ]; then
   echo "Certs for this domain already exist.  Not calling certbot."
 else
-  # Get your initial certificate.  After this, certbot will automatically renew
-  # the cert before it expires.
+  # Get your initial certificate via DNS challenge and Google Cloud DNS.  After
+  # this, certbot will automatically renew the cert before it expires.
   certbot certonly \
     -n \
     --email shaka-lab@github.io --agree-tos \
-    --authenticator dns-google-domains \
-    --dns-google-domains-credentials /etc/letsencrypt/google-domains.ini \
-    --domains "$CERT_HOST"
+    --dns-google \
+    --domains "$CERT_HOST" \
+    $CERTBOT_ARGS
 fi
+
+# Update permissions and sync certs immediately.
+/etc/letsencrypt/renewal-hooks/deploy/shaka-lab-certs.sh

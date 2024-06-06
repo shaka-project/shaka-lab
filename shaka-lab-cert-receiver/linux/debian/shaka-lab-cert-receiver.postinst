@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+
+# Fail on error
+set -e
+
+
+### INSTALLATION ###
+
+# Create a "runner" group using the exact GID used by the Docker image we use
+# for the GitHub Actions Runner.  Ignore failures if the group already exists
+# or the GID is already in use.  This provides compatibility with
+# `shaka-lab-github-runner`.
+groupadd -g 121 runner &>/dev/null || true
+
+# Create a non-root user for the service.  Add it explicitly to the runner
+# group, and do this by ID, in case the command above failed due to a conflict.
+adduser \
+  --quiet \
+  --system \
+  shaka-lab-cert-receiver \
+  --gid 121 \
+  --home /opt/shaka-lab/shaka-lab-cert-receiver \
+  --shell /bin/bash
+
+# Create the letsencrypt folder, with permissions set for access by this
+# service account and by the runner.
+mkdir -p /etc/letsencrypt
+chmod 750 /etc/letsencrypt
+chown -R shaka-lab-cert-receiver:121 /etc/letsencrypt
+
+# Create a blank authorized_keys file for SSH authorization, to receive the
+# certificates from another machine.
+mkdir -p /opt/shaka-lab/shaka-lab-cert-receiver/.ssh
+chown root:root /opt/shaka-lab/shaka-lab-cert-receiver/.ssh
+chmod 755 /opt/shaka-lab/shaka-lab-cert-receiver/.ssh
+
+touch /opt/shaka-lab/shaka-lab-cert-receiver/.ssh/authorized_keys
+chown root:root /opt/shaka-lab/shaka-lab-cert-receiver/.ssh/authorized_keys
+chmod 644 /opt/shaka-lab/shaka-lab-cert-receiver/.ssh/authorized_keys
