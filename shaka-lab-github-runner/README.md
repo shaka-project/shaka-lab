@@ -84,10 +84,13 @@ workflows.
 ## Certs
 
 If your workflow needs HTTPS certificates (as the Shaka Player testing
-workflows do), then you should also install the
-[`shaka-lab-certs`](../shaka-lab-certs/README.md#readme) package.  If
-`shaka-lab-certs` is installed, the `shaka-lab-github-runner` package will
-automatically make those certs accessible to runners under `/etc/letsencrypt/`.
+workflows do), then you should also look at the
+[`shaka-lab-cert-generator`](../shaka-lab-cert-generator/README.md#readme)
+and possibly
+[`shaka-lab-cert-receiver`](../shaka-lab-cert-receiver/README.md#readme)
+packages.  If one of these is installed, the `shaka-lab-github-runner` package
+will automatically make those certs accessible to runners under
+`/etc/letsencrypt/`.
 
 ## Customization
 

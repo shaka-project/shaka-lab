@@ -129,8 +129,8 @@ Host cert-host
 
 A unique SSH key will be generated for you on installation in
 `/opt/shaka-lab/shaka-lab-cert-generator/`, with the public key in
-`cert-host-id.pub` and the private key in `cert-host-id`.  When using
-the [`shaka-lab-cert-receiver` package](../shaka-lab-cert-receiver/)
+`cert-host-id.pub` and the private key in `cert-host-id`.  When using the
+[`shaka-lab-cert-receiver` package](../shaka-lab-cert-receiver/README.md#readme)
 (recommended) on the receiving device, you should copy the contents of
 `cert-host-id.pub` to the receiving device's
 `/opt/shaka-lab/shaka-lab-cert-receiver/.ssh/authorized_keys`.

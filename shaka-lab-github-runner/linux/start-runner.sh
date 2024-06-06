@@ -77,10 +77,11 @@ for i in /etc/shaka-lab-github-runner.args.d/* \
   extra_docker_args+=($(cat "$i"))
 done
 
-# If shaka-lab-certs is installed, make those certificates available to the
-# runner as a read-only bind mount.  That package already sets ownership such
-# that the runner user in the docker image can read the files.
-if dpkg -s shaka-lab-certs &>/dev/null; then
+# If shaka-lab-cert-{generator,receiver} is installed, make those certificates
+# available to the runner as a read-only bind mount.  That package already sets
+# ownership such that the runner user in the docker image can read the files.
+if dpkg -s shaka-lab-cert-generator &>/dev/null || \
+    dpkg -s shaka-lab-cert-receiver &>/dev/null; then
   extra_docker_args+=(--mount type=bind,src=/etc/letsencrypt,dst=/etc/letsencrypt,ro)
 fi
 

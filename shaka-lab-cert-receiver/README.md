@@ -7,7 +7,7 @@ TLS certificates for HTTPS-based testing, but they have to be generated in one
 place (Google Compute Engine) and consumed elsewhere (in our lab).
 
 For more details, see the
-[`shaka-lab-cert-generator` package](../shaka-lab-cert-generator/).
+[`shaka-lab-cert-generator` package](../shaka-lab-cert-generator/README.md#readme).
 
 This package is available for **Linux only**.
 
@@ -19,7 +19,7 @@ It is assumed that:
 2. The device running `shaka-lab-cert-generator` has a way to SSH into the
    device running `shaka-lab-cert-reciever`.
 3. The device running `shaka-lab-cert-receiver` will host the tests, e.g. with
-   [`shaka-lab-github-runner`](../shaka-lab-github-runner/).
+   [`shaka-lab-github-runner`](../shaka-lab-github-runner/README.md#readme).
 
 ## Installation
 
