@@ -1,0 +1,9 @@
+Template: shaka-lab-cert-generator/cert_host
+Type: string
+Description: Certificate hostname:
+ What is the hostname for your lab certificate?  (ex: testrunner.mylab.foo)
+
+Template: shaka-lab-cert-generator/certbot_args
+Type: string
+Description: Additional Certbot arguments:
+ (optional)

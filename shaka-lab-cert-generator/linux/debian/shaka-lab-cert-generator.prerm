@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Pre-remove script.  Runs as root after package removal.
+
+# DON'T fail on error.  Always keep going!
+set +e
+
+# Remove outdated config files from older versions.
+rm -f /etc/letsencrypt/google-domains.ini
+
+# If the user is purging the package:
+if [ "$1" == "purge" ]; then
+  # Remove all config files.
+  rm -f /etc/letsencrypt/renewal-hooks/deploy/shaka-lab-certs.sh
+  rm -f /opt/shaka-lab/shaka-lab-cert-generator/cert-host-id{,.pub}
+  rmdir /opt/shaka-lab/shaka-lab-cert-generator 2>/dev/null || true
+
+  # Source the debconf library, which gives us functions to read configuration.
+  . /usr/share/debconf/confmodule
+
+  # Get the configured certificate hostname.  db_get writes to "RET", then we
+  # put that into a more readable variable name.
+  db_get shaka-lab-cert-generator/cert_host
+  CERT_HOST="$RET"
+
+  if [ "$CERT_HOST" != "" ]; then
+    # Remove certbot config for the certificate owned by this package.
+    certbot delete --cert-name "$CERT_HOST"
+  fi
+fi

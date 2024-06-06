@@ -1,0 +1,5 @@
+debhelper-build-stamp
+files
+shaka-lab-cert-generator
+shaka-lab-cert-generator.substvars
+*.debhelper

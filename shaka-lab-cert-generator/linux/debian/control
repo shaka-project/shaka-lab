@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Source: shaka-lab-certs
+Source: shaka-lab-cert-generator
 Maintainer: Joey Parrish <joeyparrish@google.com>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
 Build-Depends: debhelper (>= 9)
 
-Package: shaka-lab-certs
+Package: shaka-lab-cert-generator
 Architecture: all
-Depends: certbot, passwd, python3-pip
-Description: Shaka Lab Certs
+Depends: openssh-client, python3-certbot, python3-certbot-dns-google
+Description: Shaka Lab Cert Generator
   Creates and renews certificates for HTTPS-based testing in the Shaka Lab
