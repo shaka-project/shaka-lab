@@ -159,14 +159,14 @@ jobs:
               "start": "express-chocolatey-server *.nupkg"
             },
             "engines": {
-              "node": "16.x.x"
+              "node": "22.x.x"
             }
           }
           EOF
 
           # Create the app.yaml definition for App Engine.
           cat >app.yaml <<EOF
-          runtime: nodejs16
+          runtime: nodejs22
           handlers:
             - url: /.*
               secure: always
