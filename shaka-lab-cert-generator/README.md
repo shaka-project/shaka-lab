@@ -10,6 +10,9 @@ a Google Compute Engine VM** with a default service account.  This works around
 any organizational policies in Google Cloud that might prevent you from
 exporting service account keys.  (This is relevant for Shaka at Google.)
 
+This also expects that **Google Cloud DNS is preconfigured** for the domain on
+**the same Google Cloud Platform project**.
+
 _This package offers support for additional arguments to certbot to enable power
 users to run it in other contexts.  But the intended environment of Google
 Compute Engine is the only one we use for Shaka._
