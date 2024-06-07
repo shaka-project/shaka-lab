@@ -34,19 +34,45 @@ cat <<EOF >/etc/apt/sources.list.d/google-chrome.list
 deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
 EOF
 
-# Configure the package repo where we can get Firefox stable (not LTS as
-# packaged by Ubuntu official repos).
-add-apt-repository -n -y ppa:mozillateam/ppa
-# Make sure the PPA version overrides the Ubuntu official version.
-cat <<EOF >/etc/apt/preferences.d/mozillateamppa
+if dpkg-vendor --derives-from Ubuntu; then
+  # This branch is Ubuntu.  Use the Firefox PPA.
+
+  # Configure the package repo where we can get Firefox stable (not LTS as
+  # packaged by Ubuntu official repos).
+  add-apt-repository -n -y ppa:mozillateam/ppa
+
+  # Make sure the PPA version overrides the Ubuntu official version.
+  cat <<EOF >/etc/apt/preferences.d/mozillateamppa
 Package: firefox*
 Pin: release o=LP-PPA-mozillateam
 Pin-Priority: 501
 EOF
-# Make sure that unattended upgrades pull from this alternate repo, as well.
-cat <<EOF >/etc/apt/apt.conf.d/51unattended-upgrades-firefox
+
+  # Make sure that unattended upgrades pull from this alternate repo, as well.
+  cat <<EOF >/etc/apt/apt.conf.d/51unattended-upgrades-firefox
 Unattended-Upgrade::Allowed-Origins:: "LP-PPA-mozillateam:\${distro_codename}";
 EOF
+else
+  # This branch is Debian.  Use Debian-specific instructions from Mozilla.
+
+  # Create the keyring folder if missing.
+  install -d -m 0755 /etc/apt/keyrings
+
+  # Install the signing key.
+  wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- \
+      > etc/apt/keyrings/packages.mozilla.org.asc
+
+  # Configure the package source.
+  echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
+      > /etc/apt/sources.list.d/mozilla.list
+
+  # Configure APT to prioritize packages from the Mozilla repository.
+  cat <<EOF >/etc/apt/preferences.d/mozilla
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+EOF
+fi
 
 # Install the package signing key from Microsoft Edge.
 curl -L https://packages.microsoft.com/keys/microsoft.asc \
