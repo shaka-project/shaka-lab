@@ -5,7 +5,7 @@
     "chromeos-webdriver-server": "^1",
     "generic-webdriver-server": "^1",
     "js-yaml": "^4",
-    "tizen-webdriver-server": "^1",
+    "tizen-webdriver-server": "^2",
     "webdriver-installer": "^1",
     "xbox-one-webdriver-server": "^1"
   }
