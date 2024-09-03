@@ -5,6 +5,14 @@ Requires=docker.service
 PartOf=shaka-lab-github-runners.target
 
 [Service]
+# Wait this long for the service to start up (0 disables timeouts)
 TimeoutStartSec=0
+# Always restart (meaning under all exit conditions, still limited in number
+# by StartLimit* options)
 Restart=always
+# Wait this long before restarting
+RestartSec=30s
+# This removes any limit on the number of retries
+StartLimitInterval=0
+# What to start
 ExecStart=/opt/shaka-lab/shaka-lab-github-runner/start-runner.sh %i
