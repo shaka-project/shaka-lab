@@ -196,8 +196,13 @@ function main() {
   // Update WebDrivers on startup.
   // This has a side-effect of also installing other requirements, such as
   // js-yaml, which we don't load until we need it below.
+  const updateSpawnOptions = Object.assign({}, spawnOptions);
+  if (process.platform == 'win32') {
+    // To run the .cmd script in the latest nodejs, you must pass shell=true.
+    updateSpawnOptions.shell = true;
+  }
   const updateProcess = child_process.spawnSync(
-      updateDrivers, /* args= */ [], spawnOptions);
+      updateDrivers, /* args= */ [], updateSpawnOptions);
   if (updateProcess.status) {
     throw new Error(
         `Driver update failed with exit code ${updateProcess.status}`);
