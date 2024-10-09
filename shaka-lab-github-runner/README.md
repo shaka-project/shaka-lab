@@ -119,6 +119,13 @@ them in text files inside `/etc/shaka-lab-github-runner.args.d/`.
 To add Docker command line arguments that apply to specific runner instances,
 add them in text files inside `/etc/shaka-lab-github-runner@$INSTANCE.args.d/`.
 
+To support nested containers, put this in
+`/etc/shaka-lab-github-runner.args.d/docker-nested`:
+
+```
+-v /var/run/docker.sock:/var/run/docker.sock
+```
+
 ## Updates
 
 ```sh
