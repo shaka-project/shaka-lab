@@ -48,8 +48,9 @@ RUNNER_NAME="$HOSTNAME-$(printf %03d $INSTANCE)"
 # Container name shown locally in Docker.  Same padding.
 CONTAINER_NAME="$PREFIX-$(printf %03d $INSTANCE)"
 # The Docker image we run.
-# This is from https://github.com/myoung34/docker-github-actions-runner
-DOCKER_IMAGE="myoung34/github-runner:latest"
+# Source: https://github.com/myoung34/docker-github-actions-runner
+# Tags: https://hub.docker.com/r/myoung34/github-runner/tags
+DOCKER_IMAGE="myoung34/github-runner:ubuntu-noble"
 
 # It's okay if these cleanup commands fail.  The container may not exist if
 # cleanup was successful last time.
