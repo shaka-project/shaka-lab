@@ -42,5 +42,6 @@ C:\Windows\System32\taskkill.exe /IM chromedriver-android.exe /F 2>&1
 C:\Windows\System32\taskkill.exe /IM geckodriver.exe /F 2>&1
 
 :: Update all drivers.
+SET PATH=%PATH%;C:\Windows\System32\WindowsPowerShell\v1.0
 call node_modules/.bin/webdriver-installer.cmd .
 if %errorlevel% neq 0 exit /b %errorlevel%
