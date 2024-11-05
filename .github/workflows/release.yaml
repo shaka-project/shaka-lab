@@ -22,7 +22,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -98,7 +98,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set version number
         shell: bash
@@ -192,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out tap repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: '${{ secrets.HOMEBREW_TAP_REPO }}'
           fetch-depth: 0  # The entire repo history, so we can push an update
@@ -208,7 +208,7 @@ jobs:
       - name: Check out source repo
         # This puts the source repo contents at the expected location in the
         # tap repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: shaka-lab-source
 
