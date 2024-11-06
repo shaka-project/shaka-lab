@@ -86,43 +86,59 @@ if dpkg -s shaka-lab-cert-generator &>/dev/null || \
   extra_docker_args+=(--mount type=bind,src=/etc/letsencrypt,dst=/etc/letsencrypt,ro)
 fi
 
-# To support nested containers in self-hosted workflows, certain folders
-# expected by GitHub Actions must be consistently mapped from the outer host to
-# the first container.  To keep workflows ephemeral, we also wipe these before
-# every run.
+# This matches what GitHub runner expects, and is the necessary value for
+# nested container support.
 RUNNER_WORKDIR=/home/runner/work
-MAPPED_FOLDERS=(
-  $RUNNER_WORKDIR
-  /opt/hostedtoolcache
-)
-for i in "${MAPPED_FOLDERS[@]}"; do
-  rm -rf "$i"
-  mkdir -p "$i"
-  extra_docker_args+=(--mount type=bind,src="$i",dst="$i")
-done
 
-# This folder already exists inside the container image, but we want to keep our
-# own copy of it at the host level.  This will allow it to be correctly mapped
-# to nested containers, and modified if necessary.
-EXTERNALS=/actions-runner/externals
-rm -rf "$EXTERNALS"
-mkdir -p "$EXTERNALS"
-
-# Create a temporary docker container to extract these files.
+# Make sure we have the required Docker image/tag, and the latest version of it.
 docker pull "$DOCKER_IMAGE"
-docker container create --name "$CONTAINER_NAME" "$DOCKER_IMAGE"
 
-# Copy "$EXTERNALS" itself from the container into the local parent of the same.
-# This is because "docker cp" doesn't do wildcards, so you can't copy "e/* e/".
-docker cp "$CONTAINER_NAME":"$EXTERNALS" "$EXTERNALS"/..
+# Extract the value of shaka-lab-github-runner/support_nested_containers from
+# debian package configuration.
+SUPPORT_NESTED_CONTAINERS=$(debconf-get-selections 2>/dev/null | grep shaka-lab-github-runner/support_nested_containers | awk '{print $4}')
 
-# Clean up the temporary container.
-docker container rm "$CONTAINER_NAME"
+# Add extra arguments necessary for nested containers, if requested.
+if [[ "$SUPPORT_NESTED_CONTAINERS" == "true" ]]; then
+  # To support nested containers in self-hosted workflows, certain folders
+  # expected by GitHub Actions must be consistently mapped from the outer host
+  # to the first container.  To keep workflows ephemeral, we also wipe these
+  # before every run.
+  MAPPED_FOLDERS=(
+    $RUNNER_WORKDIR
+    /opt/hostedtoolcache
+  )
+  for i in "${MAPPED_FOLDERS[@]}"; do
+    rm -rf "$i"
+    mkdir -p "$i"
+    extra_docker_args+=(--mount type=bind,src="$i",dst="$i")
+  done
 
-# Create a special mount for this folder.
-extra_docker_args+=(--mount type=bind,src="$EXTERNALS",dst="$EXTERNALS",ro)
+  # This folder already exists inside the container image, but we want to keep
+  # our own copy of it at the host level.  This will allow it to be correctly
+  # mapped to nested containers, and modified if necessary.
+  EXTERNALS=/actions-runner/externals
+  rm -rf "$EXTERNALS"
+  mkdir -p "$EXTERNALS"
 
-# Start a docker container.
+  # Create a temporary docker container to extract these files.
+  docker container create --name "$CONTAINER_NAME" "$DOCKER_IMAGE"
+
+  # Copy "$EXTERNALS" itself from the container into the local parent of the
+  # same.  This is because "docker cp" doesn't do wildcards, so you can't copy
+  # "e/* e/".
+  docker cp "$CONTAINER_NAME":"$EXTERNALS" "$EXTERNALS"/..
+
+  # Clean up the temporary container.
+  docker container rm "$CONTAINER_NAME"
+
+  # Create a special mount for this folder.
+  extra_docker_args+=(--mount type=bind,src="$EXTERNALS",dst="$EXTERNALS",ro)
+
+  # Create a special bind for the docker socket.
+  extra_docker_args+=(-v /var/run/docker.sock:/var/run/docker.sock)
+fi
+
+# Start the docker container.
 #   --rm: Remove the container when it shuts down.
 #   --name: The name of the container.
 #   --network host: Use the host directly for networking, rather than NAT.
