@@ -74,6 +74,7 @@ db_go
 db_input high shaka-lab-github-runner/access_token || true
 db_input high shaka-lab-github-runner/labels || true
 db_input high shaka-lab-github-runner/number_of_runners || true
+db_input high shaka-lab-github-runner/support_nested_containers || true
 db_go
 
 # Now we should have all necessary configuration.
@@ -87,6 +88,8 @@ db_get shaka-lab-github-runner/labels
 LABELS="$RET"
 db_get shaka-lab-github-runner/number_of_runners
 NUMBER_OF_RUNNERS="$RET"
+db_get shaka-lab-github-runner/support_nested_containers
+SUPPORT_NESTED_CONTAINERS="$RET"
 
 
 ### INSTALLATION ###

@@ -35,3 +35,9 @@ Template: shaka-lab-github-runner/number_of_runners
 Type: string
 Description: Number of runner instances
  The number of runner instances to launch in parallel.
+
+Template: shaka-lab-github-runner/support_nested_containers
+Type: boolean
+Description: Support nested containers?
+ If true, support nested containers.  Incompatible with multiple runner
+ instances on the same host.
