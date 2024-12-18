@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
 
       - name: Install deps
         run: |
@@ -99,6 +100,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set version number
         shell: bash
@@ -196,6 +199,8 @@ jobs:
         with:
           repository: '${{ secrets.HOMEBREW_TAP_REPO }}'
           fetch-depth: 0  # The entire repo history, so we can push an update
+          # To push to this repo, an explicit token is used to authenticate.
+          persist-credentials: false
 
       - name: Wipe source and formula folders
         run: |
@@ -211,6 +216,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: shaka-lab-source
+          persist-credentials: false
 
       - name: Finish staging tap repo
         run: |
