@@ -74,7 +74,7 @@ jobs:
           gpg -o staging/public.key --armor --export nomail@shakalab.rocks
 
       - name: Upload packages
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: staging
 
