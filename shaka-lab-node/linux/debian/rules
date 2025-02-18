@@ -38,6 +38,7 @@ override_dh_auto_install:
 	install -m 644 ../start-nodes.js "$(DESTDIR)/shaka-lab-node/"
 	install -m 644 ../node-templates.yaml "$(DESTDIR)/shaka-lab-node/"
 	install -m 755 update-drivers.sh "$(DESTDIR)/shaka-lab-node/"
+	install -m 755 update-node.sh "$(DESTDIR)/shaka-lab-node/"
 	install -m 755 start-nodes.sh "$(DESTDIR)/shaka-lab-node/"
 	
 	install -m 755 -d "$(PREFIX)/etc"
