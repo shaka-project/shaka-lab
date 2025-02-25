@@ -34,11 +34,11 @@
 	<key>CFBundleIconFile</key>
 	<string>ApplicationStub</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.apple.automator.shaka-lab-node</string>
+	<string>com.apple.automator.shaka-lab-node-update-drivers</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>shaka-lab-node</string>
+	<string>shaka-lab-node-update-drivers</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
