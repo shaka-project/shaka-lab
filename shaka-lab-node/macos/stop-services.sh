@@ -13,19 +13,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Run this script as root if you're not already.
-if [[ "$EUID" != "0" ]]; then
-  exec sudo "$0"
+# Fail on error
+set -e
+
+# Get the user ID currently logged in on the GUI.
+GUI_UID=$(stat -f "%Du" /dev/console)
+
+# Run this script as the GUI user via sudo if you're not already the GUI user.
+if [[ "$EUID" != "$GUI_UID" ]]; then
+  exec sudo -u "#$GUI_UID" "$0"
 fi
 
-# Get the user currently logged in on the GUI.
-GUI_USER=$(stat -f "%Su" /dev/console)
-GUI_HOME=$(eval "echo ~$GUI_USER")
+PID_FILE=/opt/shaka-lab-node/shaka-lab-node.pid
 
-# Stop and unload the services.
-sudo -u $GUI_USER launchctl unload $GUI_HOME/Library/LaunchAgents/shaka-lab-node-update.plist
-sudo -u $GUI_USER launchctl unload $GUI_HOME/Library/LaunchAgents/shaka-lab-node-service.plist
+if [[ -e "$PID_FILE" ]]; then
+  # The ID of the log-wrapper process, which is also the process group ID for
+  # all processes beneath that.
+  PROCESS_GROUP_ID=$(cat $PID_FILE)
+  # The parent process of that group, the Automator app.
+  AUTOMATOR_PROCESS_ID=$(ps -o ppid= -p $PROCESS_GROUP_ID || true)
 
-# Unlink the service definitions.
-rm -f $GUI_HOME/Library/LaunchAgents/shaka-lab-node-update.plist
-rm -f $GUI_HOME/Library/LaunchAgents/shaka-lab-node-service.plist
+  # Kill the group, as well as the Automator app, ignoring errors.
+  # The negative number is interpreted by kill as a group ID instead of a
+  # process ID, so it will kill everything in the group.
+  echo "Stopping services..."
+  kill -s TERM -- -$PROCESS_GROUP_ID $AUTOMATOR_PROCESS_ID 2>/dev/null || true
+
+  rm -f "$PID_FILE"
+fi
