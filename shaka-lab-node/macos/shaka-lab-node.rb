@@ -52,6 +52,14 @@ cask "shaka-lab-node" do
   # The destination folder of most shaka-lab-node files.
   destination = "/opt/shaka-lab-node"
 
+  # Install a launchd service to update the drivers.
+  service do
+    run ["/usr/bin/open", "-n", "/Applications/shaka-lab-node-update-drivers.app"]
+    # Run daily at 1am
+    run_type :cron
+    cron "0 1 * * *"
+  end
+
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
   preflight do
@@ -97,7 +105,9 @@ cask "shaka-lab-node" do
     sudo_install "#{source_root}/shaka-lab-node/package.json", destination
     sudo_install "#{source_root}/shaka-lab-node/start-nodes.js", destination
     for path in Dir.glob("#{source_root}/shaka-lab-node/macos/*") do
-      sudo_install path, destination
+      unless path.end_with?(".app")
+        sudo_install path, destination
+      end
     end
     # Mark the shell scripts as executable.
     for path in Dir.glob("#{source_root}/shaka-lab-node/macos/*.sh") do
@@ -113,7 +123,6 @@ cask "shaka-lab-node" do
     # Certain files need hard-coded paths to node.js, which is installed under
     # a variable Homebrew prefix.  So replace the string "$HOMEBREW_PREFIX"
     # with the current prefix (in the HOMEBREW_PREFIX variable).
-    sudo_inreplace "#{destination}/shaka-lab-node-service.plist", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
     sudo_inreplace "#{destination}/update-drivers.sh", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
 
     # Service logs go here, so make sure the folder exists:
@@ -135,6 +144,20 @@ cask "shaka-lab-node" do
       "/etc/newsyslog.d/",
     ], sudo: true
 
+    # Copy the .app bundles to /Applications/
+    system_command "/bin/cp", args: [
+      "-R",
+      "#{source_root}/shaka-lab-node/macos/shaka-lab-node.app",
+      "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update-drivers.app",
+      "/Applications/",
+    ], sudo: true
+
+    # Set shaka-lab-node to start on login.
+    system_command "/usr/bin/osascript", args: [
+      "-e",
+      "tell application \"System Events\" to make login item at end with properties {path:\"/Applications/shaka-lab-node.app\", hidden:false}",
+    ]
+
     # Now start/restart the services.
     puts "Restarting services..."
     system_command "#{destination}/restart-services.sh", sudo: true
@@ -151,6 +174,8 @@ cask "shaka-lab-node" do
       "-rf",
       "#{destination}",
       "/etc/newsyslog.d/shaka-lab-node-logrotate.conf",
+      "/Applications/shaka-lab-node.app",
+      "/Applications/shaka-lab-node-update-drivers.app",
     ], sudo: true
   end
 end
