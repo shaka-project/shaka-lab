@@ -2,29 +2,29 @@
 A config file for the DNS server.
 This defines the records for reverse lookups (IP to name) for the lab network.
 -#}
-{% set output_path = '/etc/bind/db.lab.reverse' %}
+{% set output_path = '/etc/bind/db.lab.shaka.reverse' %}
 {% set service_reload = 'systemctl reload-or-restart named' %}
 $ORIGIN .
 $TTL 86400	; 1 day
 {% set reverse_domain = lan_subnet.split('.')[0:3]|reverse()|join('.') %}
-{{ reverse_domain }}.in-addr.arpa	IN SOA	dns.lab. shaka.lab. (
+{{ reverse_domain }}.in-addr.arpa	IN SOA	dns.lab.shaka. shaka.lab.shaka. (
 				1263527841 ; serial
 				10800      ; refresh (3 hours)
 				3600       ; retry (1 hour)
 				604800     ; expire (1 week)
 				38400      ; minimum (10 hours 40 minutes)
 				)
-			NS	gateway.lab.
+			NS	gateway.lab.shaka.
 
 $ORIGIN {{ reverse_domain }}.in-addr.arpa.
 
-{{ lan_ip.split('.')[-1] }}	PTR	gateway.lab.
+{{ lan_ip.split('.')[-1] }}	PTR	gateway.lab.shaka.
 {% if lan_ip != lan_router %}
-{{ lan_router.split('.')[-1] }}	PTR	router.lab.
+{{ lan_router.split('.')[-1] }}	PTR	router.lab.shaka.
 {% endif %}
 
 $TTL 300	; 5 minutes
 
 {% for name, specs in devices.items() %}
-{{ specs.ip.split('.')[-1] }}	PTR	{{ name }}.lab.
+{{ specs.ip.split('.')[-1] }}	PTR	{{ name }}.lab.shaka.
 {% endfor %}
