@@ -4,7 +4,7 @@ The node configuration file is called `shaka-lab-node-config.yaml`, and lives
 in a different location per platform:
 
  - Linux: `/etc/shaka-lab-node-config.yaml`
- - Windows: `c:\ProgramData\shaka-lab-node\node-config.yaml`
+ - Windows: `c:\ProgramData\shaka-lab-node\shaka-lab-node-config.yaml`
  - macOS (Arm): `/opt/homebrew/etc/shaka-lab-node-config.yaml`
  - macOS (Intel): `/usr/local/etc/shaka-lab-node-config.yaml`
 
