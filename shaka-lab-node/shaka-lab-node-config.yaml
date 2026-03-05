@@ -24,6 +24,10 @@ hub: http://127.0.0.1:4444/
 # properly registered.
 #host: 192.168.1.55
 
+# Optional: Restart the nodes daily to maintain stability.
+# Specify a specific UTC time in "HH:MM" format.
+#daily_restart: "03:00"
+
 # The Selenium nodes to create.  Customize this to your lab devices.
 # Any regular browser you enable will have to be installed separately.
 nodes:

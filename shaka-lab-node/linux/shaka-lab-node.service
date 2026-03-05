@@ -24,6 +24,7 @@ Type=simple
 User=shaka-lab-node
 ExecStart=/opt/shaka-lab/shaka-lab-node/start-nodes.sh
 Restart=always
+SuccessExitStatus=2
 
 [Install]
 WantedBy=multi-user.target
