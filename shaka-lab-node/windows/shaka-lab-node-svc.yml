@@ -15,6 +15,7 @@
 # Node service definition for the tool WinSW: https://github.com/winsw/winsw
 
 # NOTE that we are using WinSW v2, not v3, which uses XML configs only.
+# See https://github.com/winsw/winsw/blob/v2/doc/yamlConfigFile.md
 
 # NOTE also that the upstream documentation for winsw is mistaken.  They use
 # lowercase, but camelcase is required.
@@ -27,6 +28,12 @@ executable: C:\Program Files\nodejs\node.exe
 arguments: C:\ProgramData\chocolatey\lib\shaka-lab-node\start-nodes.js
 workingDirectory: C:\ProgramData\shaka-lab-node\
 stopParentProcessFirst: true  # Shut down by killing the parent process
+
+# Restart the service on failure (non-zero exit code).
+# This is required for the daily restart feature to work on Windows.
+onFailure:
+  - action: restart
+    delay: 10 sec
 
 env:
   # Since the main script and modules live in different places, we need an

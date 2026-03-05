@@ -105,36 +105,73 @@ function main() {
     process.exit(1);
   }
 
-  const child = child_process.spawn(command, commandArgs, {
-    // Ignore stdin, but capture stdout and stderr as pipes.
-    stdio: ['ignore', 'pipe', 'pipe'],
-    // Make sure children are attached to the parent.
-    detached: false,
-  });
+  let child = null;
+  let quitting = false;
 
-  child.once('error', (error) => {
-    console.log('Failed to spawn child process!');
-    console.log(error);
-  });
-  child.once('spawn', () => {
-    console.log('Child process started:', [command].concat(commandArgs));
-  });
+  const spawnChild = () => {
+    if (quitting) {
+      return;
+    }
 
-  child.stdout.on('data', (chunk) => writeToLog(stdoutLogFd, chunk));
-  child.stderr.on('data', (chunk) => writeToLog(stderrLogFd, chunk));
-  child.stdout.resume();
-  child.stderr.resume();
+    child = child_process.spawn(command, commandArgs, {
+      // Ignore stdin, but capture stdout and stderr as pipes.
+      stdio: ['ignore', 'pipe', 'pipe'],
+      // Make sure children are attached to the parent.
+      detached: false,
+    });
+
+    child.once('error', (error) => {
+      console.log('Failed to spawn child process!');
+      console.log(error);
+    });
+    child.once('spawn', () => {
+      console.log('Child process started:', [command].concat(commandArgs));
+    });
+
+    child.stdout.on('data', (chunk) => writeToLog(stdoutLogFd, chunk));
+    child.stderr.on('data', (chunk) => writeToLog(stderrLogFd, chunk));
+    child.stdout.resume();
+    child.stderr.resume();
+
+    child.once('exit', (code, signal) => {
+      console.log(`Child process exited with code ${code}, signal ${signal}.`);
+      child = null;
+      if (!quitting) {
+        console.log('Restarting child in 5s...');
+        setTimeout(spawnChild, 5000);
+      }
+    });
+  };
+
+  spawnChild();
 
   process.on('SIGHUP', () => {
     console.log('Received SIGHUP, reopening log files.');
     reopenLogs();
   });
 
+  // Handle termination signals to quit gracefully.
+  const quit = () => {
+    console.log('Quitting log-wrapper.');
+    quitting = true;
+    if (child && child.exitCode == null) {
+      child.once('exit', () => process.exit(0));
+      child.kill();
+      // Fallback in case the child hangs.
+      setTimeout(() => process.exit(0), 1000);
+    } else {
+      process.exit(0);
+    }
+  };
+
+  process.once('SIGINT', quit);
+  process.once('SIGTERM', quit);
+
   // When _this_ process stops...
   process.once('exit', () => {
-    console.log('Exitting.');
+    console.log('Exiting.');
 
-    if (child.exitCode == null) {
+    if (child && child.exitCode == null) {
       // Still running.  Stop it.
       child.kill();
     }

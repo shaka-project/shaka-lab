@@ -148,6 +148,37 @@ function optionalParam(nodeConfig, paramName, defaultValue) {
 }
 
 /**
+ * Calculate the number of milliseconds until the next occurrence of a specific
+ * UTC time.
+ *
+ * @param {string} utcTimeStr A time in "HH:MM" format (UTC)
+ * @return {number}
+ */
+function getMsUntilNextOccurrence(utcTimeStr) {
+  const parts = utcTimeStr.split(':');
+  if (parts.length != 2) {
+    console.error(`Invalid daily_restart time format: "${utcTimeStr}". ` +
+                  'Expected "HH:MM".');
+    process.exit(1);
+  }
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  if (isNaN(hours) || isNaN(minutes) ||
+      hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    console.error(`Invalid daily_restart time: "${utcTimeStr}".`);
+    process.exit(1);
+  }
+
+  const now = new Date();
+  const next = new Date(now);
+  next.setUTCHours(hours, minutes, 0, 0);
+  if (next <= now) {
+    next.setUTCDate(next.getUTCDate() + 1);
+  }
+  return next.getTime() - now.getTime();
+}
+
+/**
  * Substitute parameters (such as "$exe") into a config's string value.
  *
  * @param {string} string
@@ -313,6 +344,18 @@ function main() {
     args.push('-capabilities', capabilitiesArray.join(','));
 
     nodeCommands.push(args);
+  }
+
+  // Schedule a daily restart to maintain stability.
+  const dailyRestart = config['daily_restart'];
+
+  if (dailyRestart && typeof dailyRestart == 'string') {
+    const msUntilRestart = getMsUntilNextOccurrence(dailyRestart);
+    console.log(`Scheduling restart in ${msUntilRestart / 1000}s`);
+    setTimeout(() => {
+      console.log('Restart time reached. Exiting.');
+      process.exit(2);
+    }, msUntilRestart);
   }
 
   // Launch the node commands.  If any of them fail, shut down the others.

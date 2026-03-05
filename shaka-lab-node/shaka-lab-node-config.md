@@ -50,6 +50,21 @@ This field is optional, but may be necessary for systems with multiple IPs.
 Devices running Docker or using VPNs are very likely to have multiple IPs.
 
 
+## Daily Restart
+
+The nodes can be scheduled to restart daily to maintain stability.  You can
+specify a fixed UTC time for the restart:
+
+```yaml
+# Optional: Restart the nodes daily at 03:00 UTC.
+daily_restart: "03:00"
+```
+
+When the restart time is reached, the `shaka-lab-node` process will exit, and the
+OS's service manager will restart it.  If this field is omitted, the nodes will
+run indefinitely.
+
+
 ## Template Instantiation
 
 The details of Selenium configuration are kept in templates (see
