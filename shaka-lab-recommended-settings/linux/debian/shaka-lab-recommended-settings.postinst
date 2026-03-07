@@ -20,7 +20,13 @@
 set -e
 
 # Reload sshd after installing new sshd configs.
-systemctl reload-or-restart sshd
+if systemctl cat ssh &>/dev/null; then
+  # Since Ubuntu 24.04
+  systemctl reload-or-restart ssh
+else
+  # In Ubuntu 22.04 and earlier
+  systemctl reload-or-restart sshd
+fi
 
 # Configure additional apt repositories for third-party browser packages.
 # This makes it possible to then install the shaka-lab-browsers metapackage,
