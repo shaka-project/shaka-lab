@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Root LaunchDaemon for the loopback HTTP CONNECT proxy.
+
+  It MUST be a root daemon (installed in /Library/LaunchDaemons and loaded into
+  the system domain), because root daemons are exempt from macOS Local Network
+  Privacy. Running it as a per-user LaunchAgent would re-introduce the gating
+  this proxy exists to avoid.
+
+  The path to node uses "$HOMEBREW_PREFIX", which the package install replaces
+  with the real Homebrew prefix (/opt/homebrew on Apple Silicon, /usr/local on
+  Intel). If you load this by hand, substitute the output of "command -v node"
+  first.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>io.github.shaka-project.shaka-lab-node.local-network-proxy</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>$HOMEBREW_PREFIX/bin/node</string>
+    <string>/opt/shaka-lab-node/local-network-proxy.js</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PROXY_PORT</key>
+    <string>1080</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/opt/shaka-lab-node/logs/local-network-proxy.log</string>
+  <key>StandardErrorPath</key>
+  <string>/opt/shaka-lab-node/logs/local-network-proxy.log</string>
+</dict>
+</plist>

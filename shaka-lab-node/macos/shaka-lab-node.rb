@@ -128,6 +128,22 @@ cask "shaka-lab-node" do
     # Service logs go here, so make sure the folder exists:
     sudo_mkdir_p "#{destination}/logs"
 
+    # Install and load the loopback proxy LaunchDaemon.  It works around macOS
+    # Local Network Privacy, which otherwise blocks the test browser from
+    # reaching lab hosts.  It must be a root daemon for the privacy exemption.
+    # See local-network-privacy.md.  Its plist references "$HOMEBREW_PREFIX" for
+    # the path to node, which we replace with the real prefix here.
+    proxy_plist = "/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist"
+    sudo_install "#{source_root}/shaka-lab-node/macos/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist", proxy_plist
+    sudo_inreplace proxy_plist, "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
+    # Reload it.  Tolerate "not loaded" on a first install.
+    begin
+      system_command "/bin/launchctl", args: ["bootout", "system", proxy_plist], sudo: true
+    rescue StandardError
+      # Was not loaded yet; ignore.
+    end
+    system_command "/bin/launchctl", args: ["bootstrap", "system", proxy_plist], sudo: true
+
     # Get the user currently logged in on the GUI.
     GUI_USER = `stat -f "%Su" /dev/console`.strip
 
@@ -169,6 +185,15 @@ cask "shaka-lab-node" do
     system_command "#{destination}/stop-services.sh", sudo: true
     puts "Done!"
 
+    # Unload the loopback proxy LaunchDaemon before removing it.  Tolerate it
+    # already being unloaded.
+    proxy_plist = "/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist"
+    begin
+      system_command "/bin/launchctl", args: ["bootout", "system", proxy_plist], sudo: true
+    rescue StandardError
+      # Already unloaded; ignore.
+    end
+
     # Remove the main installation and symlinks.
     system_command "/bin/rm", args: [
       "-rf",
@@ -176,6 +201,7 @@ cask "shaka-lab-node" do
       "/etc/newsyslog.d/shaka-lab-node-logrotate.conf",
       "/Applications/shaka-lab-node.app",
       "/Applications/shaka-lab-node-update-drivers.app",
+      proxy_plist,
     ], sudo: true
   end
 end
