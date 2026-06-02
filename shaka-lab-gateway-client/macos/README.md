@@ -21,6 +21,7 @@ to join the domain.
 
 ```sh
 brew tap shaka-project/shaka-lab
+brew trust shaka-project/shaka-lab
 brew install shaka-lab-gateway-client
 ```
 

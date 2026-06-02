@@ -13,7 +13,7 @@ This is the macOS package.
 
 ```sh
 brew tap shaka-project/shaka-lab
-brew tap homebrew/cask-versions
+brew trust shaka-project/shaka-lab
 brew install shaka-lab-browsers
 ```
 

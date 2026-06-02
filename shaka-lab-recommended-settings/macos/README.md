@@ -18,6 +18,7 @@ This is the macOS package.
 
 ```sh
 brew tap shaka-project/shaka-lab
+brew trust shaka-project/shaka-lab
 brew install shaka-lab-recommended-settings
 ```
 
