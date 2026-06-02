@@ -17,13 +17,13 @@
 # Stop on all errors.
 $ErrorActionPreference = "Stop"
 
-# Unregister the scheduled WebDriver update task (if installed).
+# Remove the obsolete nightly WebDriver update task if a previous version
+# installed it.  Driver updates now happen on service startup (including the
+# daily restart), so the separate scheduled task is no longer used.
 $task = Get-ScheduledTask | Where-Object -FilterScript { $_.TaskName -eq "shaka-lab-node-update" }
 if ($task) {
-  echo "Unregistering WebDriver update task..."
+  echo "Removing obsolete WebDriver update task..."
   Unregister-ScheduledTask `
       -TaskName shaka-lab-node-update `
       -Confirm:$false
-} else {
-  echo "WebDriver update task already unregistered..."
 }

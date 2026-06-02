@@ -69,18 +69,12 @@ $ACL | Set-Acl -Path $runtimeFolder
 echo "Starting service..."
 & "$installFolder\shaka-lab-node-svc.exe" start
 
-# Register the scheduled WebDriver update task (if not already installed).
+# Remove the obsolete nightly WebDriver update task if a previous version
+# installed it.  Driver updates now happen on service startup (including the
+# daily restart), so the separate scheduled task is no longer used.  This runs
+# on install and upgrade.
 $task = Get-ScheduledTask | Where-Object -FilterScript { $_.TaskName -eq "shaka-lab-node-update" }
 if ($task) {
-  echo "WebDriver update task already registered..."
-} else {
-  echo "Registering WebDriver update task..."
-  $action = New-ScheduledTaskAction -Execute "$installFolder\update-drivers.cmd"
-  $trigger = New-ScheduledTaskTrigger -Daily -At 1am  # local time
-  Register-ScheduledTask `
-      -TaskName shaka-lab-node-update `
-      -Description "Updates WebDrivers nightly for shaka-lab-node" `
-      -Action $action `
-      -User "NT SERVICE\shaka-lab-node" `
-      -Trigger $trigger | Out-Null
+  echo "Removing obsolete WebDriver update task..."
+  Unregister-ScheduledTask -TaskName shaka-lab-node-update -Confirm:$false
 }

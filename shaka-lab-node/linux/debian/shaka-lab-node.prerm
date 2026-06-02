@@ -23,3 +23,8 @@ set +e
 systemctl stop shaka-lab-node.service
 systemctl disable shaka-lab-node.service
 systemctl daemon-reload
+
+# Remove the obsolete daily WebDriver update cron symlink, if present.  Driver
+# updates now happen on node startup (including the daily restart), so there is
+# no separate cron job.  Tolerate the file being absent.
+rm -f /etc/cron.daily/update-selenium-drivers

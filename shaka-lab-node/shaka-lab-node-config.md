@@ -64,6 +64,11 @@ When the restart time is reached, the `shaka-lab-node` process will exit, and th
 OS's service manager will restart it.  If this field is omitted, the nodes will
 run indefinitely.
 
+The restart also refreshes WebDrivers, because the node updates drivers on every
+startup.  This replaces the separate nightly driver-update job that older
+versions installed.  Without `daily_restart`, WebDrivers refresh only when the
+service is (re)started.
+
 
 ## Template Instantiation
 

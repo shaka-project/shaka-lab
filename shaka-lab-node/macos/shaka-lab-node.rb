@@ -52,13 +52,9 @@ cask "shaka-lab-node" do
   # The destination folder of most shaka-lab-node files.
   destination = "/opt/shaka-lab-node"
 
-  # Install a launchd service to update the drivers.
-  service do
-    run ["/usr/bin/open", "-n", "/Applications/shaka-lab-node-update-drivers.app"]
-    # Run daily at 1am
-    run_type :cron
-    cron "0 1 * * *"
-  end
+  # NOTE: WebDrivers are updated on node startup by start-nodes.js, and the
+  # daily restart (config "daily_restart") re-runs that startup, so there is no
+  # separate scheduled driver-update job.
 
   # Use preflight so that if the commands fail, the package is not considered
   # installed.
@@ -160,12 +156,18 @@ cask "shaka-lab-node" do
       "/etc/newsyslog.d/",
     ], sudo: true
 
-    # Copy the .app bundles to /Applications/
+    # Copy the .app bundle to /Applications/
     system_command "/bin/cp", args: [
       "-R",
       "#{source_root}/shaka-lab-node/macos/shaka-lab-node.app",
-      "#{source_root}/shaka-lab-node/macos/shaka-lab-node-update-drivers.app",
       "/Applications/",
+    ], sudo: true
+
+    # Remove the obsolete update-drivers app that older versions installed.
+    # Driver updates now happen on node startup (including the daily restart),
+    # so the app is no longer used.  This cleans it up on upgrade.
+    system_command "/bin/rm", args: [
+      "-rf", "/Applications/shaka-lab-node-update-drivers.app",
     ], sudo: true
 
     # Set shaka-lab-node to start on login.

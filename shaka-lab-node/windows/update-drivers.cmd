@@ -12,8 +12,8 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 
-:: Update all WebDrivers.  Runs after package installation, on service startup,
-:: and again nightly.
+:: Update all WebDrivers.  Runs on every node startup, which covers package
+:: installation and the daily restart.
 
 :: Dont print every command.
 @echo off

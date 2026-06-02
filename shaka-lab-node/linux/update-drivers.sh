@@ -14,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Update all WebDrivers.  Runs after package installation, on service startup,
-# and again nightly.
+# Update all WebDrivers.  Runs on every node startup, which covers package
+# installation and the daily restart.
 
 # Fail on error.
 set -e
 
-# If run as root (from cron or package postinstall script), the script
+# If run as root (for example, by hand with sudo), the script
 # re-launches itself as the non-root user that owns the folder.
 if [[ "$EUID" == 0 ]]; then
   exec /bin/su shaka-lab-node -s /bin/bash -c "$0"

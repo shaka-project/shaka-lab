@@ -52,10 +52,6 @@ override_dh_auto_install:
 	# uninstalled.
 	install -m 755 -d "$(PREFIX)/etc/systemd/system"
 	ln -sf /lib/systemd/system/shaka-lab-node.service "$(PREFIX)/etc/systemd/system/"
-	
-	# Update drivers daily.
-	install -m 755 -d "$(PREFIX)/etc/cron.daily"
-	ln -sf /opt/shaka-lab/shaka-lab-node/update-drivers.sh "$(PREFIX)/etc/cron.daily/update-selenium-drivers"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.
