@@ -20,7 +20,7 @@ Directory Administrator password used to set up the Gateway.  This is necessary
 to join the domain.
 
 ```sh
-choco source add -n=shaka-lab -s=https://shaka-lab-chocolatey-dot-shaka-player-demo.appspot.com/
+choco source add -n=shaka-lab -s=https://chocolatey.shakalab.rocks/
 choco install shaka-lab-gateway-client
 ```
 

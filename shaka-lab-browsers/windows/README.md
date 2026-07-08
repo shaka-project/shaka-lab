@@ -12,7 +12,7 @@ This is the Windows package.
 ## Installation
 
 ```sh
-choco source add -n=shaka-lab -s=https://shaka-lab-chocolatey-dot-shaka-player-demo.appspot.com/
+choco source add -n=shaka-lab -s=https://chocolatey.shakalab.rocks/
 choco install shaka-lab-browsers
 ```
 

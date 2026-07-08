@@ -138,54 +138,46 @@ jobs:
 
   deploy-windows:
     needs: build-windows
-    # Windows packages are deployed to App Engine and served via
-    # express-chocolatey-server.
 
+    # Windows packages are distributed through a repo connected to Vercel,
+    # where the packages are hosted via express-chocolatey-server.  Check out
+    # the Chocolatey repo instead of the source repo, then update the nupkg
+    # files there, and finish by pushing an update to the Chocolatey repo.
     runs-on: ubuntu-latest
     steps:
+      - name: Check out Chocolatey repo
+        uses: actions/checkout@v4
+        with:
+          repository: '${{ secrets.CHOCOLATEY_TAP_REPO }}'
+          # Get the entire repo history, so we can push an update.
+          fetch-depth: 0
+          # To push to the Chocolatey repo, an explicit token is used to
+          # authenticate, and we persist it for the later step where we push.
+          # Nothing is executed in this job.  Files are copied and staged only.
+          # Intentional: uses same token used for the Homebrew deployment.
+          token: '${{ secrets.HOMEBREW_DEPLOY_TOKEN }}'
+          persist-credentials: true
+
+      - name: Wipe old nupkg files
+        run: git rm -rf *.nupkg || true
+
       - name: Download packages
         uses: actions/download-artifact@v4
         with:
           name: windows-packages
 
-      - name: Prepare app engine
+      - name: Finish staging Chocolatey repo
         run: |
-          # Create a package.json file with the deps for our App Engine
-          # instance (express-chocolatey-server), and a script to start the
-          # server.
-          cat >package.json <<EOF
-          {
-            "dependencies": {
-              "express-chocolatey-server": "^1.0.0"
-            },
-            "scripts": {
-              "start": "express-chocolatey-server *.nupkg"
-            },
-            "engines": {
-              "node": "22.x.x"
-            }
-          }
-          EOF
+          PACKAGE_VERSION=$(date -u +%Y%m%d.%H%M%S)
 
-          # Create the app.yaml definition for App Engine.
-          cat >app.yaml <<EOF
-          runtime: nodejs22
-          handlers:
-            - url: /.*
-              secure: always
-              redirect_http_response_code: 301
-              script: auto
-          EOF
+          # Update the Chocolatey repo with a new commit.
+          git add *.nupkg
+          git config user.email shaka-bot@users.noreply.github.com
+          git config user.name "Shaka Bot"
+          git commit -m "Release $PACKAGE_VERSION"
 
-      - uses: google-github-actions/auth@v2
-        with:
-          credentials_json: '${{ secrets.APPENGINE_DEPLOY_KEY }}'
-
-      - uses: google-github-actions/deploy-appengine@v2
-        with:
-          project_id: '${{ secrets.APPENGINE_PROJECT_ID }}'
-          version: '${{ secrets.APPENGINE_PROJECT_VERSION }}'
-          promote: false
+      - name: Push Chocolatey repo
+        run: git push
 
 
   deploy-macos:
