@@ -37,7 +37,7 @@ cask "shaka-lab-node" do
   # NOTE: We can't express a specific version in a Cask's dependencies.
   depends_on cask: "oracle-jdk"
 
-  # We need node.js, at least v12.
+  # We need node.js, any LTS.
   # NOTE: We can't express a specific version in a Cask's dependencies.
   depends_on formula: "node"
 
