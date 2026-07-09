@@ -206,13 +206,32 @@ function substituteParams(string, params) {
  */
 function stopAllProcesses(processes) {
   for (const child of processes) {
-    if (child.exitCode == null) {
-      // Still running.  Stop it.
-      try {
+    if (child.exitCode != null) {
+      // Already exited.  Nothing to stop.
+      continue;
+    }
+
+    try {
+      if (process.platform == 'win32') {
+        // On Windows, java runs behind a Chocolatey shim, so the real JVM is a
+        // grandchild of this process.  child.kill() would terminate only the
+        // shim and orphan the rest of the tree.  taskkill /T covers the tree
+        // and /F forces it.  This must be synchronous, since stopAllProcesses
+        // also runs from a 'process.exit' handler.
+        const root = process.env.SystemRoot || 'C:\\Windows';
+        const taskkill = `${root}\\System32\\taskkill.exe`;
+        child_process.execFileSync(
+            taskkill, ['/pid', child.pid.toString(), '/t', '/f'],
+            {stdio: 'ignore'});
+      } else {
+        // On other platforms, java is the direct child, and the service manager
+        // (systemd/launchd) reaps anything it leaves behind.
         child.kill();
-      } catch (error) {
-        // Ignore errors if the process is already dead.
       }
+    } catch (error) {
+      // Ignore errors if the process is already dead.  On Windows, taskkill
+      // exits non-zero (which execFileSync throws on) when the PID is already
+      // gone; that's expected and harmless here.
     }
   }
 }
