@@ -55,6 +55,12 @@ const genericWebdriverServerJarPath =
 const seleniumStandaloneJarPath =
     `${shakaLabNodePath}/selenium-server-standalone-3.141.59.jar`;
 
+// The longest we will wait for the driver update script before giving up on it.
+// The script runs "npm update" and then downloads up to a handful of drivers,
+// so it is normally a matter of seconds to a couple of minutes.  Anything
+// beyond this is a hang, not slowness.
+const UPDATE_DRIVERS_TIMEOUT_MS = 10 * 60 * 1000;
+
 // Common, repeated options for child_process.spawn().
 const spawnOptions = {
   // Run from the package's working directory.
@@ -237,32 +243,111 @@ function stopAllProcesses(processes) {
 }
 
 /**
+ * Forcibly kill the driver update script and everything it spawned.
+ *
+ * NOTE: This is only correct for a child spawned by runDriverUpdate() below,
+ * which puts the script at the root of its own tree (a shell on Windows, its
+ * own process group elsewhere).  Do not use it on the node processes, which
+ * are deliberately kept in our own process group.
+ *
+ * @param {ChildProcess} child
+ */
+function killDriverUpdate(child) {
+  try {
+    if (process.platform == 'win32') {
+      // The direct child is a shell, and npm and the driver installer run
+      // below it.  child.kill() would terminate only the shell and orphan the
+      // rest, which is how we ended up with a stray webdriver-installer
+      // holding the service hostage in the first place.  taskkill /T covers
+      // the tree and /F forces it.
+      const root = process.env.SystemRoot || 'C:\\Windows';
+      const taskkill = `${root}\\System32\\taskkill.exe`;
+      child_process.execFileSync(
+          taskkill, ['/pid', child.pid.toString(), '/t', '/f'],
+          {stdio: 'ignore'});
+    } else {
+      // The script leads its own process group, so a negative PID signals the
+      // whole group, including npm and the driver installer.
+      process.kill(-child.pid, 'SIGKILL');
+    }
+  } catch (error) {
+    // Ignore errors if the process is already dead.  On Windows, taskkill
+    // exits non-zero (which execFileSync throws on) when the PID is already
+    // gone; that's expected and harmless here.
+  }
+}
+
+/**
+ * Run the driver update script, and wait for it to finish.
+ *
+ * The script talks to package registries, driver CDNs, attached devices, and
+ * OS services, none of which are guaranteed to answer.  If one of them never
+ * does, the service never finishes starting and sits there wedged, with
+ * nothing in the logs to say why.  Enforce a timeout so that the service
+ * manager gets a failure it can act on and restarts us.
+ *
+ * @return {!Promise}
+ */
+function runDriverUpdate() {
+  return new Promise((resolve, reject) => {
+    const updateSpawnOptions = Object.assign({}, spawnOptions);
+    if (process.platform == 'win32') {
+      // To run the .cmd script in the latest nodejs, you must pass shell=true.
+      updateSpawnOptions.shell = true;
+    } else {
+      // Put the script in its own process group, so that a timeout can take
+      // down everything it spawned and not just the script itself.
+      updateSpawnOptions.detached = true;
+    }
+
+    const child = child_process.spawn(
+        updateDrivers, /* args= */ [], updateSpawnOptions);
+
+    const timeoutSeconds = UPDATE_DRIVERS_TIMEOUT_MS / 1000;
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      console.error(
+          `Driver update has not finished after ${timeoutSeconds}s.` +
+          '  Killing it.');
+      killDriverUpdate(child);
+    }, UPDATE_DRIVERS_TIMEOUT_MS);
+
+    child.once('error', (error) => {
+      clearTimeout(timer);
+      // Hopefully this error object has enough context without us needing to
+      // write a custom message or wrap the Error object in any way.  We
+      // haven't triggered this in the wild yet.
+      reject(error);
+    });
+
+    child.once('exit', (code, signal) => {
+      clearTimeout(timer);
+
+      if (timedOut) {
+        reject(new Error(`Driver update timed out after ${timeoutSeconds}s`));
+      } else if (code) {
+        reject(new Error(`Driver update failed with exit code ${code}`));
+      } else if (signal) {
+        reject(new Error(`Driver update was killed by signal ${signal}`));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+/**
  * Read configs and templates, and start Selenium nodes as child processes.
  * This parent process will monitor the child processes, and shut them all down
  * if one fails.  The background service system of the OS will log this and
  * restart this parent process as needed.
  */
-function main() {
+async function main() {
   // Update WebDrivers on startup.
   // This has a side-effect of also installing other requirements, such as
   // js-yaml, which we don't load until we need it below.
-  const updateSpawnOptions = Object.assign({}, spawnOptions);
-  if (process.platform == 'win32') {
-    // To run the .cmd script in the latest nodejs, you must pass shell=true.
-    updateSpawnOptions.shell = true;
-  }
-  const updateProcess = child_process.spawnSync(
-      updateDrivers, /* args= */ [], updateSpawnOptions);
-  if (updateProcess.status) {
-    throw new Error(
-        `Driver update failed with exit code ${updateProcess.status}`);
-  }
-  if (updateProcess.error) {
-    // Hopefully this error object has enough context without us needing to
-    // write a custom message or wrap the Error object in any way.  We haven't
-    // triggered this in the wild yet.
-    throw updateProcess.error;
-  }
+  await runDriverUpdate();
 
   const yaml = require('js-yaml');
 
@@ -421,4 +506,8 @@ function main() {
   // otherwise dies, the script will respond by shutting down all others.
 }
 
-main();
+main().catch((error) => {
+  // Exit non-zero so that the service manager restarts us and tries again.
+  console.error(error);
+  process.exit(1);
+});
