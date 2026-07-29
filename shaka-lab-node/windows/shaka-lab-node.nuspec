@@ -38,7 +38,7 @@
 
     <dependencies>
       <dependency id="nodejs" version="24.0" />
-      <dependency id="openjdk.portable" version="14.0" />
+      <dependency id="microsoft-openjdk" version="14.0" />
     </dependencies>
   </metadata>
   <files>
