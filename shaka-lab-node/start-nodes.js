@@ -40,7 +40,7 @@ if (process.platform == 'win32') {
   classPathSeparator = ';';
   exe = '.exe';
   cmd = '.cmd';
-  javaCommand = 'C:/ProgramData/chocolatey/bin/java.exe';
+  javaCommand = 'java.exe';
 } else if (process.platform == 'darwin') {
   configPath = '/etc/shaka-lab-node-config.yaml';
   shakaLabNodePath = '/opt/shaka-lab-node';
