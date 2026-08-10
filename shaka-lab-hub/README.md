@@ -40,6 +40,29 @@ If you wish to listen on a specific IP or hostname, uncomment and change the
 #HOST=0.0.0.0
 ```
 
+
+### Why the hub logs an unexpected IP address
+
+With the default `HOST` of `0.0.0.0`, the hub listens on all IPs, but its logs
+claim otherwise:
+
+```
+Nodes should register to http://172.17.0.1:4444/grid/register/
+Clients should connect to http://172.17.0.1:4444/wd/hub
+```
+
+Selenium binds its socket to `0.0.0.0` as requested, and then, only for
+display purposes, replaces `0.0.0.0` with the first non-loopback IPv4 address
+it can find.
+
+This log does not reflect a real restriction.  The hub is still reachable on
+every address of the machine, and nodes are unaffected.
+
+You can make the log messages accurate by setting `HOST` to a specific
+address, but that also restricts the hub to listening on that one address
+only.
+
+
 ## Restarting the service after editing the config
 
 ```sh
