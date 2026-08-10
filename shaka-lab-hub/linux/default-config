@@ -18,4 +18,13 @@
 #PORT=4444
 
 # The IP or hostname to listen on, which defaults to 0.0.0.0 (all IPs).
+#
+# NOTE: With the default of 0.0.0.0, the hub does listen on all IPs, but it
+# does not say so in its logs.  Selenium replaces 0.0.0.0 with the first
+# non-loopback IPv4 address it can find, then uses that in the "Nodes should
+# register to ..." and "Clients should connect to ..." log messages.  It does
+# reflect what the hub actually listens on.
+#
+# Setting HOST to a specific address makes those log messages accurate, but it
+# also restricts the hub to that one address.
 #HOST=0.0.0.0
