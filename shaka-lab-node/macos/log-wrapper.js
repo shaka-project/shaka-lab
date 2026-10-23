@@ -26,6 +26,18 @@
 // logging to stdout and stderr, while leaving the details of logging and
 // signal handling to the wrapper.
 //
+// Since the wrapper also restarts the service when it exits, launchd never
+// sees the service stop, and so never cleans up after it.  So the wrapper does
+// that too, the way systemd would on Linux: the service runs in its own process
+// group, and whatever is left in that group when the service exits gets killed.
+// This matters because processes orphaned by the service, such as a
+// safaridriver whose Selenium node was killed, can hold on to resources the
+// next run of the service needs.
+//
+// The service's PID, which is also its process group ID, is written next to
+// the wrapper's own PID file, with ".pid" replaced by ".child.pid".  This lets
+// stop-services.sh clean up the service even if the wrapper is already gone.
+//
 // References:
 //  - https://serverfault.com/q/900499
 //  - https://stackoverflow.com/q/71832882
@@ -48,6 +60,7 @@ function main() {
   const pidPath = args[2];
   const command = args[3];
   const commandArgs = args.slice(4);  // may be empty
+  const childPidPath = pidPath.replace(/(\.pid)?$/, '.child.pid');
 
   // File descriptors for logging.
   let stdoutLogFd = null;
@@ -108,17 +121,61 @@ function main() {
   let child = null;
   let quitting = false;
 
+  // The process group of the most recent child, which leads its own group.
+  // This outlives the child itself, so that anything it left behind can still
+  // be found and killed.
+  let childGroupId = null;
+
+  // Signal everything in the child's process group, if anything is left.
+  const signalChildGroup = (signal) => {
+    if (childGroupId == null) {
+      return;
+    }
+
+    try {
+      // The negative number is interpreted as a group ID instead of a PID.
+      process.kill(-childGroupId, signal);
+    } catch (error) {
+      // Ignore errors if the group is already empty.
+    }
+  };
+
+  const childGroupIsEmpty = () => {
+    try {
+      // Signal 0 checks for existence without sending anything.
+      process.kill(-childGroupId, 0);
+      return false;
+    } catch (error) {
+      return true;
+    }
+  };
+
   const spawnChild = () => {
     if (quitting) {
       return;
     }
 
+    // The previous child's group was sent SIGTERM when the child exited.
+    // Force out anything that ignored it before starting over.
+    signalChildGroup('SIGKILL');
+
     child = child_process.spawn(command, commandArgs, {
       // Ignore stdin, but capture stdout and stderr as pipes.
       stdio: ['ignore', 'pipe', 'pipe'],
-      // Make sure children are attached to the parent.
-      detached: false,
+      // Put the child in its own process group, so that we can find and kill
+      // everything it spawned, even after the child itself is gone.
+      detached: true,
     });
+
+    if (child.pid != null) {
+      childGroupId = child.pid;
+      try {
+        fs.writeFileSync(childPidPath, child.pid.toString() + '\n');
+      } catch (error) {
+        console.log('Failed to write child PID file:', childPidPath);
+        console.log(error);
+      }
+    }
 
     child.once('error', (error) => {
       console.log('Failed to spawn child process!');
@@ -136,6 +193,10 @@ function main() {
     child.once('exit', (code, signal) => {
       console.log(`Child process exited with code ${code}, signal ${signal}.`);
       child = null;
+
+      // Stop anything the child left behind.
+      signalChildGroup('SIGTERM');
+
       if (!quitting) {
         console.log('Restarting child in 5s...');
         setTimeout(spawnChild, 5000);
@@ -154,14 +215,22 @@ function main() {
   const quit = () => {
     console.log('Quitting log-wrapper.');
     quitting = true;
-    if (child && child.exitCode == null) {
-      child.once('exit', () => process.exit(0));
-      child.kill();
-      // Fallback in case the child hangs.
-      setTimeout(() => process.exit(0), 1000);
-    } else {
+
+    if (childGroupId == null) {
       process.exit(0);
     }
+
+    // Ask the child and everything it spawned to stop, and give them a moment
+    // to do so before forcing them.
+    signalChildGroup('SIGTERM');
+    const deadline = Date.now() + 1000;
+    const poll = setInterval(() => {
+      if (childGroupIsEmpty() || Date.now() >= deadline) {
+        clearInterval(poll);
+        signalChildGroup('SIGKILL');
+        process.exit(0);
+      }
+    }, 100);
   };
 
   process.once('SIGINT', quit);
@@ -171,10 +240,8 @@ function main() {
   process.once('exit', () => {
     console.log('Exiting.');
 
-    if (child && child.exitCode == null) {
-      // Still running.  Stop it.
-      child.kill();
-    }
+    // Stop the child and anything it spawned, if they're still running.
+    signalChildGroup('SIGTERM');
   });
 }
 

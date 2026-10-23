@@ -25,10 +25,10 @@ if [[ "$EUID" != "$GUI_UID" ]]; then
 fi
 
 PID_FILE=/opt/shaka-lab-node/shaka-lab-node.pid
+CHILD_PID_FILE=/opt/shaka-lab-node/shaka-lab-node.child.pid
 
 if [[ -e "$PID_FILE" ]]; then
-  # The ID of the log-wrapper process, which is also the process group ID for
-  # all processes beneath that.
+  # The ID of the log-wrapper process, which is also its process group ID.
   PROCESS_GROUP_ID=$(cat $PID_FILE)
   # The parent process of that group, the Automator app.
   AUTOMATOR_PROCESS_ID=$(ps -o ppid= -p $PROCESS_GROUP_ID || true)
@@ -40,4 +40,15 @@ if [[ -e "$PID_FILE" ]]; then
   kill -s TERM -- -$PROCESS_GROUP_ID $AUTOMATOR_PROCESS_ID 2>/dev/null || true
 
   rm -f "$PID_FILE"
+fi
+
+if [[ -e "$CHILD_PID_FILE" ]]; then
+  # The ID of the service under log-wrapper, which leads its own process group,
+  # containing the Selenium nodes and everything they spawned.  log-wrapper
+  # stops this group itself when it quits, but kill it here too, in case
+  # log-wrapper is already gone.
+  CHILD_PROCESS_GROUP_ID=$(cat $CHILD_PID_FILE)
+  kill -s TERM -- -$CHILD_PROCESS_GROUP_ID 2>/dev/null || true
+
+  rm -f "$CHILD_PID_FILE"
 fi
