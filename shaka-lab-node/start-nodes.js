@@ -230,8 +230,9 @@ function stopAllProcesses(processes) {
             taskkill, ['/pid', child.pid.toString(), '/t', '/f'],
             {stdio: 'ignore'});
       } else {
-        // On other platforms, java is the direct child, and the service manager
-        // (systemd/launchd) reaps anything it leaves behind.
+        // On other platforms, java is the direct child, and anything it leaves
+        // behind (such as WebDriver servers) is cleaned up once this process
+        // exits: by systemd on Linux, and by log-wrapper on macOS.
         child.kill();
       }
     } catch (error) {
@@ -338,12 +339,47 @@ function runDriverUpdate() {
 }
 
 /**
+ * Kill any Safari automation processes left over from a previous run.
+ *
+ * Safari allows only one automation session at a time.  If a safaridriver
+ * outlives the Selenium node that spawned it, it can keep Safari tied up, and
+ * then every new Safari session fails.  Nothing legitimate should be using
+ * Safari automation before our nodes start, so clear it all out.
+ *
+ * This only touches processes owned by the current user, which is the GUI user
+ * the service runs as, so it does not need root.
+ */
+function killStaleSafariAutomation() {
+  const uid = process.getuid().toString();
+  const pkillArgsList = [
+    // The WebDriver servers.
+    ['-u', uid, '-x', 'safaridriver'],
+    // The Safari instances they launched.  The --automation flag distinguishes
+    // these from Safari instances a person opened.
+    ['-u', uid, '-f', 'Safari\\.app/Contents/MacOS/Safari --automation'],
+  ];
+
+  for (const pkillArgs of pkillArgsList) {
+    try {
+      child_process.execFileSync('pkill', pkillArgs, {stdio: 'ignore'});
+    } catch (error) {
+      // pkill exits non-zero when there are no matches, which execFileSync
+      // throws on.  Nothing to clean up.
+    }
+  }
+}
+
+/**
  * Read configs and templates, and start Selenium nodes as child processes.
  * This parent process will monitor the child processes, and shut them all down
  * if one fails.  The background service system of the OS will log this and
  * restart this parent process as needed.
  */
 async function main() {
+  if (process.platform == 'darwin') {
+    killStaleSafariAutomation();
+  }
+
   // Update WebDrivers on startup.
   // This has a side-effect of also installing other requirements, such as
   // js-yaml, which we don't load until we need it below.
