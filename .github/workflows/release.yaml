@@ -22,7 +22,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
           persist-credentials: false
@@ -74,7 +74,7 @@ jobs:
           gpg -o staging/public.key --armor --export nomail@shakalab.rocks
 
       - name: Upload packages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: staging
 
@@ -93,13 +93,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
 
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -131,7 +131,7 @@ jobs:
           cp shaka-*/windows/*.nupkg staging/
 
       - name: Upload packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-packages
           path: staging/
@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Chocolatey repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: '${{ secrets.CHOCOLATEY_TAP_REPO }}'
           # Get the entire repo history, so we can push an update.
@@ -162,7 +162,7 @@ jobs:
         run: git rm -rf *.nupkg || true
 
       - name: Download packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: windows-packages
 
@@ -187,7 +187,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out tap repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: '${{ secrets.HOMEBREW_TAP_REPO }}'
           # Get the entire repo history, so we can push an update.
@@ -209,7 +209,7 @@ jobs:
       - name: Check out source repo
         # This puts the source repo contents at the expected location in the
         # tap repo.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: shaka-lab-source
           persist-credentials: false
