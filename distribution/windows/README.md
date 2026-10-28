@@ -27,6 +27,10 @@ update with `choco upgrade`.
 3. Create a GitHub repository secret named `CHOCOLATEY_TAP_REPO` with the value
    `shaka-project/chocolatey-shaka-lab` (not a true secret, but configurable in
    forks)
+4. Give the user behind the `HOMEBREW_DEPLOY_TOKEN` secret (for example,
+   [`shaka-bot`](https://github.com/shaka-bot)) write access to the Chocolatey
+   repo.  The Windows deployment reuses the token created for macOS; see
+   [the macOS docs](../macos/README.md) for how to create it.
 
 The `release.yaml` workflow will deploy updates to the Vercel-connected repo,
 which triggers Vercel to update its deployment.
