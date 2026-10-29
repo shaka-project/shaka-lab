@@ -45,6 +45,11 @@ override_dh_auto_install:
 	# Install a script to clean up Docker images so it doesn't fill up the disk.
 	install -m 755 -d "$(PREFIX)/etc/cron.daily"
 	install -m 755 docker-cleanup "$(PREFIX)/etc/cron.daily/"
+	
+	# Install a certbot deploy hook to make certs readable by the runners.
+	# This is harmless if certbot is not installed.
+	install -m 755 -d "$(PREFIX)/etc/letsencrypt/renewal-hooks/deploy"
+	install -m 755 letsencrypt-deploy-hook.sh "$(PREFIX)/etc/letsencrypt/renewal-hooks/deploy/shaka-lab-github-runner.sh"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.

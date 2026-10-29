@@ -87,13 +87,69 @@ workflows.
 ## Certs
 
 If your workflow needs HTTPS certificates (as the Shaka Player testing
-workflows do), then you should also look at the
-[`shaka-lab-cert-generator`](../shaka-lab-cert-generator/README.md#readme)
-and possibly
-[`shaka-lab-cert-receiver`](../shaka-lab-cert-receiver/README.md#readme)
-packages.  If one of these is installed, the `shaka-lab-github-runner` package
-will automatically make those certs accessible to runners under
-`/etc/letsencrypt/`.
+workflows do), run [certbot](https://certbot.eff.org/) directly on the runner
+host.  This is necessary for testing features that require a secure context,
+particularly on consumer electronics devices where we are unable to install
+trusted certificates.
+
+If `/etc/letsencrypt/live` and `/etc/letsencrypt/archive` exist, the
+`shaka-lab-github-runner` package will mount them read-only into each runner
+at the same paths.  The rest of `/etc/letsencrypt` (account keys, renewal
+configs) is not exposed to runners.
+
+The package also installs a certbot deploy hook at
+`/etc/letsencrypt/renewal-hooks/deploy/shaka-lab-github-runner.sh`, which
+makes certs and private keys readable by the runner user inside the container.
+It runs automatically when certbot renews a cert, and when this package is
+installed or upgraded.
+
+### Pre-requisites
+
+1. A domain for your lab network.  (Ours is `shakalab.rocks`.)
+2. A public DNS `A` record for the runner host, pointing to the host's
+   internal lab IP address.  This is the host that lab devices will connect
+   to.  Below, this hostname is `CERT_HOST`.  (Ours is
+   `karma.shakalab.rocks`.)
+3. A DNS provider supported by a
+   [certbot DNS plugin](https://eff-certbot.readthedocs.io/en/stable/using.html#dns-plugins),
+   so that certbot can complete a DNS challenge.  The host's IP is internal,
+   so HTTP challenges will not work.
+
+### Example: Cloudflare
+
+This is how we set up the Shaka lab.  Other DNS providers will be similar.
+
+First, create a Cloudflare API token with **Zone:DNS:Edit** permission for
+**only** your lab's zone.  Then, on the runner host:
+
+```sh
+sudo apt -y install certbot python3-certbot-dns-cloudflare
+
+# Keep DNS API credentials outside of /etc/letsencrypt.
+sudo mkdir -p /root/.secrets
+sudo chmod 700 /root/.secrets
+echo "dns_cloudflare_api_token = API_TOKEN" | \
+    sudo tee /root/.secrets/cloudflare.ini >/dev/null
+sudo chmod 600 /root/.secrets/cloudflare.ini
+
+sudo certbot certonly \
+    -n --agree-tos --email YOUR_EMAIL \
+    --dns-cloudflare \
+    --dns-cloudflare-credentials /root/.secrets/cloudflare.ini \
+    --domains CERT_HOST
+```
+
+Certbot versions before 3.2.0 do not run deploy hooks on initial issuance.
+To be safe, run the hook once yourself, then restart the runners so they pick
+up the new mounts:
+
+```sh
+sudo /etc/letsencrypt/renewal-hooks/deploy/shaka-lab-github-runner.sh
+sudo systemctl restart shaka-lab-github-runners.target
+```
+
+After this, certbot will renew the cert automatically, and the hook will keep
+the permissions correct.
 
 ## Customization
 

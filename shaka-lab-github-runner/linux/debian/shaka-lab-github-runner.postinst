@@ -143,6 +143,11 @@ Wants=${INSTANCE_LIST[@]}
 WantedBy=multi-user.target
 EOF
 
+# Fix permissions on any certs that certbot issued before this package (and
+# therefore its certbot deploy hook) was installed.  This is a no-op if there
+# are no certs.
+/etc/letsencrypt/renewal-hooks/deploy/shaka-lab-github-runner.sh
+
 # Reload service definitions, enable the new target, and start it.
 systemctl daemon-reload
 systemctl enable shaka-lab-github-runners.target
