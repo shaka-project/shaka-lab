@@ -78,12 +78,17 @@ for i in /etc/shaka-lab-github-runner.args.d/* \
   extra_docker_args+=($(cat "$i"))
 done
 
-# If shaka-lab-cert-{generator,receiver} is installed, make those certificates
-# available to the runner as a read-only bind mount.  That package already sets
-# ownership such that the runner user in the docker image can read the files.
-if dpkg -s shaka-lab-cert-generator &>/dev/null || \
-    dpkg -s shaka-lab-cert-receiver &>/dev/null; then
-  extra_docker_args+=(--mount type=bind,src=/etc/letsencrypt,dst=/etc/letsencrypt,ro)
+# If certbot has issued certificates on this host, make them available to the
+# runner as read-only bind mounts.  Only live/ and archive/ are mounted, so
+# that account keys and renewal configs (which may reference DNS API
+# credentials) stay out of the container.  The symlinks in live/ are relative
+# links into archive/, so both are mounted at their original paths.  Our
+# certbot deploy hook sets ownership such that the runner user in the docker
+# image can read the files.
+if [[ -d /etc/letsencrypt/live && -d /etc/letsencrypt/archive ]]; then
+  for i in live archive; do
+    extra_docker_args+=(--mount type=bind,src=/etc/letsencrypt/$i,dst=/etc/letsencrypt/$i,ro)
+  done
 fi
 
 # This matches what GitHub runner expects, and is the necessary value for
