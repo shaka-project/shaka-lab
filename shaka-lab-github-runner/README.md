@@ -188,13 +188,13 @@ sudo apt update && sudo apt -y upgrade
 ## Stopping the service
 
 ```sh
-sudo systemctl stop github-actions-runners.target
+sudo systemctl stop shaka-lab-github-runners.target
 ```
 
 ## Starting the service
 
 ```sh
-sudo systemctl start github-actions-runners.target
+sudo systemctl start shaka-lab-github-runners.target
 ```
 
 ## Logs
@@ -202,7 +202,7 @@ sudo systemctl start github-actions-runners.target
 To watch live logs from instance 1 (for example):
 
 ```sh
-journalctl -f -u github-actions-runner@1.service
+journalctl -f -u shaka-lab-github-runner@1.service
 ```
 
 ## Uninstallation
