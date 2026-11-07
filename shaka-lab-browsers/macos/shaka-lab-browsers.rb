@@ -35,65 +35,20 @@ cask "shaka-lab-browsers" do
   # Signal that this package does not need upgrading through "brew upgrade".
   auto_updates true
 
-  # Use preflight so that if the commands fail, the package is not considered
-  # installed.
-  preflight do
-    # Enable the "develop" menu for Safari
-    system_command "/usr/bin/defaults", args: [
-      "write", "com.apple.Safari.SandboxBroker", "ShowDevelopMenu",
-      "-bool", "true",
-    ]
-    system_command "/usr/bin/defaults", args: [
-      "write", "com.apple.Safari", "IncludeDevelopMenu",
-      "-bool", "true",
-    ]
+  # The path from the Cask definition to the full shaka-lab source.
+  source_root = "#{__dir__}/../shaka-lab-source"
 
-    # Enable the "develop" menu for Safari Tech Preview
-    system_command "/usr/bin/defaults", args: [
-      "write", "com.apple.SafariTechnologyPreview.SandboxBroker", "ShowDevelopMenu",
-      "-bool", "true",
-    ]
-    system_command "/usr/bin/defaults", args: [
-      "write", "com.apple.SafariTechnologyPreview", "IncludeDevelopMenu",
-      "-bool", "true",
-    ]
-
-    # Enable remote automation for Safari
-    system_command "/usr/bin/safaridriver",
-        args: [ "--enable" ], sudo: true
-
-    # Attempt to install the Safari Tech Preview cask
-    # This is not an actual cask dependency because it is only available on the
-    # latest macOS versions.  If this command fails, the shaka-lab-browsers
-    # install still succeeds.
-    # Here we use ruby's native system method (Kernel.system) instead of
-    # Homebrew's so that we can get an exit code instead of failing.
-    if Kernel.system "brew", "install", "--cask", "safari-technology-preview", :out=>["/dev/null"], :err=>["/dev/null"]
-      # Enable remote automation for Safari Tech Preview
-      # Safari TP is only available on the latest macOS versions
-      system_command "/Applications/Safari Technology Preview.app/Contents/MacOS/safaridriver",
-          args: [ "--enable" ], sudo: true
-    else
-      puts "*** NOTE: Safari Technology Preview could not be installed. ***"
-      puts "*** Safari TP install requires the latest version of macOS. ***"
-    end
+  # The real work happens in install.sh and postflight.sh, run as root.
+  # If they fail, the package is not considered installed.
+  preflight_steps do
+    run "#{source_root}/shaka-lab-browsers/macos/install.sh",
+        args: ["{{HOMEBREW_PREFIX}}"], sudo: true, print_stdout: true
   end
 
-  postflight do
-    # Take all browsers out of quarantine.  This has been found necessary for
-    # Firefox and Chrome at least in some cases.
-    # Without this, the first time shaka-lab-node tries to start a browers, a
-    # dialog box may pop up from the OS and must be interacted with before
-    # tests can run for the first time.
-    system_command "/usr/bin/xattr", args: [
-      "-d", "com.apple.quarantine", "/Applications/Firefox.app",
-    ]
-    system_command "/usr/bin/xattr", args: [
-      "-d", "com.apple.quarantine", "/Applications/Google Chrome.app",
-    ]
-    system_command "/usr/bin/xattr", args: [
-      "-d", "com.apple.quarantine", "/Applications/Microsoft Edge.app",
-    ]
+  # Quarantine is removed after the browser Casks are installed.
+  postflight_steps do
+    run "#{source_root}/shaka-lab-browsers/macos/postflight.sh",
+        sudo: true, print_stdout: true
   end
 
   depends_on cask: "firefox"

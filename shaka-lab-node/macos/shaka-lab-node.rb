@@ -49,161 +49,23 @@ cask "shaka-lab-node" do
   # We install files from there.
   source_root = "#{__dir__}/../shaka-lab-source"
 
-  # The destination folder of most shaka-lab-node files.
-  destination = "/opt/shaka-lab-node"
-
   # NOTE: WebDrivers are updated on node startup by start-nodes.js, and the
   # daily restart (config "daily_restart") re-runs that startup, so there is no
   # separate scheduled driver-update job.
 
-  # Use preflight so that if the commands fail, the package is not considered
-  # installed.
-  preflight do
-    # NOTE: The inreplace command for Formulae is not available in Casks.
-    # Since it is very simple, we replicate it here to keep the installation
-    # code more readable.  This version can also write to files owned by root.
-    def sudo_inreplace(path, original_text, new_text)
-      contents = File.read(path)
-      contents.gsub!(original_text, new_text)
-
-      temp_file = Tempfile.new('shaka-lab-node-install-')
-      begin
-        temp_file.write(contents)
-        temp_file.flush
-        system_command "/bin/cp", args: [temp_file.path, path], sudo: true
-      ensure
-        temp_file.close
-        temp_file.unlink
-      end
-    end
-
-    # NOTE: This utility runs /usr/bin/install, but through sudo.  It is
-    # similar to FileUtils.install, but give us the ability to install files as
-    # root.
-    def sudo_install(source, destination, mode: "0644")
-      system_command "/usr/bin/install", args: [
-        "-m", mode, source, destination,
-      ], sudo: true
-    end
-
-    # NOTE: Similar to FileUtils.mkdir_p, but through sudo.
-    def sudo_mkdir_p(path)
-      system_command "/bin/mkdir", args: ["-p", path], sudo: true
-    end
-
-    # Create the destination directory.
-    sudo_mkdir_p destination
-
-    # Main shaka-lab-node files.
-    sudo_install "#{source_root}/LICENSE.txt", destination
-    sudo_install "#{source_root}/selenium-jar/selenium-server-standalone-3.141.59.jar", destination
-    sudo_install "#{source_root}/shaka-lab-node/node-templates.yaml", destination
-    sudo_install "#{source_root}/shaka-lab-node/package.json", destination
-    sudo_install "#{source_root}/shaka-lab-node/start-nodes.js", destination
-    for path in Dir.glob("#{source_root}/shaka-lab-node/macos/*") do
-      unless path.end_with?(".app")
-        sudo_install path, destination
-      end
-    end
-    # Mark the shell scripts as executable.
-    for path in Dir.glob("#{source_root}/shaka-lab-node/macos/*.sh") do
-      sudo_install path, destination, mode: "0755"
-    end
-
-    # Don't overwrite the config file if it already exists!
-    # This file will be left in tact during uninstall.
-    unless File.exist? "/etc/shaka-lab-node-config.yaml"
-      sudo_install "#{source_root}/shaka-lab-node/shaka-lab-node-config.yaml", "/etc/"
-    end
-
-    # Certain files need hard-coded paths to node.js, which is installed under
-    # a variable Homebrew prefix.  So replace the string "$HOMEBREW_PREFIX"
-    # with the current prefix (in the HOMEBREW_PREFIX variable).
-    sudo_inreplace "#{destination}/update-drivers.sh", "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
-
-    # Service logs go here, so make sure the folder exists:
-    sudo_mkdir_p "#{destination}/logs"
-
-    # Install and load the loopback proxy LaunchDaemon.  It works around macOS
-    # Local Network Privacy, which otherwise blocks the test browser from
-    # reaching lab hosts.  It must be a root daemon for the privacy exemption.
-    # See local-network-privacy.md.  Its plist references "$HOMEBREW_PREFIX" for
-    # the path to node, which we replace with the real prefix here.
-    proxy_plist = "/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist"
-    sudo_install "#{source_root}/shaka-lab-node/macos/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist", proxy_plist
-    sudo_inreplace proxy_plist, "$HOMEBREW_PREFIX", HOMEBREW_PREFIX
-    # Reload it.  Tolerate "not loaded" on a first install.
-    begin
-      system_command "/bin/launchctl", args: ["bootout", "system", proxy_plist], sudo: true
-    rescue StandardError
-      # Was not loaded yet; ignore.
-    end
-    system_command "/bin/launchctl", args: ["bootstrap", "system", proxy_plist], sudo: true
-
-    # Get the user currently logged in on the GUI.
-    GUI_USER = `stat -f "%Su" /dev/console`.strip
-
-    # Make the destination directory owned by the logged-in GUI user.
-    # Make sure the service account can write to all the necessary locations in
-    # the installation to do updates and logging:
-    system_command "/usr/sbin/chown", args: [
-      "-R", GUI_USER, destination,
-    ], sudo: true
-
-    # Symlink the log rotation config file into its required location.
-    system_command "/bin/ln", args: [
-      "-sf", "#{destination}/shaka-lab-node-logrotate.conf",
-      "/etc/newsyslog.d/",
-    ], sudo: true
-
-    # Copy the .app bundle to /Applications/
-    system_command "/bin/cp", args: [
-      "-R",
-      "#{source_root}/shaka-lab-node/macos/shaka-lab-node.app",
-      "/Applications/",
-    ], sudo: true
-
-    # Remove the obsolete update-drivers app that older versions installed.
-    # Driver updates now happen on node startup (including the daily restart),
-    # so the app is no longer used.  This cleans it up on upgrade.
-    system_command "/bin/rm", args: [
-      "-rf", "/Applications/shaka-lab-node-update-drivers.app",
-    ], sudo: true
-
-    # Set shaka-lab-node to start on login.
-    system_command "/usr/bin/osascript", args: [
-      "-e",
-      "tell application \"System Events\" to make login item at end with properties {path:\"/Applications/shaka-lab-node.app\", hidden:false}",
-    ]
-
-    # Now start/restart the services.
-    puts "Restarting services..."
-    system_command "#{destination}/restart-services.sh", sudo: true
-    puts "Done!"
+  # The real work happens in install.sh and uninstall.sh, run as root.
+  # If they fail, the package is not considered installed or uninstalled.
+  preflight_steps do
+    run "#{source_root}/shaka-lab-node/macos/install.sh",
+        args: [source_root, "{{HOMEBREW_PREFIX}}"], sudo: true, print_stdout: true
   end
 
-  uninstall_preflight do
-    puts "Stopping services..."
-    system_command "#{destination}/stop-services.sh", sudo: true
-    puts "Done!"
-
-    # Unload the loopback proxy LaunchDaemon before removing it.  Tolerate it
-    # already being unloaded.
-    proxy_plist = "/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist"
-    begin
-      system_command "/bin/launchctl", args: ["bootout", "system", proxy_plist], sudo: true
-    rescue StandardError
-      # Already unloaded; ignore.
+  # install.sh puts uninstall.sh outside of the tap, because Homebrew
+  # uninstalls from its own saved copy of this Cask, which can't find files in
+  # the tap.
+  uninstall_preflight_steps do
+    if_path_exists "/opt/shaka-lab-node/uninstall.sh" do
+      run "/opt/shaka-lab-node/uninstall.sh", sudo: true, print_stdout: true
     end
-
-    # Remove the main installation and symlinks.
-    system_command "/bin/rm", args: [
-      "-rf",
-      "#{destination}",
-      "/etc/newsyslog.d/shaka-lab-node-logrotate.conf",
-      "/Applications/shaka-lab-node.app",
-      "/Applications/shaka-lab-node-update-drivers.app",
-      proxy_plist,
-    ], sudo: true
   end
 end
