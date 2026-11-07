@@ -22,7 +22,7 @@ Build-Depends: debhelper (>= 9)
 Package: shaka-lab-gateway
 Architecture: all
 Recommends: shaka-lab-gateway-client
-Depends: bind9, iptables-persistent, isc-dhcp-server, ldap-utils, ldb-tools, net-tools, python3-jinja2, python3-yaml, samba, subnetcalc, winbind
+Depends: bind9, iptables-persistent, isc-dhcp-server, ldap-utils, ldb-tools, net-tools, python3-jinja2, python3-yaml, samba, samba-ad-dc | samba (<< 2:4.20.1+dfsg-2~), subnetcalc, winbind
 Description: Shaka Lab Gateway
  Shaka Lab network services: DHCP, DNS, Samba Active Directory
  .

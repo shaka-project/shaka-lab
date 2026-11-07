@@ -95,35 +95,43 @@ if ! systemctl is-enabled samba-ad-dc.service &>/dev/null; then
   systemctl disable nmbd
   systemctl disable winbind
 
-  # Wipe all Samba configs and databases.
-  for i in $(smbd -b | egrep "LOCKDIR|STATEDIR|CACHEDIR|PRIVATE_DIR" | cut -f 2 -d :); do
-    find $i -name '*.tdb' -or -name '*.ldb'
-  done | sort | uniq | xargs rm
-  backup_config /etc/samba/smb.conf
-  rm /etc/samba/smb.conf
+  # If an AD domain has already been provisioned, keep it.  The service can
+  # end up disabled or missing without the domain being gone, for example when
+  # an OS upgrade moves the service into a separate package.  Wiping here
+  # would delete every lab user.
+  if [ -e /var/lib/samba/private/sam.ldb ]; then
+    echo "Existing Samba AD domain found.  Re-enabling it without reprovisioning."
+  else
+    # Wipe all Samba configs and databases.
+    for i in $(smbd -b | egrep "LOCKDIR|STATEDIR|CACHEDIR|PRIVATE_DIR" | cut -f 2 -d :); do
+      find $i -name '*.tdb' -or -name '*.ldb'
+    done | sort | uniq | xargs rm
+    backup_config /etc/samba/smb.conf
+    rm /etc/samba/smb.conf
 
-  # Reconfigure Samba as an Active Directory Domain Controller.
-  samba-tool domain provision \
-    --domain=LAB \
-    --realm=LAB.SHAKA \
-    --use-rfc2307 \
-    --server-role=dc \
-    --dns-backend=NONE \
-    --host-ip=$lan_ip \
-    --adminpass=$active_directory_password
+    # Reconfigure Samba as an Active Directory Domain Controller.
+    samba-tool domain provision \
+      --domain=LAB \
+      --realm=LAB.SHAKA \
+      --use-rfc2307 \
+      --server-role=dc \
+      --dns-backend=NONE \
+      --host-ip=$lan_ip \
+      --adminpass=$active_directory_password
 
-  # Set Samba AD user policies: no password age or complexity requirements.
-  samba-tool domain passwordsettings set --history-length 0
-  samba-tool domain passwordsettings set --complexity off
-  samba-tool domain passwordsettings set --min-pwd-age 0
-  samba-tool domain passwordsettings set --max-pwd-age 0
+    # Set Samba AD user policies: no password age or complexity requirements.
+    samba-tool domain passwordsettings set --history-length 0
+    samba-tool domain passwordsettings set --complexity off
+    samba-tool domain passwordsettings set --min-pwd-age 0
+    samba-tool domain passwordsettings set --max-pwd-age 0
 
-  # Create AD groups.
-  samba-tool group add labusers
-  samba-tool group addunixattrs labusers 2000
+    # Create AD groups.
+    samba-tool group add labusers
+    samba-tool group addunixattrs labusers 2000
 
-  samba-tool group add labadmins
-  samba-tool group addunixattrs labadmins 2001
+    samba-tool group add labadmins
+    samba-tool group addunixattrs labadmins 2001
+  fi
 
   # Enable the Samba AD service.
   systemctl unmask samba-ad-dc.service
