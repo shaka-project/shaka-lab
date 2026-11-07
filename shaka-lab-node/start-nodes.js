@@ -61,6 +61,10 @@ const seleniumStandaloneJarPath =
 // beyond this is a hang, not slowness.
 const UPDATE_DRIVERS_TIMEOUT_MS = 10 * 60 * 1000;
 
+// How often to look for safaridriver processes that Selenium has lost track of
+// on macOS.  See reapSupersededSafariDrivers().
+const SAFARIDRIVER_REAP_INTERVAL_MS = 60 * 1000;
+
 // Common, repeated options for child_process.spawn().
 const spawnOptions = {
   // Run from the package's working directory.
@@ -370,6 +374,100 @@ function killStaleSafariAutomation() {
 }
 
 /**
+ * Parse an elapsed time from ps, in the format [[dd-]hh:]mm:ss, into seconds.
+ *
+ * @param {string} etime
+ * @return {number}
+ */
+function parseElapsedSeconds(etime) {
+  const [days, time] = etime.includes('-') ? etime.split('-') : ['0', etime];
+  const seconds = time.split(':').reduce(
+      (total, part) => total * 60 + Number(part), 0);
+  return Number(days) * 24 * 60 * 60 + seconds;
+}
+
+/**
+ * Kill safaridriver processes that Selenium has lost track of.
+ *
+ * Selenium 3.141.59 leaks safaridriver in two ways:
+ *
+ *  1. When a session times out, Selenium asks safaridriver to delete the
+ *     session before stopping safaridriver, and waits for an answer with no
+ *     timeout.  If Safari hung during the session, the answer never comes, so
+ *     safaridriver is never stopped, and Safari stays paired with the dead
+ *     session.  Since the node has only one thread for cleaning up sessions,
+ *     no other session is ever cleaned up either.
+ *  2. When a new session fails, Selenium stops its safaridriver for only some
+ *     kinds of errors.  While Safari is still paired with the dead session
+ *     from #1, every new session fails with "already paired", which is not one
+ *     of those, so each attempt leaves another safaridriver behind.
+ *
+ * Safari allows only one automation session at a time, so the newest
+ * safaridriver under each Safari node is the only one that can be doing
+ * anything useful.  Any older ones were leaked in one of the ways above.
+ * Killing them also frees up Selenium's cleanup thread and Safari itself,
+ * since the request Selenium was stuck on fails once safaridriver is gone.
+ *
+ * TODO: Remove this after upgrading to Selenium 4, which puts a timeout on the
+ * request in #1, and stops the driver on any failure in #2.
+ *
+ * @param {Array<ChildProcess>} processes The Selenium node processes.
+ */
+function reapSupersededSafariDrivers(processes) {
+  const nodePids = new Set(processes.map((child) => child.pid));
+
+  let psOutput;
+  try {
+    psOutput = child_process.execFileSync(
+        'ps', ['-A', '-o', 'pid=,ppid=,etime=,comm='], {encoding: 'utf8'});
+  } catch (error) {
+    console.log('Failed to list processes:', error);
+    return;
+  }
+
+  // The safaridriver processes under each Selenium node, keyed by node PID.
+  // Grouping by node keeps Safari and Safari Technology Preview separate,
+  // since each has its own node and its own automation session.
+  const driversByNode = new Map();
+  for (const line of psOutput.split('\n')) {
+    const match = line.match(/^\s*(\d+)\s+(\d+)\s+(\S+)\s+(.*)$/);
+    if (!match) {
+      continue;
+    }
+
+    const pid = Number(match[1]);
+    const ppid = Number(match[2]);
+    const elapsedSeconds = parseElapsedSeconds(match[3]);
+    const command = match[4];
+    if (!nodePids.has(ppid) || !/(^|\/)safaridriver$/.test(command)) {
+      continue;
+    }
+
+    if (!driversByNode.has(ppid)) {
+      driversByNode.set(ppid, []);
+    }
+    driversByNode.get(ppid).push({pid, elapsedSeconds});
+  }
+
+  for (const [nodePid, drivers] of driversByNode) {
+    // Newest first.  Drivers started in the same second are ordered by PID.
+    drivers.sort((a, b) =>
+      (a.elapsedSeconds - b.elapsedSeconds) || (b.pid - a.pid));
+
+    for (const driver of drivers.slice(1)) {
+      console.log(
+          `Killing superseded safaridriver ${driver.pid} ` +
+          `(started ${driver.elapsedSeconds}s ago by node ${nodePid}).`);
+      try {
+        process.kill(driver.pid, 'SIGTERM');
+      } catch (error) {
+        // Ignore errors if the process is already dead.
+      }
+    }
+  }
+}
+
+/**
  * Read configs and templates, and start Selenium nodes as child processes.
  * This parent process will monitor the child processes, and shut them all down
  * if one fails.  The background service system of the OS will log this and
@@ -518,6 +616,12 @@ async function main() {
     });
 
     processes.push(child);
+  }
+
+  if (process.platform == 'darwin') {
+    setInterval(
+        () => reapSupersededSafariDrivers(processes),
+        SAFARIDRIVER_REAP_INTERVAL_MS);
   }
 
   // If shut down politely, exit with code 0.
