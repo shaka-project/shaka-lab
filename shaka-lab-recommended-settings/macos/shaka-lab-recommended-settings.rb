@@ -65,11 +65,6 @@ cask "shaka-lab-recommended-settings" do
       "-privs", "-all",
     ], sudo: true
 
-    # Allow unsigned binaries (necessary for shaka-lab-node and WebDriver)
-    system_command "/usr/sbin/spctl", args: [
-      "--master-disable",
-    ], sudo: true
-
     # Wake the system when the lid is opened (laptops)
     system_command "/usr/bin/pmset", args: [
       "-a", "lidwake", "1",
