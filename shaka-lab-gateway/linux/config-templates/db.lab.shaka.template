@@ -11,7 +11,7 @@ lab.shaka		IN SOA	dns.lab.shaka. shaka.lab.shaka. (
 				10800      ; refresh (3 hours)
 				3600       ; retry (1 hour)
 				604800     ; expire (1 week)
-				38400      ; minimum (10 hours 40 minutes)
+				300        ; minimum (5 minutes, also how long clients cache "no such record")
 				)
 			NS	gateway.lab.shaka.
 
