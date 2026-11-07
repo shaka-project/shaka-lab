@@ -46,7 +46,8 @@ Dependencies installed with this package:
 
 Settings configured automatically by this package:
  - Remote access:
-   - Enable SSH for all users
+   - Enable SSH for admins (lab users are given access by
+     [`shaka-lab-gateway-client`](../../shaka-lab-gateway-client/macos/README.md#readme))
    - Enable VNC
  - Power:
    - Wake the system when the lid is opened (laptops)

@@ -36,6 +36,17 @@ brew update && brew upgrade shaka-lab-gateway-client
 There is no configuration necessary if you are connecting to the Active
 Directory service from shaka-lab-gateway.  This package has no other intent.
 
+## Lab user logins
+
+Lab users (members of the Active Directory group `labusers`) can log in over
+SSH.  If Remote Login is limited to certain users, this package adds
+`labusers` to the allowed list.
+
+macOS only creates home directories for Active Directory users on a GUI
+login.  So this package installs a service that creates a home directory for
+each lab user.  It runs every 5 minutes, so a new lab user may have to wait a
+few minutes after being created on the gateway before logging in.
+
 ## Managing Active Directory users
 
 Managing Active Directory users is done on the gateway itself.  See
@@ -51,3 +62,5 @@ to leave the domain.
 brew uninstall shaka-lab-gateway-client
 brew autoremove
 ```
+
+Uninstalling leaves lab users' home directories in `/Users` in place.

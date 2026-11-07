@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Root LaunchDaemon to create local home directories for lab users.
+
+  It runs at load and every 5 minutes, so lab users created on the gateway get
+  a home soon after.  See create-lab-homes.sh for details.  It must run as
+  root to create directories in /Users.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>io.github.shaka-project.shaka-lab-gateway-client.create-lab-homes</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/shaka-lab-gateway-client/create-lab-homes.sh</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>300</integer>
+
+  <key>StandardOutPath</key>
+  <string>/var/log/shaka-lab-gateway-client.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/shaka-lab-gateway-client.log</string>
+</dict>
+</plist>
