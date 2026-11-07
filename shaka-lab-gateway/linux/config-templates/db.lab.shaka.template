@@ -36,6 +36,21 @@ _kerberos._tcp.dc._msdcs   SRV   0   0   88 gateway.lab.shaka.
 _kpasswd._tcp              SRV   0   0  464 gateway.lab.shaka.
 _kpasswd._udp              SRV   0   0  464 gateway.lab.shaka.
 
+; Site-specific SRV records for Active Directory services.  The domain is
+; provisioned without --site, so it uses the default site name.
+_ldap._tcp.Default-First-Site-Name._sites                SRV   0   0  389 gateway.lab.shaka.
+_ldap._tcp.Default-First-Site-Name._sites.dc._msdcs      SRV   0   0  389 gateway.lab.shaka.
+_kerberos._tcp.Default-First-Site-Name._sites            SRV   0   0   88 gateway.lab.shaka.
+_kerberos._tcp.Default-First-Site-Name._sites.dc._msdcs  SRV   0   0   88 gateway.lab.shaka.
+
+; Global Catalog records.  macOS clients can't bring their Active Directory
+; node online without these.
+gc._msdcs                                                A     {{ lan_ip }}
+_gc._tcp                                                 SRV   0   0 3268 gateway.lab.shaka.
+_ldap._tcp.gc._msdcs                                     SRV   0   0 3268 gateway.lab.shaka.
+_gc._tcp.Default-First-Site-Name._sites                  SRV   0   0 3268 gateway.lab.shaka.
+_ldap._tcp.Default-First-Site-Name._sites.gc._msdcs      SRV   0   0 3268 gateway.lab.shaka.
+
 $TTL 300	; 5 minutes
 
 ; Records for local network devices
