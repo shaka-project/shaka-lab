@@ -50,15 +50,11 @@ cask "shaka-lab-recommended-settings" do
       "-setnetworktimeserver", "time.apple.com",
     ], sudo: true
 
-    # Enable SSH
+    # Enable SSH.  By default, this is limited to admins.  Lab users are given
+    # access by shaka-lab-gateway-client.
     system_command "/usr/sbin/systemsetup", args: [
       "-setremotelogin", "on",
     ], sudo: true
-
-    # Enable SSH for all users, not just admins
-    # (This fails if run twice, so ignore failures here.  system_command
-    # doesn't let us ignore failures, so use Kernel.system.)
-    Kernel.system "/usr/bin/sudo", "/usr/sbin/dseditgroup", "-o", "delete", "-t", "group", "com.apple.access_ssh", :out=>["/dev/null"], :err=>["/dev/null"]
 
     # Enable VNC
     system_command "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart", args: [
