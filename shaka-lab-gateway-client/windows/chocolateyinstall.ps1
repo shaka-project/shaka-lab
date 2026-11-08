@@ -20,17 +20,46 @@ $ErrorActionPreference = "Stop"
 
 
 # Commands to join the domain will fail if we're already in it, so check.
-$computer=(Get-WmiObject -Namespace root\cimv2 -Class Win32_ComputerSystem)
-$domain=$computer.Domain
+# A join only takes effect after a restart.  Until then, Windows may still
+# report the old domain, but it keeps the Netlogon\JoinDomain registry key
+# while the join is pending.
+$domain = (Get-CimInstance -ClassName Win32_ComputerSystem).Domain
+$joinPending = Test-Path HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\JoinDomain
+$restartNeeded = $false
 
 # NOTE: This is a case-insensitive check.
-if ($domain -eq "lab.shaka") {
+if ($domain -eq "lab.shaka" -and -Not $joinPending) {
   echo "`nAlready a member of the Shaka Lab domain.`n"
+} elseif ($joinPending) {
+  echo "`nAlready joined the Shaka Lab domain, but a restart is still needed.`n"
+  $restartNeeded = $true
 } else {
+  # Kerberos rejects clock skew over 5 minutes, so sync the clock before
+  # joining.  shaka-lab-recommended-settings sets up ongoing time sync.
+  echo "`nSyncing the clock...`n"
+  Start-Service -Name w32time
+  w32tm /resync /rediscover
+
   echo "`nJoining Shaka Lab domain via Shaka Lab Gateway.`n"
   echo "`nWhen prompted, enter your Active Directory Administrator password.`n"
   Add-Computer -DomainName LAB.SHAKA -Credential Administrator
   echo "`nSuccessfully joined the Shaka Lab domain!`n"
+  $restartNeeded = $true
+}
+
+
+# Give lab admins admin rights on this machine.  S-1-5-32-544 is the local
+# Administrators group, whatever its name in the system's language.
+try {
+  Add-LocalGroupMember -SID S-1-5-32-544 -Member "LAB\labadmins"
+  echo "`nGave LAB\labadmins admin rights.`n"
+} catch [Microsoft.PowerShell.Commands.MemberExistsException] {
+  echo "`nLAB\labadmins already has admin rights.`n"
+} catch [Microsoft.PowerShell.Commands.PrincipalNotFoundException] {
+  # Right after joining, the domain's groups may not resolve until a restart.
+  Write-Warning ("Could not find LAB\labadmins.  " +
+      "After restarting, install this package again to give lab admins " +
+      "admin rights.")
 }
 
 
@@ -87,4 +116,9 @@ if (($newLines -join "`n") -ne ($lines -join "`n")) {
   # WriteAllLines writes UTF-8 without a byte order mark, which sshd requires.
   [System.IO.File]::WriteAllLines($sshdConfig, [string[]]$newLines)
   Restart-Service -Name sshd
+}
+
+
+if ($restartNeeded) {
+  echo "`n*** Restart this computer to finish joining the Shaka Lab domain. ***`n"
 }
