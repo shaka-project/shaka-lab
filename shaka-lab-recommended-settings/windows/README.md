@@ -41,11 +41,14 @@ Settings configured automatically by this package:
  - Install and start Microsoft SSH server
  - Configure SSH server:
    - Use PowerShell as the login shell
+ - Sync time from time.windows.com, even when joined to a domain
  - Enable Remote Desktop connections
  - Disable firewall
  - Disable all forms of sleep and hibernate
  - Configure VIM:
    - Disable backup files
+   - Make Backspace work over SSH
+   - Don't clear the screen on exit
  - Configure Windows Update:
    - No updates between midnight at 6pm local
    - Restart without prompting the logged-in user
