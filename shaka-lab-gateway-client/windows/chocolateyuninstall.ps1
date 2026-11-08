@@ -18,15 +18,26 @@
 $ErrorActionPreference = "Stop"
 
 # Commands to leave the domain will fail if we're not in it, so check.
-$computer=(Get-WmiObject -Namespace root\cimv2 -Class Win32_ComputerSystem)
-$domain=$computer.Domain
+$domain = (Get-CimInstance -ClassName Win32_ComputerSystem).Domain
 
 # NOTE: This is a case-insensitive check.
 if ($domain -eq "lab.shaka") {
+  # Revoke lab admins' admin rights.  This must happen before leaving the
+  # domain, while the name LAB\labadmins can still be resolved.  S-1-5-32-544
+  # is the local Administrators group, whatever its name in the system's
+  # language.
+  try {
+    Remove-LocalGroupMember -SID S-1-5-32-544 -Member "LAB\labadmins"
+    echo "`nRevoked admin rights from LAB\labadmins.`n"
+  } catch [Microsoft.PowerShell.Commands.MemberNotFoundException] {
+    echo "`nLAB\labadmins did not have admin rights.`n"
+  }
+
   echo "`nLeaving the Shaka Lab domain via Shaka Lab Gateway.`n"
   echo "`nWhen prompted, enter your Active Directory Administrator password.`n"
   Remove-Computer -UnjoinDomainCredential Administrator -Force
   echo "`nSuccessfully left the Shaka Lab domain.`n"
+  echo "`n*** Restart this computer to finish leaving the Shaka Lab domain. ***`n"
 } else {
   echo "`nAlready left the Shaka Lab domain.`n"
 }

@@ -17,12 +17,16 @@ package.  Devices with the client package will connect to that gateway.
 
 **NOTE**: When you install this package, you will be prompted for the Active
 Directory Administrator password used to set up the Gateway.  This is necessary
-to join the domain.
+to join the domain.  Before joining, the package syncs the clock, since the
+domain rejects computers whose clocks are more than 5 minutes off.
 
 ```sh
 choco source add -n=shaka-lab -s=https://chocolatey.shakalab.rocks/
 choco install shaka-lab-gateway-client
 ```
+
+**NOTE**: Restart the computer after installing to finish joining the domain.
+The package doesn't restart it for you.
 
 ## Updates
 
@@ -69,6 +73,19 @@ has a `.ssh\authorized_keys` file, the SSH server drops their connection
 instead of falling back to a password, so they cannot log in over SSH at all.
 Use Kerberos instead.  Local accounts are not affected.
 
+## Admin rights
+
+Members of the Active Directory group `labadmins` are administrators on every
+computer with this package installed.  The package adds `LAB\labadmins` to the
+local Administrators group.
+
+Over SSH, administrators get full admin rights without any extra step, so
+there is no need for an equivalent of `sudo`.  At the console, Windows asks
+them to confirm before running something as administrator.
+
+Keep a local administrator account as well.  Domain accounts can't log in if
+the gateway is down, or after the computer leaves the domain.
+
 ## Managing Active Directory users
 
 Managing Active Directory users is done on the gateway itself.  See
@@ -80,9 +97,15 @@ https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme
 Directory Administrator password used to set up the Gateway.  This is necessary
 to leave the domain.
 
-Uninstalling does not restore the `sshd_config` block removed during
-installation.
+Uninstalling removes `LAB\labadmins` from the local Administrators group.  It
+does not restore the `sshd_config` changes made during installation.
+
+Uninstall while logged in as a local administrator.  After the computer leaves
+the domain, domain accounts can't log in to it.
 
 ```sh
 choco uninstall -y shaka-lab-gateway-client
 ```
+
+**NOTE**: Restart the computer after uninstalling to finish leaving the domain.
+The package doesn't restart it for you.
