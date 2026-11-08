@@ -39,6 +39,9 @@ if [[ "$domain" == "lab.shaka" ]]; then
     dseditgroup -o edit -d 'LAB\labusers' -t group com.apple.access_ssh || true
   fi
 
+  # Revoke local admin rights for lab admins.
+  dsconfigad -nogroups
+
   echo "Leaving the Shaka Lab domain via Shaka Lab Gateway."
   echo "When prompted for \"Administrator's Password\", enter your Active Directory Administrator password."
   dsconfigad -remove -u Administrator

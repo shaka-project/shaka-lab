@@ -42,6 +42,10 @@ else
   echo "Successfully joined the Shaka Lab domain!"
 fi
 
+# Give lab admins local admin rights, including sudo, as the Linux client
+# does.  This replaces any other admin groups set for the domain.
+dsconfigad -groups 'LAB\labadmins'
+
 # Allow lab users to log in over SSH.  When Remote Login is limited to certain
 # users, macOS keeps that list in the group com.apple.access_ssh.  If that
 # group doesn't exist, Remote Login is already open to all users.
