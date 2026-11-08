@@ -37,18 +37,37 @@ Directory service from shaka-lab-gateway.
 
 ## SSH access
 
-Lab users can log in over SSH with their Active Directory password.  This
-package installs and starts the Windows OpenSSH server if needed, and removes
-the `Match Group administrators` block from the end of the stock
-`sshd_config`.  That block makes the SSH server look up each user's groups
-before authenticating them, which fails for domain users and drops the
-connection.  Removing it also means admin accounts use their own
-`authorized_keys` files instead of a shared one.
+Lab users can log in over SSH with their Active Directory password, or without
+a password using Kerberos.  This package installs and starts the Windows
+OpenSSH server if needed, and makes two changes to the stock `sshd_config`:
 
-**NOTE**: SSH key logins do not work for domain users yet.  If a domain user
+ - It removes the `Match Group administrators` block from the end.  That block
+   makes the SSH server look up each user's groups before authenticating them,
+   which fails for domain users and drops the connection.  Removing it also
+   means admin accounts use their own `authorized_keys` files instead of a
+   shared one.
+ - It turns on `GSSAPIAuthentication`, which allows Kerberos logins.
+
+To log in with Kerberos, get a ticket with your Active Directory password, then
+connect using the host's full name in the `lab.shaka` domain:
+
+```sh
+kinit USERNAME
+ssh -l USERNAME HOSTNAME.lab.shaka
+```
+
+Many SSH clients try Kerberos by default.  Debian and Ubuntu, for example,
+enable it in `/etc/ssh/ssh_config`.  If yours does not, add
+`-o GSSAPIAuthentication=yes` to the `ssh` command, or set
+`GSSAPIAuthentication yes` in your SSH client config.
+
+**NOTE**: SSH key logins do not work for domain users.  For a key login,
+Windows asks the domain controller for a ticket on the user's behalf.  Current
+Windows releases make that request in a form Samba's domain controller does
+not support (`PA-S4U-X509-USER`, see CVE-2026-20849).  Worse, if a domain user
 has a `.ssh\authorized_keys` file, the SSH server drops their connection
 instead of falling back to a password, so they cannot log in over SSH at all.
-Local accounts are not affected.
+Use Kerberos instead.  Local accounts are not affected.
 
 ## Managing Active Directory users
 
