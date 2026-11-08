@@ -37,6 +37,16 @@ New-ItemProperty `
   -PropertyType String -Force | Out-Null
 
 
+echo "`nEnabling time sync...`n"
+# Domain members normally sync time from a domain controller, but the Shaka Lab
+# Gateway doesn't serve time.  Always sync from a public time server instead,
+# whether or not this machine is in a domain.  The 0x8 flag means an ordinary
+# NTP client, using the normal polling interval.
+Set-Service -Name w32time -StartupType Automatic
+Start-Service -Name w32time
+w32tm /config /manualpeerlist:"time.windows.com,0x8" /syncfromflags:manual /update
+
+
 echo "`nEnabling Remote Desktop connections`n"
 # NOTE: Needs admin rights
 Set-ItemProperty `
@@ -64,6 +74,22 @@ if (-Not (cat c:\tools\vim\_vimrc | Select-String nobackup -Quiet)) {
   echo "`nConfiguring vim`n"
   # Disable backup files which clutter the filesystem
   Add-Content "c:\tools\vim\_vimrc" "`r`nset nobackup`r`nset noundofile`r`n"
+}
+
+# This step also appends, so skip it if the settings are already there.
+if (-Not (cat c:\tools\vim\_vimrc | Select-String "Char-0x7f" -SimpleMatch -Quiet)) {
+  echo "`nConfiguring vim for SSH sessions`n"
+  Add-Content "c:\tools\vim\_vimrc" @(
+    "",
+    "`" Over SSH, Backspace arrives as a literal DEL (0x7F).  Treat it as Backspace.",
+    "if has('win32') && !has('gui_running')",
+    "  noremap! <Char-0x7f> <BS>",
+    "  nnoremap <Char-0x7f> <BS>",
+    "endif",
+    "",
+    "`" Keep vim from clearing the screen on exit.",
+    "set t_ti= t_te="
+  )
 }
 
 
