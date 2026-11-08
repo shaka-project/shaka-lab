@@ -42,6 +42,9 @@ Lab users (members of the Active Directory group `labusers`) can log in over
 SSH.  If Remote Login is limited to certain users, this package adds
 `labusers` to the allowed list.
 
+Lab admins (members of the Active Directory group `labadmins`) are local
+admins, and can use `sudo`.
+
 macOS only creates home directories for Active Directory users on a GUI
 login.  So this package installs a service that creates a home directory for
 each lab user.  It runs every 5 minutes, so a new lab user may have to wait a
