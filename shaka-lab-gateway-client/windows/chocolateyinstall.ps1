@@ -61,14 +61,30 @@ Set-Service -Name sshd -Status running -StartupType automatic
 # Remove both lines of that block.  This does nothing if they are already gone.
 $sshdConfig = "$env:ProgramData\ssh\sshd_config"
 $lines = @(Get-Content $sshdConfig)
-$kept = @($lines | ? {
+$newLines = @($lines | ? {
   ($_ -notmatch '^\s*Match\s+Group\s+administrators\s*$') -and
   (-Not $_.Contains("administrators_authorized_keys"))
 })
 
-if ($kept.Count -ne $lines.Count) {
+# For the same S4U reason, SSH keys don't work for domain users.  Kerberos
+# (GSSAPI) logins do: the client presents a Kerberos ticket for this host, and
+# Windows builds the user's token from that ticket without S4U.  Turn that on
+# by replacing the stock "#GSSAPIAuthentication no" line.  If there is no such
+# line, append one.  That is safe because no Match block remains to capture it.
+$newLines = @($newLines | % {
+  if ($_ -match '^\s*#?\s*GSSAPIAuthentication\s') {
+    "GSSAPIAuthentication yes"
+  } else {
+    $_
+  }
+})
+if (-Not ($newLines -contains "GSSAPIAuthentication yes")) {
+  $newLines += "GSSAPIAuthentication yes"
+}
+
+if (($newLines -join "`n") -ne ($lines -join "`n")) {
   echo "`nConfiguring SSH server for domain users...`n"
   # WriteAllLines writes UTF-8 without a byte order mark, which sshd requires.
-  [System.IO.File]::WriteAllLines($sshdConfig, [string[]]$kept)
+  [System.IO.File]::WriteAllLines($sshdConfig, [string[]]$newLines)
   Restart-Service -Name sshd
 }
