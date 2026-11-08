@@ -33,7 +33,22 @@ choco upgrade -y shaka-lab-gateway-client
 ## Configuration
 
 There is no configuration necessary if you are connecting to the Active
-Directory service from shaka-lab-gateway.  This package has no other intent.
+Directory service from shaka-lab-gateway.
+
+## SSH access
+
+Lab users can log in over SSH with their Active Directory password.  This
+package installs and starts the Windows OpenSSH server if needed, and removes
+the `Match Group administrators` block from the end of the stock
+`sshd_config`.  That block makes the SSH server look up each user's groups
+before authenticating them, which fails for domain users and drops the
+connection.  Removing it also means admin accounts use their own
+`authorized_keys` files instead of a shared one.
+
+**NOTE**: SSH key logins do not work for domain users yet.  If a domain user
+has a `.ssh\authorized_keys` file, the SSH server drops their connection
+instead of falling back to a password, so they cannot log in over SSH at all.
+Local accounts are not affected.
 
 ## Managing Active Directory users
 
@@ -45,6 +60,9 @@ https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme
 **NOTE**: When you uninstall this package, you will be prompted for the Active
 Directory Administrator password used to set up the Gateway.  This is necessary
 to leave the domain.
+
+Uninstalling does not restore the `sshd_config` block removed during
+installation.
 
 ```sh
 choco uninstall -y shaka-lab-gateway-client
