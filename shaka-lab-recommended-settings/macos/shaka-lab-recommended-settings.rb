@@ -39,117 +39,19 @@ cask "shaka-lab-recommended-settings" do
   # Signal that this package does not need upgrading through "brew upgrade".
   auto_updates true
 
-  # Use preflight so that if the commands fail, the package is not considered
-  # installed.
-  preflight do
-    # Enable time sync
-    system_command "/usr/sbin/systemsetup", args: [
-      "-setusingnetworktime", "on",
-    ], sudo: true
-    system_command "/usr/sbin/systemsetup", args: [
-      "-setnetworktimeserver", "time.apple.com",
-    ], sudo: true
+  # The path from the Cask definition to the full shaka-lab source.
+  source_root = "#{__dir__}/../shaka-lab-source"
 
-    # Enable SSH.  By default, this is limited to admins.  Lab users are given
-    # access by shaka-lab-gateway-client.
-    system_command "/usr/sbin/systemsetup", args: [
-      "-setremotelogin", "on",
-    ], sudo: true
-
-    # Enable VNC
-    system_command "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart", args: [
-      "-activate", "-configure",
-      "-access", "-on",
-      "-allowAccessFor", "-allUsers",
-      "-restart", "-agent",
-      "-privs", "-all",
-    ], sudo: true
-
-    # Wake the system when the lid is opened (laptops)
-    system_command "/usr/bin/pmset", args: [
-      "-a", "lidwake", "1",
-    ], sudo: true
-
-    # Restart automatically on power loss
-    system_command "/usr/bin/pmset", args: [
-      "-a", "autorestart", "1",
-    ], sudo: true
-
-    # Never put the display to sleep
-    system_command "/usr/bin/pmset", args: [
-      "-a", "displaysleep", "0",
-    ], sudo: true
-
-    # Never put the machine to sleep
-    system_command "/usr/bin/pmset", args: [
-      "-c", "sleep", "0",  # while charging
-    ], sudo: true
-    system_command "/usr/bin/pmset", args: [
-      "-b", "sleep", "0",  # while on battery
-    ], sudo: true
-
-    # Disable hibernation mode
-    system_command "/usr/bin/pmset", args: [
-      "-a", "hibernatemode", "0",
-    ], sudo: true
-
-    # Disable the "power nap" feature
-    system_command "/usr/bin/pmset", args: [
-      "-a", "powernap", "0",
-    ], sudo: true
-
-    # Check for OS updates automatically
-    system_command "/usr/bin/defaults", args: [
-      "write", "/Library/Preferences/com.apple.SoftwareUpdate.plist",
-      "AutomaticCheckEnabled", "-bool", "true",
-    ], sudo: true
-
-    # Check for OS updates daily
-    system_command "/usr/bin/defaults", args: [
-      "write", "/Library/Preferences/com.apple.SoftwareUpdate.plist",
-      "ScheduleFrequency", "-int", "1",
-    ], sudo: true
-
-    # Download OS updates in the background
-    system_command "/usr/bin/defaults", args: [
-      "write", "/Library/Preferences/com.apple.SoftwareUpdate.plist",
-      "AutomaticDownload", "-int", "1",
-    ], sudo: true
-
-    # Install OS updates automatically
-    system_command "/usr/bin/defaults", args: [
-      "write", "/Library/Preferences/com.apple.SoftwareUpdate.plist",
-      "CriticalUpdateInstall", "-int", "1",
-    ], sudo: true
-
-    # Update apps automtically
-    system_command "/usr/bin/defaults", args: [
-      "write", "/Library/Preferences/com.apple.commerce.plist",
-      "AutoUpdate", "-bool", "true",
-    ], sudo: true
-
-    # Allow the App Store to reboot the machine when required for updates
-    system_command "/usr/bin/defaults", args: [
-      "write", "/Library/Preferences/com.apple.commerce.plist",
-      "AutoUpdateRestartRequired", "-bool", "true",
-    ], sudo: true
+  # The real work happens in install.sh and postflight.sh, run as root.
+  # If they fail, the package is not considered installed.
+  preflight_steps do
+    run "#{source_root}/shaka-lab-recommended-settings/macos/install.sh",
+        sudo: true, print_stdout: true
   end
 
-  # These commands depend on kcpassword, so they go into postflight.
-  postflight do
-    # Prompt for the user's password to enable autologin
-    require 'io/console'
-    puts "Enabling autologin..."
-    password = IO::console.getpass "Enter user password: "
-
-    # Enable autologin, part 1: Write obfuscated password read by logind
-    system_command "#{HOMEBREW_PREFIX}/bin/kcpassword", args: [
-      password,
-    ], sudo: true
-    # Enable autologin, part 2: Set the username read by logind
-    system_command "/usr/bin/defaults", args: [
-      "write", "/Library/Preferences/com.apple.loginwindow",
-      "autoLoginUser", ENV['USER'],
-    ], sudo: true
+  # Autologin depends on kcpassword, so it goes into postflight.
+  postflight_steps do
+    run "#{source_root}/shaka-lab-recommended-settings/macos/postflight.sh",
+        args: ["{{HOMEBREW_PREFIX}}"], sudo: true, print_stdout: true
   end
 end

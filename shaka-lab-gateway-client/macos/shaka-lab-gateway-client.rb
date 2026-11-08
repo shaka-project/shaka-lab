@@ -40,118 +40,20 @@ cask "shaka-lab-gateway-client" do
   # We install files from there.
   source_root = "#{__dir__}/../shaka-lab-source"
 
-  # The destination folder of shaka-lab-gateway-client files.
-  destination = "/opt/shaka-lab-gateway-client"
-
-  # The LaunchDaemon that creates home directories for lab users.
-  homes_plist = "/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-gateway-client.create-lab-homes.plist"
-
-  # Use preflight so that if the commands fail, the package is not considered
-  # installed.
-  preflight do
-    # NOTE: This utility runs /usr/bin/install, but through sudo.  It is
-    # similar to FileUtils.install, but give us the ability to install files as
-    # root.
-    def sudo_install(source, destination, mode: "0644")
-      system_command "/usr/bin/install", args: [
-        "-m", mode, source, destination,
-      ], sudo: true
-    end
-
-    # Commands to join the domain will fail if we're already in it, so check.
-    domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`.strip
-    puts "Current domain = \"#{domain}\""
-
-    if domain == "lab.shaka"
-      puts "Already a member of the Shaka Lab domain."
-    else
-      # Perform a one-time time sync, since this is critical for joining AD.
-      # In contrast, shaka-lab-recommended-settings will set ongoing time sync.
-      system_command "/usr/bin/sntp", args: [
-        "-sS", "time.apple.com",
-      ], sudo: true
-
-      puts "Joining Shaka Lab domain via Shaka Lab Gateway."
-      puts "When prompted for \"Password\", enter your own password for sudo."
-      puts "When prompted for \"Administrator's Password\", enter your Active Directory Administrator password."
-
-      system_command "/usr/sbin/dsconfigad", args: [
-        "-domain", "lab.shaka",
-        "-u", "Administrator",
-      ], sudo: true
-
-      puts "Successfully joined the Shaka Lab domain!"
-    end
-
-    # Allow lab users to log in over SSH.  When Remote Login is limited to
-    # certain users, macOS keeps that list in the group com.apple.access_ssh.
-    # If that group doesn't exist, Remote Login is already open to all users.
-    if Kernel.system "/usr/bin/dscl", ".", "-read", "/Groups/com.apple.access_ssh", :out=>["/dev/null"], :err=>["/dev/null"]
-      system_command "/usr/sbin/dseditgroup", args: [
-        "-o", "edit", "-a", "LAB\\labusers", "-t", "group", "com.apple.access_ssh",
-      ], sudo: true
-    end
-
-    # Install and load the LaunchDaemon that creates home directories for lab
-    # users.  macOS only creates them on GUI login, and lab users log in over
-    # SSH.  See create-lab-homes.sh.
-    system_command "/bin/mkdir", args: ["-p", destination], sudo: true
-    sudo_install "#{source_root}/shaka-lab-gateway-client/macos/create-lab-homes.sh", destination, mode: "0755"
-    sudo_install "#{source_root}/shaka-lab-gateway-client/macos/io.github.shaka-project.shaka-lab-gateway-client.create-lab-homes.plist", homes_plist
-    # Reload it.  Tolerate "not loaded" on a first install.
-    begin
-      system_command "/bin/launchctl", args: ["bootout", "system", homes_plist], sudo: true
-    rescue StandardError
-      # Was not loaded yet; ignore.
-    end
-    system_command "/bin/launchctl", args: ["bootstrap", "system", homes_plist], sudo: true
+  # The real work happens in install.sh and uninstall.sh, run as root.
+  # If they fail, the package is not considered installed or uninstalled.
+  preflight_steps do
+    run "#{source_root}/shaka-lab-gateway-client/macos/install.sh",
+        args: [source_root], sudo: true, print_stdout: true
   end
 
-  uninstall_preflight do
-    # Unload the home directory LaunchDaemon before removing it.  Tolerate it
-    # already being unloaded.  Home directories it created are left in place.
-    begin
-      system_command "/bin/launchctl", args: ["bootout", "system", homes_plist], sudo: true
-    rescue StandardError
-      # Already unloaded; ignore.
-    end
-    system_command "/bin/rm", args: [
-      "-rf",
-      destination,
-      homes_plist,
-      "/var/log/shaka-lab-gateway-client.log",
-    ], sudo: true
-
-    # Commands to leave the domain will fail if we're not in it, so check.
-    domain = `dsconfigad -show | awk '/Active Directory Domain/{print $NF}'`.strip
-    puts "Current domain = \"#{domain}\""
-
-    if domain == "lab.shaka"
-      # Revoke SSH access for lab users.  This must happen before leaving the
-      # domain, while the group name can still be resolved.  Tolerate lab users
-      # not having been in the group.
-      if Kernel.system "/usr/bin/dscl", ".", "-read", "/Groups/com.apple.access_ssh", :out=>["/dev/null"], :err=>["/dev/null"]
-        begin
-          system_command "/usr/sbin/dseditgroup", args: [
-            "-o", "edit", "-d", "LAB\\labusers", "-t", "group", "com.apple.access_ssh",
-          ], sudo: true
-        rescue StandardError
-          # Not in the group; ignore.
-        end
-      end
-
-      puts "Leaving the Shaka Lab domain via Shaka Lab Gateway."
-      puts "When prompted for \"Password\", enter your own password for sudo."
-      puts "When prompted for \"Administrator's Password\", enter your Active Directory Administrator password."
-
-      system_command "/usr/sbin/dsconfigad", args: [
-        "-remove",
-        "-u", "Administrator",
-      ], sudo: true
-
-      puts "Successfully left the Shaka Lab domain."
-    else
-      puts "Already left the Shaka Lab domain."
+  # install.sh puts uninstall.sh outside of the tap, because Homebrew
+  # uninstalls from its own saved copy of this Cask, which can't find files in
+  # the tap.
+  uninstall_preflight_steps do
+    if_path_exists "/opt/shaka-lab-gateway-client/uninstall.sh" do
+      run "/opt/shaka-lab-gateway-client/uninstall.sh",
+          sudo: true, print_stdout: true
     end
   end
 end
