@@ -16,7 +16,8 @@
 
 # Post-install script.  Runs as root after package installation.
 # It will get necessary base configuration, then set up the LDAP config for
-# authentication of lab users.
+# authentication of lab users, and join the domain so that lab users can log
+# in over SSH with Kerberos.
 
 # Fail on error
 set -e
@@ -53,7 +54,7 @@ active_directory_password="$RET"
 backup_config() {
   # If we don't already have an original backup from the first install, make
   # one now.  Subsequent installs or updates will not recreate this.
-  if [ ! -e "$1".shaka-lab.orig ]; then
+  if [ -e "$1" ] && [ ! -e "$1".shaka-lab.orig ]; then
     cp -a "$1" "$1".shaka-lab.orig
   fi
 }
@@ -147,3 +148,85 @@ mod_nsswitch shadow ldap "files ldap"
 
 # Enable the automatic creation of home directories when an AD user logs in.
 pam-auth-update --enable mkhomedir
+
+
+### KERBEROS SETUP ###
+
+# Point Kerberos at the gateway, which is the KDC for the lab's realm.
+backup_config /etc/krb5.conf
+
+cat <<EOF >/etc/krb5.conf
+# /etc/krb5.conf
+# Kerberos configuration file, written by shaka-lab-gateway-client.
+# See krb5.conf(5) for details.
+
+[libdefaults]
+	default_realm = LAB.SHAKA
+	dns_lookup_realm = false
+	dns_lookup_kdc = false
+	# Don't use reverse DNS to find the names of servers.  The lab's reverse
+	# zone can have several names for one IP, and the first one returned is
+	# often not the one that has keys in Active Directory.
+	rdns = false
+
+[realms]
+	LAB.SHAKA = {
+		kdc = gateway.lab.shaka
+		admin_server = gateway.lab.shaka
+	}
+
+[domain_realm]
+	.lab.shaka = LAB.SHAKA
+	lab.shaka = LAB.SHAKA
+EOF
+
+
+# Join the domain.  This creates a computer account for this machine on the
+# gateway, and writes the keys sshd needs to accept Kerberos logins to
+# /etc/krb5.keytab.  The gateway's DNS only knows this machine by its short
+# name in the lab.shaka domain, so build the full name from that, rather than
+# trusting the local machine's idea of its domain.
+short_name=$(hostname -s)
+short_name=${short_name,,}
+host_fqdn="$short_name.lab.shaka"
+host_principal="host/$host_fqdn@LAB.SHAKA"
+
+if [ ${#short_name} -gt 15 ]; then
+  # Active Directory computer names are limited to 15 characters.  adcli would
+  # silently truncate a longer name, and two machines whose names start the
+  # same way would end up fighting over one computer account.  Don't fail the
+  # whole install over this, since logins with a password still work.
+  echo "WARNING: The host name \"$short_name\" is longer than 15 characters." >&2
+  echo "WARNING: Not joining the domain, so Kerberos SSH logins are disabled." >&2
+  echo "WARNING: Rename this machine, then reinstall this package." >&2
+elif klist -k /etc/krb5.keytab 2>/dev/null | grep -qF " $host_principal"; then
+  # This runs on every upgrade, so don't join again.
+  echo "Already joined to the domain as $host_fqdn."
+else
+  echo "Joining the domain as $host_fqdn."
+  # Report a failure, but don't fail the install over it.  Logins with a
+  # password still work, and the join will be tried again on the next upgrade.
+  if ! printf '%s\n' "$active_directory_password" | adcli join \
+      --domain=lab.shaka \
+      --domain-realm=LAB.SHAKA \
+      --domain-controller=gateway.lab.shaka \
+      --login-user=Administrator \
+      --stdin-password \
+      --host-fqdn="$host_fqdn"; then
+    echo "WARNING: Failed to join the domain." >&2
+    echo "WARNING: Kerberos SSH logins are disabled." >&2
+    echo "WARNING: Reinstall this package to try again." >&2
+  fi
+fi
+
+
+### SSH SETUP ###
+
+# Reload sshd after installing new sshd configs.
+if systemctl cat ssh &>/dev/null; then
+  # Since Ubuntu 24.04
+  systemctl reload-or-restart ssh
+else
+  # In Ubuntu 22.04 and earlier
+  systemctl reload-or-restart sshd
+fi

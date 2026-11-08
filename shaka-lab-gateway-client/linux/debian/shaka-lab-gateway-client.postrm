@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-remove script.  Runs as root after package removal.
+
+# DON'T fail on error.  Always keep going!
+set +e
+
+# A plain "remove" leaves this machine joined to the domain, the same way it
+# leaves the rest of this package's configuration in place.  Only a "purge"
+# leaves the domain.
+if [ "$1" = "purge" ]; then
+  active_directory_password=""
+  if [ -e /usr/share/debconf/confmodule ]; then
+    # Source the debconf library, and get the AD admin password before purging
+    # it below.
+    . /usr/share/debconf/confmodule
+    db_get shaka-lab-gateway-client/active_directory_password
+    active_directory_password="$RET"
+  fi
+
+  short_name=$(hostname -s)
+  short_name=${short_name,,}
+  host_principal="host/$short_name.lab.shaka@LAB.SHAKA"
+
+  # Only leave the domain if the postinst joined it.
+  if klist -k /etc/krb5.keytab 2>/dev/null | grep -qF " $host_principal"; then
+    echo "Deleting the computer account $short_name from the domain."
+    if ! printf '%s\n' "$active_directory_password" | adcli delete-computer \
+        --domain=lab.shaka \
+        --domain-realm=LAB.SHAKA \
+        --domain-controller=gateway.lab.shaka \
+        --login-user=Administrator \
+        --stdin-password \
+        "$short_name"; then
+      echo "WARNING: Failed to delete the computer account $short_name." >&2
+      echo "WARNING: Delete it on the gateway with:" >&2
+      echo "WARNING:   sudo samba-tool computer delete '$short_name\$'" >&2
+    fi
+
+    rm -f /etc/krb5.keytab
+  fi
+
+  # Pick up the removal of this package's sshd config.
+  if systemctl cat ssh &>/dev/null; then
+    # Since Ubuntu 24.04
+    systemctl reload-or-restart ssh
+  else
+    # In Ubuntu 22.04 and earlier
+    systemctl reload-or-restart sshd
+  fi
+
+  if [ -e /usr/share/debconf/confmodule ]; then
+    # Remove all debconf configuration associated with this package.
+    db_purge
+  fi
+fi
