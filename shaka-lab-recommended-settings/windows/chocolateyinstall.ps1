@@ -35,14 +35,6 @@ New-ItemProperty `
   -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell `
   -Value "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" `
   -PropertyType String -Force | Out-Null
-#  - Disable SSH keys shared across all admin accounts
-if (-Not (Test-Path c:\ProgramData\ssh\sshd_config.orig)) {
-  cp c:\ProgramData\ssh\sshd_config c:\ProgramData\ssh\sshd_config.orig
-}
-cp c:\ProgramData\ssh\sshd_config c:\ProgramData\ssh\sshd_config.bk
-cat c:\ProgramData\ssh\sshd_config.bk | `
-    ? {-Not $_.Contains("administrators_authorized_keys")} | `
-    Set-Content c:\ProgramData\ssh\sshd_config
 
 
 echo "`nEnabling Remote Desktop connections`n"
