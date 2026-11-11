@@ -1,0 +1,70 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Shaka Lab Access Portal Config
+#
+# Everything is optional: this file as-is is a valid config with no devices.
+# The commented values below are the defaults.  After editing, restart the
+# portal with:
+#   sudo systemctl restart shaka-lab-access-portal
+
+# listen:
+#   # 127.0.0.1 allows only local users and SSH tunnels that end on this
+#   # machine.  0.0.0.0 serves every network this machine is on.  The portal
+#   # has no passwords, so anyone who can reach this port can use the KVMs and
+#   # power-cycle devices.
+#   host: 127.0.0.1
+#   port: 8080
+
+# The portal is served at http://<baseDomain>:<port>/ and each KVM at
+# http://<slug>.<baseDomain>:<port>/. Browsers resolve *.localhost to the local
+# machine, so "kvm.localhost" works over an SSH tunnel with no DNS setup.
+# baseDomain: kvm.localhost
+
+# How to run matter-power-control.
+# powerControl:
+#   # A name on PATH, or a full path.
+#   command: matter-power-control
+#   # Passed as --config if set. Otherwise the tool uses its own default,
+#   # which is /etc/matter-power-control.json when installed by the package.
+#   config: /path/to/matter-power-control.json
+#   # Give up on a single command after this many seconds.
+#   timeoutSeconds: 60
+
+# Each device needs a kvm, a power plug, or both.
+#   slug:  lowercase letters, digits, hyphens; becomes the KVM's subdomain.
+#   name:  shown in the portal.
+#   kvm.url:  the TinyPilot's base URL (self-signed certs are fine).
+#   power.label:  a label from matter-power-control's config.
+#
+# devices:
+#   # A device with both a KVM and a power plug.
+#   - slug: lab-pc
+#     name: Lab PC
+#     kvm:
+#       url: https://lab-pc-kvm.example/
+#     power:
+#       label: lab-pc
+#
+#   # A device with only a KVM.
+#   - slug: media-player
+#     name: Media Player
+#     kvm:
+#       url: https://media-player-kvm.example/
+#
+#   # A device with only a power plug.
+#   - slug: test-router
+#     name: Test Router
+#     power:
+#       label: test-router

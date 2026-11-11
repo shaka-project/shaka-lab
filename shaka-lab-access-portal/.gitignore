@@ -1,0 +1,4 @@
+*.deb
+node_modules/
+dist/
+/config.yaml

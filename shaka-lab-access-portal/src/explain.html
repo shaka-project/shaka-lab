@@ -1,0 +1,59 @@
+<!--
+  Copyright 2026 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Shown when the portal is reached by an address it can't work from (such as
+  the server's IP), and always at /explain. This file is re-read on every
+  request, so edit it and refresh.
+
+  Placeholders (values are HTML-escaped):
+    {{host}}        the address the browser used, e.g. 10.0.0.5:8080
+    {{portalUrl}}   where the portal works, e.g. http://kvm.localhost:8080/
+    {{baseDomain}}  e.g. kvm.localhost
+    {{exampleKvm}}  a KVM hostname, e.g. android.kvm.localhost
+    {{serverName}}  this machine's hostname, for the ssh example
+    {{port}}        the port the portal listens on
+-->
+<main>
+  <h1>Open the portal by name</h1>
+
+  <p>
+    You reached this server as <code>{{host}}</code>, but because of the way it
+    interfaces to the KVMs, the portal only works through a tunnel and at
+    <a href="{{portalUrl}}">{{portalUrl}}</a>.
+  </p>
+
+  <details>
+    <summary>Learn more</summary>
+    <p>
+      Each KVM gets its own hostname, such as <code>{{exampleKvm}}</code>, so
+      that its web interface and the same-site cookies from it work unmodified
+      inside the portal. Your browser has to reach the portal
+      <a href="{{portalUrl}}">{{portalUrl}}</a> for that to work.
+    </p>
+
+    <h2>From outside the lab</h2>
+
+    <p>Forward a local port to the portal over SSH:</p>
+
+    <pre>ssh -L {{port}}:localhost:{{port}} {{serverName}}</pre>
+
+    <p>
+      Then open <a href="{{portalUrl}}">{{portalUrl}}</a>. Chrome and Firefox
+      send every <code>*.localhost</code> name to your own machine, so this
+      needs no DNS or hosts file changes. Any free local port works in place of
+      the first <code>{{port}}</code>.
+    </p>
+  </details>
+</main>

@@ -44,6 +44,7 @@ Everything in this repo is licensed under [Apache license v2.0](LICENSE.txt).
  - [Shaka Lab Gateway](shaka-lab-gateway/README.md#readme): Lab gateway (DHCP, DNS, AD, routing)
  - [Shaka Lab Gateway Client](shaka-lab-gateway-client/README.md#readme): Central lab user login
  - [Shaka Lab GitHub Runner](shaka-lab-github-runner/README.md#readme): Self-hosted GitHub Actions runners
+ - [Shaka Lab Access Portal](shaka-lab-access-portal/README.md#readme): Web portal for device KVMs and power control (Linux only)
 
 
 ## Distribution Systems
