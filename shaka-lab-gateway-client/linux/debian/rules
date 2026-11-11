@@ -29,6 +29,8 @@ export PREFIX = $(PWD)/debian/$(DEB_SOURCE)
 override_dh_auto_install:
 	install -m 755 -d "$(PREFIX)/etc/sudoers.d"
 	install -m 644 sudoers.labadmins "$(PREFIX)/etc/sudoers.d/labadmins"
+	install -m 755 -d "$(PREFIX)/etc/ssh/sshd_config.d"
+	install -m 644 sshd.conf "$(PREFIX)/etc/ssh/sshd_config.d/shaka-lab-gateway-client.conf"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.
