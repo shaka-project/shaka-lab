@@ -27,6 +27,11 @@ jobs:
           submodules: true
           persist-credentials: false
 
+      # Packages with TypeScript sources compile them with npm.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
       - name: Install deps
         run: |
           sudo apt -y update

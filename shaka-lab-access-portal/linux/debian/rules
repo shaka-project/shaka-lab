@@ -1,0 +1,72 @@
+#!/usr/bin/make -f
+
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Makefile to build the debian package.
+
+# Debug the debian build process.
+export DH_VERBOSE = 1
+
+# Defines Make variable DEB_SOURCE for us, which is the name of the package.
+include /usr/share/dpkg/pkg-info.mk
+
+# Where we will install things.
+export PREFIX = $(PWD)/debian/$(DEB_SOURCE)
+export DESTDIR = $(PREFIX)/opt/shaka-lab
+
+# How "dh" helpers will build the package contents.
+override_dh_auto_build:
+	# Compile the TypeScript sources.  Debian and Ubuntu build Node without
+	# TypeScript support, so it can't run them directly.  The distro's
+	# TypeScript package is too old, so get the compiler from npm.
+	rm -rf ../dist
+	cd .. && npm ci --ignore-scripts
+	cd .. && npm run build
+
+# How "dh" helpers will install the package contents to a staging area.
+override_dh_auto_install:
+	# package.json is needed at runtime, since it marks the output as ES
+	# modules.
+	install -m 755 -d "$(DESTDIR)/shaka-lab-access-portal/dist"
+	install -m 644 ../package.json "$(DESTDIR)/shaka-lab-access-portal/"
+	install -m 644 ../dist/*.js ../src/explain.html "$(DESTDIR)/shaka-lab-access-portal/dist/"
+
+	# The only runtime dependency comes from the node-yaml package.  ES module
+	# imports don't search global module paths, so link it in.
+	install -m 755 -d "$(DESTDIR)/shaka-lab-access-portal/node_modules"
+	ln -sf /usr/share/nodejs/yaml "$(DESTDIR)/shaka-lab-access-portal/node_modules/yaml"
+
+	install -m 755 -d "$(PREFIX)/usr/bin"
+	install -m 755 matter-power-control/matter-power-control "$(PREFIX)/usr/bin/"
+	# Read the label map from /etc instead of the user's home directory.
+	patch --no-backup-if-mismatch "$(PREFIX)/usr/bin/matter-power-control" \
+		debian/matter-power-control-etc-config.patch
+
+	# Files in /etc are config files, so upgrades keep the admin's edits.
+	install -m 755 -d "$(PREFIX)/etc"
+	install -m 644 ../shaka-lab-access-portal-config.yaml "$(PREFIX)/etc/"
+	install -m 644 matter-power-control.json "$(PREFIX)/etc/"
+
+	# Install the service to /usr/lib, not /etc, so debian does not see it as a
+	# "config file" that survives uninstallation.  Don't symlink it into /etc:
+	# newer systemd no longer searches /lib, so a symlink pointing there looks
+	# like a "linked" unit, which systemctl refuses to enable.
+	install -m 755 -d "$(PREFIX)/usr/lib/systemd/system"
+	install -m 644 shaka-lab-access-portal.service "$(PREFIX)/usr/lib/systemd/system/"
+
+# Generically, any build target should be handled off to "dh" to do something
+# standard, unless a step is overriden above.
+%:
+	dh $@

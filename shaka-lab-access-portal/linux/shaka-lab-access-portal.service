@@ -1,0 +1,35 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Shaka Lab Access Portal service definition for systemd.
+
+[Unit]
+Description=Shaka Lab Access Portal
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=shaka-lab-access-portal
+WorkingDirectory=/opt/shaka-lab/shaka-lab-access-portal
+# matter-power-control runs chip-tool, which is a snap.
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+ExecStart=/usr/bin/node dist/server.js --config /etc/shaka-lab-access-portal-config.yaml
+Restart=always
+# Wait between restarts, so that a bad config doesn't hit systemd's start rate
+# limit and leave the service stopped after it's fixed.
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

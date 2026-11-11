@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Post-install script.  Runs as root after package installation.
+
+# Fail on error
+set -e
+
+# The service user's home.  chip-tool keeps its state here, including Matter
+# device pairings.  It must be under /home, because chip-tool is a snap, and
+# snaps can't use homes in directories that come from their read-only base
+# snap, such as /opt, /srv, or /var/lib.
+SERVICE_HOME=/home/shaka-lab-access-portal
+
+# Create a non-root user for the service.
+adduser \
+  --quiet \
+  --system \
+  shaka-lab-access-portal \
+  --home "$SERVICE_HOME" \
+  --no-create-home
+# Only the service user may read it, since anyone holding chip-tool's Matter
+# fabric credentials can control the paired devices.
+install -d -o shaka-lab-access-portal -g nogroup -m 700 "$SERVICE_HOME"
+
+# Install chip-tool, which matter-power-control uses to talk to Matter devices.
+# It is only distributed as a snap.  This is a no-op if already installed.
+snap wait system seed.loaded
+snap install chip-tool
+
+# Snaps need the user's systemd instance to track their processes, so the
+# service user needs one, even though it never logs in.
+loginctl enable-linger shaka-lab-access-portal
+
+# Enable and start the service.
+systemctl daemon-reload
+systemctl enable shaka-lab-access-portal.service
+systemctl start shaka-lab-access-portal.service

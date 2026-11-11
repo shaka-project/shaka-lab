@@ -1,3 +1,6 @@
 [submodule "shaka-lab-gateway/linux/total-perspective-vortex"]
 	path = shaka-lab-gateway/linux/total-perspective-vortex
 	url = https://github.com/joeyparrish/total-perspective-vortex
+[submodule "shaka-lab-access-portal/linux/matter-power-control"]
+	path = shaka-lab-access-portal/linux/matter-power-control
+	url = https://github.com/joeyparrish/matter-power-control
