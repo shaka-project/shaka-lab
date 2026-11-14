@@ -230,3 +230,11 @@ else
   # In Ubuntu 22.04 and earlier
   systemctl reload-or-restart sshd
 fi
+
+
+### DNS SETUP ###
+
+# Pick up this package's systemd-resolved config, if resolved is in use.
+if systemctl is-active --quiet systemd-resolved; then
+  systemctl restart systemd-resolved
+fi
