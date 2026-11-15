@@ -28,3 +28,8 @@ if [ "$1" != "upgrade" ]; then
   done
   systemctl daemon-reload
 fi
+
+# Before removing this package's PAM profile, take it out of the PAM config.
+if [ "$1" = "remove" ]; then
+  pam-auth-update --package --remove shaka-lab-gateway-labusers
+fi

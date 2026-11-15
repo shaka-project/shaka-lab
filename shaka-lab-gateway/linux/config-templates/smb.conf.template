@@ -13,7 +13,11 @@ A config file for Samba Active Directory.
 	server role = active directory domain controller
 	server services = s3fs, rpc, nbt, wrepl, ldap, cldap, kdc, drepl, winbindd, ntp_signd, kcc, dnsupdate
 	workgroup = LAB
+	# Logins on this gateway go through winbind.  Take UIDs and GIDs from
+	# uidNumber and gidNumber, to match lab clients, and use plain names like
+	# "joeyparrish" and "labadmins" instead of "LAB\joeyparrish".
 	idmap_ldb:use rfc2307 = yes
+	winbind use default domain = yes
 	template homedir = /home/%U
 	template shell = /bin/bash
 

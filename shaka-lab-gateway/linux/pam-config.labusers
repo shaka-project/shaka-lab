@@ -1,0 +1,7 @@
+Name: Only members of labusers may log in with Active Directory accounts (shaka-lab-gateway)
+Default: yes
+Priority: 0
+Account-Type: Additional
+Account:
+	[success=1 default=ignore]	pam_localuser.so
+	requisite			pam_succeed_if.so quiet_success user ingroup labusers
