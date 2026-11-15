@@ -73,6 +73,36 @@ has a `.ssh\authorized_keys` file, the SSH server drops their connection
 instead of falling back to a password, so they cannot log in over SSH at all.
 Use Kerberos instead.  Local accounts are not affected.
 
+## SSH from this computer to other lab machines
+
+A domain user logged in to this computer already has a Kerberos ticket from
+their Windows login, so they can SSH to other lab machines without a password
+or `kinit`:
+
+```sh
+ssh HOSTNAME
+```
+
+This package configures Windows' SSH client for lab hosts, in a marked block in
+`C:\ProgramData\ssh\ssh_config`.  It applies to `gateway`, to names starting
+with `shaka-`, and to any name ending in `.lab.shaka`, matching the Linux
+package.  For a lab host with some other name, use its full name in the
+`lab.shaka` domain.
+
+For those hosts:
+
+ - It sends your user name without the `LAB\` prefix, which other lab machines
+   would not recognize.
+ - It turns on Kerberos (GSSAPI) logins, which are off by default.
+ - It forwards your Kerberos ticket, so you can SSH onward from there without a
+   password.  Windows only forwards a ticket to a host that is trusted for
+   delegation in Active Directory.  Otherwise the login still works, but you
+   arrive without a ticket.  If a host became trusted for delegation after you
+   last connected to it, Windows keeps using its cached ticket for that host,
+   so run `klist purge` (or log off and on again) before connecting.
+
+Settings in your own `.ssh\config` take precedence.
+
 ## Admin rights
 
 Members of the Active Directory group `labadmins` are administrators on every
@@ -97,8 +127,9 @@ https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme
 Directory Administrator password used to set up the Gateway.  This is necessary
 to leave the domain.
 
-Uninstalling removes `LAB\labadmins` from the local Administrators group.  It
-does not restore the `sshd_config` changes made during installation.
+Uninstalling removes `LAB\labadmins` from the local Administrators group, and
+removes the SSH client settings block from `ssh_config`.  It does not restore
+the `sshd_config` changes made during installation.
 
 Uninstall while logged in as a local administrator.  After the computer leaves
 the domain, domain accounts can't log in to it.

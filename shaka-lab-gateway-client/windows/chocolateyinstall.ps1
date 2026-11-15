@@ -119,6 +119,62 @@ if (($newLines -join "`n") -ne ($lines -join "`n")) {
 }
 
 
+# Configure the SSH client, so that domain users can log in to other lab
+# machines with the Kerberos ticket from their Windows login:
+#
+#  - Windows' ssh client sends a domain user's name as "lab\USER", which other
+#    lab machines don't recognize.  The USERNAME environment variable holds the
+#    name without the domain.
+#  - Kerberos (GSSAPI) logins are off by default in Windows' ssh client.
+#  - Delegating credentials forwards the Kerberos ticket, so that further SSH
+#    hops don't need a password or kinit.  Windows only forwards a ticket to a
+#    host that is trusted for delegation in Active Directory.
+#
+# These settings live in a marked block that this package owns, and that
+# uninstalling removes.  Settings in a user's own .ssh\config take precedence.
+$sshConfig = "$env:ProgramData\ssh\ssh_config"
+$blockStart = "# BEGIN shaka-lab-gateway-client"
+$blockEnd = "# END shaka-lab-gateway-client"
+$block = @(
+  $blockStart,
+  # Match the lab hosts the same way the Linux package does, including short
+  # names like "shaka-linux2".
+  'Host *.lab.shaka shaka-* gateway',
+  '    User ${USERNAME}',
+  '    GSSAPIAuthentication yes',
+  '    GSSAPIDelegateCredentials yes',
+  $blockEnd
+)
+
+$lines = @()
+if (Test-Path $sshConfig) {
+  $lines = @(Get-Content $sshConfig)
+}
+
+# Drop any copy of the block from an earlier install, then append the current
+# one.
+$newLines = @()
+$inBlock = $false
+foreach ($line in $lines) {
+  if ($line -eq $blockStart) {
+    $inBlock = $true
+  }
+  if (-Not $inBlock) {
+    $newLines += $line
+  }
+  if ($line -eq $blockEnd) {
+    $inBlock = $false
+  }
+}
+$newLines += $block
+
+if (($newLines -join "`n") -ne ($lines -join "`n")) {
+  echo "`nConfiguring SSH client for lab hosts...`n"
+  # WriteAllLines writes UTF-8 without a byte order mark.
+  [System.IO.File]::WriteAllLines($sshConfig, [string[]]$newLines)
+}
+
+
 if ($restartNeeded) {
   echo "`n*** Restart this computer to finish joining the Shaka Lab domain. ***`n"
 }
