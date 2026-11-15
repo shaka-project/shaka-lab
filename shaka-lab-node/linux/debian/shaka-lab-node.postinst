@@ -58,6 +58,12 @@ chown -R shaka-lab-node:nogroup /opt/shaka-lab/shaka-lab-node
 # new prerm does not run on the upgrade that replaces an old version).
 rm -f /etc/cron.daily/update-selenium-drivers
 
+# Older versions installed the service to /lib/systemd/system and linked it
+# into /etc/systemd/system.  dpkg removes that link on upgrade, but the link
+# that enabled the old service can still point at the old path, and systemctl
+# won't replace it.  Remove it, so enabling below starts clean.
+rm -f /etc/systemd/system/multi-user.target.wants/shaka-lab-node.service
+
 # Enable and start the service.
 systemctl daemon-reload
 systemctl enable shaka-lab-node.service

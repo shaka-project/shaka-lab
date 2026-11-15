@@ -44,14 +44,12 @@ override_dh_auto_install:
 	install -m 755 -d "$(PREFIX)/etc"
 	install -m 644 ../shaka-lab-node-config.yaml "$(PREFIX)/etc/"
 	
-	install -m 755 -d "$(PREFIX)/lib/systemd/system"
-	install -m 644 shaka-lab-node.service "$(PREFIX)/lib/systemd/system/"
-	
-	# If you don't put the service in /lib and symlink it to /etc, debian will
-	# see it as a "config file", and it will not be removed when a package is
-	# uninstalled.
-	install -m 755 -d "$(PREFIX)/etc/systemd/system"
-	ln -sf /lib/systemd/system/shaka-lab-node.service "$(PREFIX)/etc/systemd/system/"
+	# Install the service to /usr/lib, not /etc, so debian does not see it as a
+	# "config file" that survives uninstallation.  Don't symlink it into /etc:
+	# newer systemd no longer searches /lib, so a symlink pointing there looks
+	# like a "linked" unit, which systemctl refuses to enable.
+	install -m 755 -d "$(PREFIX)/usr/lib/systemd/system"
+	install -m 644 shaka-lab-node.service "$(PREFIX)/usr/lib/systemd/system/"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.
