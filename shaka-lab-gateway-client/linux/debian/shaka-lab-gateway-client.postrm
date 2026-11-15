@@ -63,6 +63,11 @@ if [ "$1" = "purge" ]; then
     systemctl reload-or-restart sshd
   fi
 
+  # Pick up the removal of this package's systemd-resolved config.
+  if systemctl is-active --quiet systemd-resolved; then
+    systemctl restart systemd-resolved
+  fi
+
   if [ -e /usr/share/debconf/confmodule ]; then
     # Remove all debconf configuration associated with this package.
     db_purge

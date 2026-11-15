@@ -7,7 +7,8 @@ This is the Linux package.
 
 **NOTE**: Exactly one Linux device on your lab network must install the
 [`shaka-lab-gateway`](https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme)
-package.  Devices with the client package will connect to that gateway.
+package.  Devices with the client package will connect to that gateway.  Do
+not install the client package on the gateway itself.
 
 
 ## Installation
@@ -52,6 +53,11 @@ sudo apt update && sudo apt -y upgrade
 
 There is no configuration necessary if you are connecting to the Active
 Directory service from shaka-lab-gateway.
+
+This package configures `systemd-resolved` to look up short host names in the
+`lab.shaka` domain, so that `ssh HOSTNAME` finds `HOSTNAME.lab.shaka`.  The
+gateway's DHCP server offers that domain too, but recent releases, such as
+Ubuntu 26.04, ignore it by default.
 
 ## SSH access
 
