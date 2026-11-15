@@ -33,14 +33,17 @@ sudo apt remove -y shaka-lab-recommended-settings
 Dependencies installed with this package:
  - aptitude (console apt frontend)
  - arping (network debugging tool)
+ - curl (download tool)
  - debconf-utils (debian configuration tools)
  - dialog (console configuration dialogs for packages)
+ - gpg (signature and key tool)
  - net-tools (more network debugging tools)
  - openssh-server (SSH server)
  - plocate (file search tool)
  - smartmontools (disk monitoring tools)
  - tcpdump (network debugging/sniffing tool)
  - vim (text editor)
+ - wget (download tool)
 
 Settings configured automatically by this package:
  - Configure SSH server:
