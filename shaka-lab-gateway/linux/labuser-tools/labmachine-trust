@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# Trust lab machines' computer accounts for delegation, so that Windows will
+# forward Kerberos tickets to them.  MIT Kerberos clients, as on Linux, forward
+# tickets whether or not the machine is trusted.
+#
+# Usage:
+#   labmachine-trust HOST    Trust one machine, by its host name.
+#   labmachine-trust --all   Trust every machine except domain controllers.
+
+# Fail on error, including in pipelines, so that a failed search (as non-root,
+# for example) isn't mistaken for an empty result.
+set -e -o pipefail
+
+sam=/var/lib/samba/private/sam.ldb
+
+# Flags in userAccountControl, and the LDAP matching rule for testing them.
+UF_SERVER_TRUST_ACCOUNT=8192         # A domain controller
+UF_TRUSTED_FOR_DELEGATION=524288
+UF_PARTIAL_SECRETS_ACCOUNT=67108864  # A read-only domain controller
+bit_and=1.2.840.113556.1.4.803
+
+usage() {
+  echo "Usage: $(basename "$0") HOST" >&2
+  echo "       $(basename "$0") --all" >&2
+  exit 1
+}
+
+account_name() {
+  # Turn a host name like "shaka-linux2", "SHAKA-LINUX2$", or
+  # "shaka-linux2.lab.shaka" into its computer account name, "SHAKA-LINUX2$".
+  local name="${1%\$}"
+  name="${name%%.*}"
+  name="${name^^}"
+  if [[ ! "$name" =~ ^[A-Z0-9-]+$ ]]; then
+    echo "\"$1\" is not a valid host name." >&2
+    exit 1
+  fi
+  echo "$name\$"
+}
+
+remind() {
+  echo
+  echo "Machines that already have a Kerberos ticket for a newly trusted machine"
+  echo "won't forward tickets to it until they get a new one.  On Windows, run"
+  echo "\"klist purge\".  Elsewhere, run \"kdestroy\" and then \"kinit\".  Or wait"
+  echo "for the old tickets to expire."
+}
+
+if [ "$1" == "--all" ]; then
+  # Every computer that isn't a domain controller and isn't trusted yet.
+  # LDAP filters can't contain whitespace between terms, so build it up.
+  filter="(objectClass=computer)"
+  filter+="(!(userAccountControl:$bit_and:=$UF_SERVER_TRUST_ACCOUNT))"
+  filter+="(!(userAccountControl:$bit_and:=$UF_PARTIAL_SECRETS_ACCOUNT))"
+  filter+="(!(userAccountControl:$bit_and:=$UF_TRUSTED_FOR_DELEGATION))"
+  accounts=$(ldbsearch -H "$sam" "(&$filter)" sAMAccountName | \
+      sed -n -e 's/^sAMAccountName: //p' | sort)
+
+  if [ -z "$accounts" ]; then
+    echo "Every lab machine is already trusted for delegation."
+    exit 0
+  fi
+
+  for account in $accounts; do
+    echo "Trusting $account for delegation."
+    samba-tool delegation for-any-service "$account" on
+    samba-tool delegation show "$account"
+  done
+
+  echo
+  echo "Trusted these machines for delegation:"
+  echo "$accounts" | sed -e 's/^/  /'
+  remind
+  exit 0
+fi
+
+if [ $# -ne 1 ] || [[ "$1" == -* ]]; then
+  usage
+fi
+
+account=$(account_name "$1")
+
+flags=$(ldbsearch -H "$sam" \
+    "(&(objectClass=computer)(sAMAccountName=$account))" \
+    userAccountControl | sed -n -e 's/^userAccountControl: //p')
+
+if [ -z "$flags" ]; then
+  echo "There is no computer account named $account." >&2
+  exit 1
+fi
+
+if (( flags & (UF_SERVER_TRUST_ACCOUNT | UF_PARTIAL_SECRETS_ACCOUNT) )); then
+  echo "$account is a domain controller.  Not changing it." >&2
+  exit 1
+fi
+
+if (( flags & UF_TRUSTED_FOR_DELEGATION )); then
+  echo "$account is already trusted for delegation."
+  samba-tool delegation show "$account"
+  exit 0
+fi
+
+samba-tool delegation for-any-service "$account" on
+samba-tool delegation show "$account"
+remind

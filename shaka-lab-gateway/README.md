@@ -150,6 +150,37 @@ sudo labuser-change-password joeyparrish
 sudo labuser-delete joeyparrish
 ```
 
+## Letting Windows forward Kerberos tickets to lab machines
+
+Windows only forwards a user's Kerberos ticket to machines that Active
+Directory trusts for delegation.  Without a forwarded ticket, a user who logs
+into a lab machine from Windows with Kerberos can't use Kerberos from there to
+reach other machines.  Other clients forward tickets either way.
+
+Trust one machine, by its host name:
+
+```sh
+sudo labmachine-trust shaka-linux2
+```
+
+Trust every machine in the domain, except domain controllers such as the
+gateway itself.  Machines that are already trusted are skipped, and the ones
+that were changed are listed at the end:
+
+```sh
+sudo labmachine-trust --all
+```
+
+Stop trusting a machine:
+
+```sh
+sudo labmachine-untrust shaka-linux2
+```
+
+A Windows client that already has a ticket for a machine keeps using it, so
+run `klist purge` on the client after changing a machine's trust, or wait for
+the ticket to expire.
+
 ## Uninstallation
 
 ```sh

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Stop trusting a lab machine's computer account for delegation, so that
+# Windows stops forwarding Kerberos tickets to it.  This undoes
+# labmachine-trust.
+#
+# Usage:
+#   labmachine-untrust HOST
+
+# Fail on error, including in pipelines, so that a failed search (as non-root,
+# for example) isn't mistaken for an empty result.
+set -e -o pipefail
+
+sam=/var/lib/samba/private/sam.ldb
+
+# Flags in userAccountControl.
+UF_SERVER_TRUST_ACCOUNT=8192         # A domain controller
+UF_TRUSTED_FOR_DELEGATION=524288
+UF_PARTIAL_SECRETS_ACCOUNT=67108864  # A read-only domain controller
+
+if [ $# -ne 1 ] || [[ "$1" == -* ]]; then
+  echo "Usage: $(basename "$0") HOST" >&2
+  exit 1
+fi
+
+# Turn a host name like "shaka-linux2", "SHAKA-LINUX2$", or
+# "shaka-linux2.lab.shaka" into its computer account name, "SHAKA-LINUX2$".
+name="${1%\$}"
+name="${name%%.*}"
+name="${name^^}"
+if [[ ! "$name" =~ ^[A-Z0-9-]+$ ]]; then
+  echo "\"$1\" is not a valid host name." >&2
+  exit 1
+fi
+account="$name\$"
+
+flags=$(ldbsearch -H "$sam" \
+    "(&(objectClass=computer)(sAMAccountName=$account))" \
+    userAccountControl | sed -n -e 's/^userAccountControl: //p')
+
+if [ -z "$flags" ]; then
+  echo "There is no computer account named $account." >&2
+  exit 1
+fi
+
+if (( flags & (UF_SERVER_TRUST_ACCOUNT | UF_PARTIAL_SECRETS_ACCOUNT) )); then
+  echo "$account is a domain controller.  Not changing it." >&2
+  exit 1
+fi
+
+if (( ! (flags & UF_TRUSTED_FOR_DELEGATION) )); then
+  echo "$account is not trusted for delegation."
+  samba-tool delegation show "$account"
+  exit 0
+fi
+
+samba-tool delegation for-any-service "$account" off
+samba-tool delegation show "$account"
+
+echo
+echo "Machines that already have a Kerberos ticket for $account may keep"
+echo "forwarding tickets to it until they get a new one.  On Windows, run"
+echo "\"klist purge\".  Elsewhere, run \"kdestroy\" and then \"kinit\".  Or wait"
+echo "for the old tickets to expire."
