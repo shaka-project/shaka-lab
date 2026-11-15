@@ -32,17 +32,15 @@ override_dh_auto_install:
 	install -m 644 ../../selenium-jar/selenium-server-standalone-3.141.59.jar "$(DESTDIR)/shaka-lab-hub/"
 	install -m 755 start-hub.sh "$(DESTDIR)/shaka-lab-hub/"
 	
-	install -m 755 -d "$(PREFIX)/lib/systemd/system"
-	install -m 644 shaka-lab-hub.service "$(PREFIX)/lib/systemd/system/"
-	
+	# Install the service to /usr/lib, not /etc, so debian does not see it as a
+	# "config file" that survives uninstallation.  Don't symlink it into /etc:
+	# newer systemd no longer searches /lib, so a symlink pointing there looks
+	# like a "linked" unit, which systemctl refuses to enable.
+	install -m 755 -d "$(PREFIX)/usr/lib/systemd/system"
+	install -m 644 shaka-lab-hub.service "$(PREFIX)/usr/lib/systemd/system/"
+
 	install -m 755 -d "$(PREFIX)/etc/default"
 	install -m 644 default-config "$(PREFIX)/etc/default/shaka-lab-hub"
-	
-	# If you don't put the service in /lib and symlink it to /etc, debian will
-	# see it as a "config file", and it will not be removed when a package is
-	# uninstalled.
-	install -m 755 -d "$(PREFIX)/etc/systemd/system"
-	ln -sf /lib/systemd/system/shaka-lab-hub.service "$(PREFIX)/etc/systemd/system/"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.
