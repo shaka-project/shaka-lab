@@ -72,6 +72,36 @@ called Total Perspective Vortex.
 Modify `/etc/total-perspective-vortex/config.yaml` and read the docs at
 https://github.com/joeyparrish/total-perspective-vortex for more details.
 
+Each entry under `devices` gets a DNS name, and a reserved IP if it has a
+`mac`.  Names of machines that join the Active Directory domain must be 15
+characters or less.
+
+To give a device other names, list them in `aliases`:
+
+```yaml
+devices:
+  shaka-linux1:
+    ip: 192.168.0.201
+    mac: "AA:BB:CC:DD:EE:FF"
+    aliases:
+      - selenium-grid
+```
+
+Aliases become DNS CNAME records for the device's name.  They don't get
+reverse (PTR) records or DHCP reservations.  Don't add an alias as another
+device with the same IP: that gives the IP several PTR records, which DNS
+returns in rotation, so Kerberos clients that look up PTRs ask for the wrong
+principal and fail with "Server not found in Kerberos database".
+
+If your config has such duplicate devices, delete each one and list its name
+under the real device's `aliases`.  An alias can't match any device name or
+another alias.  Then check the changes before applying them:
+
+```sh
+sudo total-perspective-vortex --diff
+sudo total-perspective-vortex
+```
+
 ## Restarting services after editing the config
 
 ```sh

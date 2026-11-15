@@ -4,9 +4,35 @@ This defines the records for forward lookups (name to IP) for the lab network.
 -#}
 {% set output_path = '/etc/bind/db.lab.shaka' %}
 {% set service_reload = 'systemctl reload-or-restart named' %}
+{#-
+Aliases become CNAME records, and a name with a CNAME can't have any other
+record.  BIND refuses to load a zone that breaks that rule, which would take
+down DNS for the whole lab, so fail here, before this file is written.
+
+Jinja can't raise errors, so fail() looks up a missing key and then an
+attribute of the result.  That raises an error whose message includes the key.
+-#}
+{%- macro fail(message) %}{{ {}[message].fail }}{% endmacro %}
+{%- set ns = namespace(
+    names=['dc', 'dns', 'dhcp', 'gateway', 'ldap', 'router'] +
+          devices.keys()|map('lower')|list) %}
+{%- macro check_aliases(owner, aliases) %}
+{%- if aliases is string %}
+{{- fail('The aliases of ' ~ owner ~ ' must be a list, not a string') }}
+{%- endif %}
+{%- for alias in aliases %}
+{%- if alias|lower in ns.names %}
+{{- fail('Alias ' ~ alias ~ ' of ' ~ owner ~ ' is already a name in the lab') }}
+{%- endif %}
+{%- set ns.names = ns.names + [alias|lower] %}
+{%- endfor %}
+{%- endmacro %}
+{%- for name, specs in devices.items() %}
+{{- check_aliases(name, specs.aliases|default([])) }}
+{%- endfor %}
 $ORIGIN .
 $TTL 86400	; 1 day
-lab.shaka		IN SOA	dns.lab.shaka. shaka.lab.shaka. (
+lab.shaka		IN SOA	gateway.lab.shaka. shaka.lab.shaka. (
 				1263527841 ; serial
 				10800      ; refresh (3 hours)
 				3600       ; retry (1 hour)
@@ -17,13 +43,16 @@ lab.shaka		IN SOA	dns.lab.shaka. shaka.lab.shaka. (
 
 $ORIGIN lab.shaka.
 
-; Short names to refer to this gateway and the network router
-dc          A {{ lan_ip }}
-dns         A {{ lan_ip }}
-dhcp        A {{ lan_ip }}
+; This gateway and the network router
 gateway     A {{ lan_ip }}
-ldap        A {{ lan_ip }}
 router      A {{ lan_router }}
+
+; Names for this gateway's services.  These are CNAMEs, so that Kerberos
+; clients follow them to gateway, which is the name that has keys.
+dc          CNAME gateway.lab.shaka.
+dns         CNAME gateway.lab.shaka.
+dhcp        CNAME gateway.lab.shaka.
+ldap        CNAME gateway.lab.shaka.
 
 ; Special SRV records for Active Directory services
 _ldap._tcp                 SRV   0   0  389 gateway.lab.shaka.
@@ -53,8 +82,13 @@ _ldap._tcp.Default-First-Site-Name._sites.gc._msdcs      SRV   0   0 3268 gatewa
 
 $TTL 300	; 5 minutes
 
-; Records for local network devices
+; Records for local network devices.  Aliases are CNAMEs, which clients follow
+; to the device's real name.  Kerberos needs that real name to find the right
+; principal.
 
 {% for name, specs in devices.items() %}
 {{ name }}	A	{{ specs.ip }}
+{%- for alias in specs.aliases|default([]) %}
+{{ alias }}	CNAME	{{ name }}.lab.shaka.
+{%- endfor %}
 {% endfor %}

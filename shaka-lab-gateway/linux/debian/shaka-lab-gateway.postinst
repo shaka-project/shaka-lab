@@ -194,14 +194,23 @@ lan_router: $lan_router
 # Delete the empty devices dictionary below, and fill in your lab devices.
 # Each will have a DNS entry and a reserved IP address from the DHCP server.
 # These IPs should not be inside the range of lan_dhcp_ip_start and
-# lan_dchp_ip_end above.  Ex:
+# lan_dchp_ip_end above.
+#
+# Names of machines that join the Active Directory domain must be 15
+# characters or less.
+#
+# To give a device other names, list them in "aliases", not as more devices
+# with the same IP.  Aliases become DNS CNAME records, and don't get their own
+# reverse (PTR) records, which would confuse Kerberos.  Ex:
 #
 # devices:
-#   shaka-test-linux:
+#   shaka-linux1:
 #     ip: 192.168.0.201
 #     mac: "AA:BB:CC:DD:EE:FF"
+#     aliases:
+#       - selenium-grid
 #
-#   shaka-test-windows:
+#   shaka-windows:
 #     ip: 192.168.0.202
 #     mac: "AA:BB:CC:DD:EE:FF"
 
