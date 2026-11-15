@@ -38,6 +38,18 @@ override_dh_auto_install:
 	install -m 2775 -d "$(PREFIX)/etc/total-perspective-vortex/templates"
 	install -m 664 config-templates/* "$(PREFIX)/etc/total-perspective-vortex/templates/"
 	rm "$(PREFIX)/etc/total-perspective-vortex/templates/README.md"
+	# Logins for Active Directory users on the gateway itself.
+	install -m 755 -d "$(PREFIX)/etc/sudoers.d"
+	install -m 440 sudoers.labadmins "$(PREFIX)/etc/sudoers.d/shaka-lab-gateway"
+	install -m 755 -d "$(PREFIX)/etc/ssh/sshd_config.d"
+	install -m 644 sshd.conf "$(PREFIX)/etc/ssh/sshd_config.d/shaka-lab-gateway.conf"
+	# A pam-auth-update profile.  Winbind can see every account in the domain,
+	# not just lab users, so in the account phase, which every kind of login
+	# goes through (including Kerberos), any account that isn't in /etc/passwd
+	# must be in labusers.  This can't go by uid, since winbind on the domain
+	# controller maps Administrator to uid 0.
+	install -m 755 -d "$(PREFIX)/usr/share/pam-configs"
+	install -m 644 pam-config.labusers "$(PREFIX)/usr/share/pam-configs/shaka-lab-gateway-labusers"
 
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.

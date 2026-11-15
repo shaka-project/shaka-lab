@@ -15,10 +15,13 @@ repeatable, and automated installation process for a critical asset in the lab.
 Use it in your own setup if you wish, but at your own risk.  If installed
 naively, this could conflict with existing services on your network.
 
-**NOTE**: To allow Active Directory users to log in on a device, install the
+**NOTE**: To allow Active Directory users to log in on other devices, install
+the
 [`shaka-lab-gateway-client`](https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway-client#readme)
-package.  This includes the gateway device itself.  To allow AD users to log
-into the gateway, that device must also have the client package installed.
+package on them.  Don't install it on the gateway itself.  This package lets
+AD users log into the gateway on its own, and conflicts with the client
+package, which would join the domain from the domain controller and could
+reset the domain controller's own machine account.
 
 
 ## Installation
@@ -99,6 +102,23 @@ can't match any device name or another alias.
 ```sh
 sudo total-perspective-vortex
 ```
+
+## Logging into the gateway
+
+Members of the `labusers` group can log into the gateway with their Active
+Directory accounts, including over SSH with a Kerberos ticket, and members of
+`labadmins` can use `sudo`.  Other accounts in the domain, such as
+`Administrator`, can't log in.  Local accounts are not affected.
+
+This uses the winbind service that Samba runs as part of the domain
+controller, and the gateway's host keys, which the package exports from Active
+Directory to `/etc/krb5.keytab`.
+
+On the gateway, a user's primary group is usually Domain Users (GID 100), not
+labusers (GID 2000) as on lab clients.  Winbind only uses the user's AD primary
+group after they log in with a password, and otherwise uses Domain Users.  This
+only affects the group of new files, since labusers and labadmins still apply
+as secondary groups.
 
 ## Creating Active Directory users
 

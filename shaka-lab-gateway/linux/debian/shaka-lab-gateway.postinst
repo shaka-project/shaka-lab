@@ -249,8 +249,80 @@ cp /var/lib/samba/private/tls/ca.pem \
 update-ca-certificates
 
 
+### LOGINS ON THE GATEWAY ###
+
+# Let Active Directory users log into the gateway itself.  This uses the
+# winbindd that Samba runs as part of the domain controller.  (The
+# shaka-lab-gateway-client package must not be used here, since joining the
+# domain from the domain controller could reset its own machine account.)
+
+mod_nsswitch() {
+  # Modify an entry in nsswitch.conf, which tells the OS where to get various
+  # system information.
+
+  # The database to modify.
+  local database="$1"
+  # A source that should be added if it is not yet present.
+  local desired_source="$2"
+  # The default sources to use if the database entry is completely missing.
+  local default_sources="$3"
+
+  if grep -q "^\\s*$database:.*\\<$desired_source\\>" /etc/nsswitch.conf; then
+    echo "Database $database already sources from $desired_source."
+  elif grep -q "^\\s*$database:" /etc/nsswitch.conf; then
+    echo "Database $database does not source from $desired_source. Adding it."
+    sed -e "s/^\\s*$database:.*/& $desired_source/" -i /etc/nsswitch.conf
+  else
+    echo "Database $database not found. Setting sources \"$default_sources.\""
+    echo "$database: $default_sources" >> /etc/nsswitch.conf
+  fi
+}
+
+# Let winbind provide user accounts and groups.
+backup_config /etc/nsswitch.conf
+mod_nsswitch passwd winbind "files winbind"
+mod_nsswitch group winbind "files winbind"
+
+# Enable PAM for winbind, which installing libpam-winbind normally does already,
+# and this package's profile that limits logins to labusers.  Also create home
+# directories when an AD user first logs in.
+pam-auth-update --package
+pam-auth-update --enable mkhomedir
+
+# Export the gateway's host keys from Active Directory, so that sshd can accept
+# Kerberos logins.  This runs on every upgrade, so don't export them again.
+host_principal="host/gateway.lab.shaka@LAB.SHAKA"
+if klist -k /etc/krb5.keytab 2>/dev/null | grep -qF " $host_principal"; then
+  echo "Host keys for $host_principal are already in /etc/krb5.keytab."
+elif ! samba-tool domain exportkeytab /etc/krb5.keytab \
+    --principal="$host_principal"; then
+  # Don't fail the whole install over this, since logins with a password still
+  # work.
+  echo "WARNING: Failed to export host keys for $host_principal." >&2
+  echo "WARNING: Kerberos SSH logins to the gateway are disabled." >&2
+  echo "WARNING: Reinstall this package to try again." >&2
+fi
+
+# Reload sshd after installing new sshd configs.
+if systemctl cat ssh &>/dev/null; then
+  # Since Ubuntu 24.04
+  systemctl reload-or-restart ssh
+else
+  # In Ubuntu 22.04 and earlier
+  systemctl reload-or-restart sshd
+fi
+
+# The step below needs the labadmins group, which comes from winbind.  Samba
+# may have just been restarted, so wait up to 60 seconds for it to answer.
+wait_time=0
+while (( wait_time < 60 )) && ! getent group labadmins >/dev/null; do
+  sleep 1
+  wait_time=$(( wait_time + 1 ))
+done
+
+
 # Set permissions for the configs and templates of Total Perspective Vortex.
-# This happens last, after services have been started, and LDAP is able to
+# This happens last, after services have been started, and winbind is able to
 # resolve this Active Directory group "labadmins".  Users in that group have
 # permission to modify all configs.
 chown -R root.labadmins /etc/total-perspective-vortex
