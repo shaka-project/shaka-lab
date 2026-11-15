@@ -27,6 +27,14 @@ homebrew_prefix="$2"
 # The destination folder of most shaka-lab-node files.
 destination="/opt/shaka-lab-node"
 
+# The service's working directory, for node modules, WebDrivers, npm's cache,
+# and PID files.  Along with the service logs, it's the only part of the
+# install the GUI user can write to.  Root runs some of the rest.
+work="$destination/work"
+
+# Get the user currently logged in on the GUI.
+gui_user=$(stat -f "%Su" /dev/console)
+
 proxy_plist="/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist"
 
 # Create the destination directory.
@@ -60,8 +68,31 @@ fi
 # with the current prefix.
 sed -i '' -e "s|\\\$HOMEBREW_PREFIX|$homebrew_prefix|g" "$destination/update-drivers.sh"
 
+# The log rotation config names the GUI user as the owner of new log files, so
+# the services can keep writing them.
+sed -i '' -e "s|\\\$GUI_USER|$gui_user|g" "$destination/shaka-lab-node-logrotate.conf"
+
 # Service logs go here, so make sure the folder exists:
 mkdir -p "$destination/logs"
+
+# npm runs in the working directory, so it needs package.json there.
+mkdir -p "$work"
+install -m 644 "$source_root/shaka-lab-node/package.json" "$work"
+
+# The app writes its PID files to fixed paths at the top level, which the GUI
+# user can't write to.  Point them at the working directory.
+ln -sfh "$work/shaka-lab-node.pid" "$destination/shaka-lab-node.pid"
+ln -sfh "$work/shaka-lab-node.child.pid" "$destination/shaka-lab-node.child.pid"
+
+# Everything root runs stays owned by root: the scripts, the proxy, the log
+# rotation config, and the folder that holds them.  The services only write to
+# the working directory and the logs.
+chown -R root:wheel "$destination"
+chown -R "$gui_user" "$work" "$destination/logs"
+
+# The proxy runs as root, so its log goes in a folder that only root can write
+# to.  See the comments in its plist.
+mkdir -p /var/log/shaka-lab-node
 
 # Install and load the loopback proxy LaunchDaemon.  It works around macOS
 # Local Network Privacy, which otherwise blocks the test browser from
@@ -73,14 +104,6 @@ sed -i '' -e "s|\\\$HOMEBREW_PREFIX|$homebrew_prefix|g" "$proxy_plist"
 # Reload it.  Tolerate "not loaded" on a first install.
 launchctl bootout system "$proxy_plist" 2>/dev/null || true
 launchctl bootstrap system "$proxy_plist"
-
-# Get the user currently logged in on the GUI.
-gui_user=$(stat -f "%Su" /dev/console)
-
-# Make the destination directory owned by the logged-in GUI user.
-# Make sure the service account can write to all the necessary locations in
-# the installation to do updates and logging:
-chown -R "$gui_user" "$destination"
 
 # Symlink the log rotation config file into its required location.
 ln -sf "$destination/shaka-lab-node-logrotate.conf" /etc/newsyslog.d/

@@ -50,6 +50,9 @@ sudo /opt/shaka-lab-node/restart-services.sh
 tail -f /opt/shaka-lab-node/logs/stderr.log
 ```
 
+The loopback proxy (see [local-network-privacy.md](local-network-privacy.md))
+runs as root and logs to `/var/log/shaka-lab-node/local-network-proxy.log`.
+
 ## Uninstallation
 
 ```sh

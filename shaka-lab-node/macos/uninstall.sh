@@ -36,4 +36,5 @@ rm -rf \
     /etc/newsyslog.d/shaka-lab-node-logrotate.conf \
     /Applications/shaka-lab-node.app \
     /Applications/shaka-lab-node-update-drivers.app \
-    "$proxy_plist"
+    "$proxy_plist" \
+    /var/log/shaka-lab-node

@@ -24,8 +24,10 @@ if [[ "$EUID" != "$GUI_UID" ]]; then
   exec sudo -u "#$GUI_UID" "$0"
 fi
 
-PID_FILE=/opt/shaka-lab-node/shaka-lab-node.pid
-CHILD_PID_FILE=/opt/shaka-lab-node/shaka-lab-node.child.pid
+# The app writes these through symlinks in /opt/shaka-lab-node.  Use the real
+# files, which this user can delete.
+PID_FILE=/opt/shaka-lab-node/work/shaka-lab-node.pid
+CHILD_PID_FILE=/opt/shaka-lab-node/work/shaka-lab-node.child.pid
 
 if [[ -e "$PID_FILE" ]]; then
   # The ID of the log-wrapper process, which is also its process group ID.

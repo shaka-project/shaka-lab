@@ -44,7 +44,9 @@ if (process.platform == 'win32') {
 } else if (process.platform == 'darwin') {
   configPath = '/etc/shaka-lab-node-config.yaml';
   shakaLabNodePath = '/opt/shaka-lab-node';
-  workingDirectory = '/opt/shaka-lab-node';
+  // The only part of the install that the service's user can write to.  The
+  // rest belongs to root, which runs some of it.
+  workingDirectory = '/opt/shaka-lab-node/work';
   updateDrivers = `${shakaLabNodePath}/update-drivers.sh`;
 }
 
@@ -483,7 +485,10 @@ async function main() {
   // js-yaml, which we don't load until we need it below.
   await runDriverUpdate();
 
-  const yaml = require('js-yaml');
+  // The driver update installs node modules in the working directory, which
+  // on Windows and macOS is not where this script lives.
+  const yaml =
+      require(require.resolve('js-yaml', {paths: [workingDirectory]}));
 
   const templates = yaml.load(fs.readFileSync(templatesPath, 'utf8'));
   const config = yaml.load(fs.readFileSync(configPath, 'utf8'));

@@ -12,6 +12,11 @@
   with the real Homebrew prefix (/opt/homebrew on Apple Silicon, /usr/local on
   Intel). If you load this by hand, substitute the output of "command -v node"
   first.
+
+  Its log goes in /var/log/shaka-lab-node, not with the service logs in
+  /opt/shaka-lab-node/logs.  launchd opens it as root, and the GUI user can
+  write to that logs folder, so the GUI user could otherwise point it at any
+  file.
 -->
 <plist version="1.0">
 <dict>
@@ -36,8 +41,8 @@
   <true/>
 
   <key>StandardOutPath</key>
-  <string>/opt/shaka-lab-node/logs/local-network-proxy.log</string>
+  <string>/var/log/shaka-lab-node/local-network-proxy.log</string>
   <key>StandardErrorPath</key>
-  <string>/opt/shaka-lab-node/logs/local-network-proxy.log</string>
+  <string>/var/log/shaka-lab-node/local-network-proxy.log</string>
 </dict>
 </plist>
