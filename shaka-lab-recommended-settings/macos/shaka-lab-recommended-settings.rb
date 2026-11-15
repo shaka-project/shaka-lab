@@ -54,4 +54,12 @@ cask "shaka-lab-recommended-settings" do
     run "#{source_root}/shaka-lab-recommended-settings/macos/postflight.sh",
         args: ["{{HOMEBREW_PREFIX}}"], sudo: true, print_stdout: true
   end
+
+  # Most settings stay after uninstalling, but remove the ssh client config,
+  # which is only meant for lab machines.
+  uninstall_preflight_steps do
+    run "/bin/rm",
+        args: ["-f", "/etc/ssh/ssh_config.d/200-shaka-lab-recommended-settings.conf"],
+        sudo: true
+  end
 end
