@@ -45,6 +45,10 @@ EOF
 # If lan_ip == lan_router, this device will also function as a router.
 # Two interfaces are required for router mode.
 # If you don't have a secondary interface, leave wan_interface blank.
+# The AD admin password is only used to create the domain.  Use the "password"
+# type for it, so debconf stores it where only root can read it.  With the
+# "string" type, it would end up in /var/cache/debconf/config.dat, which
+# anyone can read.
 cat << EOF | sudo debconf-set-selections
 shaka-lab-gateway shaka-lab-gateway/lan_interface string enp47s0
 shaka-lab-gateway shaka-lab-gateway/wan_interface string enp45s0
@@ -53,7 +57,7 @@ shaka-lab-gateway shaka-lab-gateway/lan_ip string 192.168.0.1
 shaka-lab-gateway shaka-lab-gateway/lan_router string 192.168.0.254
 shaka-lab-gateway shaka-lab-gateway/dhcp_start string 192.168.0.10
 shaka-lab-gateway shaka-lab-gateway/dhcp_end string 192.168.0.99
-shaka-lab-gateway shaka-lab-gateway/active_directory_password string SOME_PASS
+shaka-lab-gateway shaka-lab-gateway/active_directory_password password SOME_PASS
 EOF
 
 # Install the package, which will not have to prompt for anything thanks to
