@@ -91,16 +91,8 @@ Aliases become DNS CNAME records for the device's name.  They don't get
 reverse (PTR) records or DHCP reservations.  Don't add an alias as another
 device with the same IP: that gives the IP several PTR records, which DNS
 returns in rotation, so Kerberos clients that look up PTRs ask for the wrong
-principal and fail with "Server not found in Kerberos database".
-
-If your config has such duplicate devices, delete each one and list its name
-under the real device's `aliases`.  An alias can't match any device name or
-another alias.  Then check the changes before applying them:
-
-```sh
-sudo total-perspective-vortex --diff
-sudo total-perspective-vortex
-```
+principal and fail with "Server not found in Kerberos database".  An alias
+can't match any device name or another alias.
 
 ## Restarting services after editing the config
 
