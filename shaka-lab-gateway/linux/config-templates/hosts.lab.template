@@ -4,5 +4,5 @@ This can be consumed by other tools, though none are provided in this package.
 -#}
 {% set output_path = '/etc/hosts.lab' %}
 {{ lan_ip }} gateway gateway.lab.shaka #shaka-lab
-{% for name, specs in devices.items() %}{{ specs.ip }}	{{ name }} {{ name }}.lab.shaka #shaka-lab
+{% for name, specs in devices.items() %}{{ specs.ip }}	{{ name }} {{ name }}.lab.shaka{% for alias in specs.aliases|default([]) %} {{ alias }} {{ alias }}.lab.shaka{% endfor %} #shaka-lab
 {% endfor %}

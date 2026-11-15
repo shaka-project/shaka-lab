@@ -7,7 +7,7 @@ This defines the records for reverse lookups (IP to name) for the lab network.
 $ORIGIN .
 $TTL 86400	; 1 day
 {% set reverse_domain = lan_subnet.split('.')[0:3]|reverse()|join('.') %}
-{{ reverse_domain }}.in-addr.arpa	IN SOA	dns.lab.shaka. shaka.lab.shaka. (
+{{ reverse_domain }}.in-addr.arpa	IN SOA	gateway.lab.shaka. shaka.lab.shaka. (
 				1263527841 ; serial
 				10800      ; refresh (3 hours)
 				3600       ; retry (1 hour)
@@ -25,6 +25,8 @@ $ORIGIN {{ reverse_domain }}.in-addr.arpa.
 
 $TTL 300	; 5 minutes
 
+; Aliases get no PTR records, so that each IP has exactly one.  With several,
+; BIND rotates them, and Kerberos clients that look up PTRs pick a random name.
 {% for name, specs in devices.items() %}
 {{ specs.ip.split('.')[-1] }}	PTR	{{ name }}.lab.shaka.
 {% endfor %}
