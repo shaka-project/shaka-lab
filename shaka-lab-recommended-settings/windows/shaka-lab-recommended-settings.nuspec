@@ -44,5 +44,6 @@
     <!-- this section controls what actually gets packaged into the Chocolatey package -->
     <file src="../../LICENSE.txt" target="./" />
     <file src="chocolatey*.ps1" target="./" />
+    <file src="install-windows-updates.ps1" target="./" />
   </files>
 </package>
