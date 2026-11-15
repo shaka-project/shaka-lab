@@ -52,4 +52,6 @@ fi
 
 # Remove our files last, so that if leaving the domain fails, uninstalling
 # again will retry it.
-rm -rf "$destination" "$homes_plist" /var/log/shaka-lab-gateway-client.log
+rm -rf "$destination" "$homes_plist" /var/log/shaka-lab-gateway-client.log \
+    /etc/ssh/sshd_config.d/200-shaka-lab-gateway-client.conf \
+    /etc/ssh/ssh_config.d/200-shaka-lab-gateway-client.conf

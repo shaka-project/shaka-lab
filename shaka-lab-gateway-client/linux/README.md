@@ -105,18 +105,17 @@ Kerberos ticket and no password at all.  This package installs the OpenSSH
 server if needed, and turns on Kerberos (GSSAPI) logins in
 `/etc/ssh/sshd_config.d/shaka-lab-gateway-client.conf`.
 
-To log in with Kerberos, get a ticket on the machine you are connecting from,
-then connect with the machine's full name:
+To log in with Kerberos, get a ticket, then ssh:
 
 ```sh
-kinit USERNAME
-ssh -l USERNAME HOSTNAME.lab.shaka
+kinit
+ssh HOSTNAME
 ```
 
-There is no need for `kinit` if you logged in to that machine with your
-password.  Kerberos only works with the full name, not a short name or an IP
-address.  Many SSH clients try Kerberos by default, including on Debian and
-Ubuntu.  On others, set `GSSAPIAuthentication yes` in your SSH client config.
+There is no need for `kinit` if you logged in with your password.  Kerberos
+only works with the canonical name, not an alias or IP address.  Many SSH
+clients try Kerberos by default.  If yours does not, set
+`GSSAPIAuthentication yes` in your SSH client config.
 
 Your ticket follows you from one lab host to the next, so you only need
 `kinit` once.  This package gets forwardable tickets by default, and its SSH

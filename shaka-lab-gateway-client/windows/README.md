@@ -41,9 +41,10 @@ Directory service from shaka-lab-gateway.
 
 ## SSH access
 
-Lab users can log in over SSH with their Active Directory password, or without
-a password using Kerberos.  This package installs and starts the Windows
-OpenSSH server if needed, and makes two changes to the stock `sshd_config`:
+Lab users can log in over SSH with their Active Directory password, or with a
+Kerberos ticket and no password at all.  This package installs and starts the
+Windows OpenSSH server if needed, and makes two changes to the stock
+`sshd_config`:
 
  - It removes the `Match Group administrators` block from the end.  That block
    makes the SSH server look up each user's groups before authenticating them,
@@ -52,17 +53,15 @@ OpenSSH server if needed, and makes two changes to the stock `sshd_config`:
    shared one.
  - It turns on `GSSAPIAuthentication`, which allows Kerberos logins.
 
-To log in with Kerberos, get a ticket with your Active Directory password, then
-connect using the host's full name in the `lab.shaka` domain:
+To log in with Kerberos, get a ticket, then ssh:
 
 ```sh
-kinit USERNAME
-ssh -l USERNAME HOSTNAME.lab.shaka
+kinit
+ssh HOSTNAME
 ```
 
-Many SSH clients try Kerberos by default.  Debian and Ubuntu, for example,
-enable it in `/etc/ssh/ssh_config`.  If yours does not, add
-`-o GSSAPIAuthentication=yes` to the `ssh` command, or set
+Kerberos only works with the canonical name, not an alias or IP address.  Many
+SSH clients try Kerberos by default.  If yours does not, set
 `GSSAPIAuthentication yes` in your SSH client config.
 
 **NOTE**: SSH key logins do not work for domain users.  For a key login,
@@ -73,15 +72,9 @@ has a `.ssh\authorized_keys` file, the SSH server drops their connection
 instead of falling back to a password, so they cannot log in over SSH at all.
 Use Kerberos instead.  Local accounts are not affected.
 
-## SSH from this computer to other lab machines
-
 A domain user logged in to this computer already has a Kerberos ticket from
 their Windows login, so they can SSH to other lab machines without a password
-or `kinit`:
-
-```sh
-ssh HOSTNAME
-```
+or `kinit`.
 
 This package configures Windows' SSH client for lab hosts, in a marked block in
 `C:\ProgramData\ssh\ssh_config`.  It applies to `gateway`, to names starting
