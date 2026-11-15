@@ -66,7 +66,7 @@ else
 
   # Install the signing key.
   wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- \
-      > etc/apt/keyrings/packages.mozilla.org.asc
+      > /etc/apt/keyrings/packages.mozilla.org.asc
 
   # Configure the package source.
   echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
