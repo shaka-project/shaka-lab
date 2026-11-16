@@ -41,3 +41,34 @@ if ($domain -eq "lab.shaka") {
 } else {
   echo "`nAlready left the Shaka Lab domain.`n"
 }
+
+# Remove the SSH client settings block that installation added.  Delete the
+# file if nothing else is left in it, since it doesn't exist by default.
+$sshConfig = "$env:ProgramData\ssh\ssh_config"
+$blockStart = "# BEGIN shaka-lab-gateway-client"
+$blockEnd = "# END shaka-lab-gateway-client"
+if (Test-Path $sshConfig) {
+  $lines = @(Get-Content $sshConfig)
+  $newLines = @()
+  $inBlock = $false
+  foreach ($line in $lines) {
+    if ($line -eq $blockStart) {
+      $inBlock = $true
+    }
+    if (-Not $inBlock) {
+      $newLines += $line
+    }
+    if ($line -eq $blockEnd) {
+      $inBlock = $false
+    }
+  }
+
+  if (@($newLines | ? { $_.Trim() -ne "" }).Count -eq 0) {
+    echo "`nRemoving SSH client settings for lab hosts...`n"
+    Remove-Item $sshConfig
+  } elseif ($newLines.Count -ne $lines.Count) {
+    echo "`nRemoving SSH client settings for lab hosts...`n"
+    # WriteAllLines writes UTF-8 without a byte order mark.
+    [System.IO.File]::WriteAllLines($sshConfig, [string[]]$newLines)
+  }
+}
