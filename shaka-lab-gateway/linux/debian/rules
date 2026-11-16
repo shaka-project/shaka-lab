@@ -43,6 +43,8 @@ override_dh_auto_install:
 	install -m 440 sudoers.labadmins "$(PREFIX)/etc/sudoers.d/shaka-lab-gateway"
 	install -m 755 -d "$(PREFIX)/etc/ssh/sshd_config.d"
 	install -m 644 sshd.conf "$(PREFIX)/etc/ssh/sshd_config.d/shaka-lab-gateway.conf"
+	install -m 755 -d "$(PREFIX)/etc/ssh/ssh_config.d"
+	install -m 644 ssh.conf "$(PREFIX)/etc/ssh/ssh_config.d/shaka-lab-gateway.conf"
 	# A pam-auth-update profile.  Winbind can see every account in the domain,
 	# not just lab users, so in the account phase, which every kind of login
 	# goes through (including Kerberos), any account that isn't in /etc/passwd

@@ -39,6 +39,11 @@ cat << EOF | sudo debconf-set-selections
 krb5-config krb5-config/default_realm string
 iptables-persistent iptables-persistent/autosave_v4 boolean false
 iptables-persistent iptables-persistent/autosave_v6 boolean false
+nslcd nslcd/ldap-uris string ldapi://%2Fvar%2Flib%2Fsamba%2Fprivate%2Fldap_priv%2Fldapi
+nslcd nslcd/ldap-base string cn=users,dc=lab,dc=shaka
+nslcd nslcd/ldap-auth-type select none
+nslcd nslcd/ldap-starttls boolean false
+libnss-ldapd libnss-ldapd/nsswitch multiselect passwd, group
 EOF
 
 # Configure your lab and gateway details before installation.
@@ -114,15 +119,16 @@ Directory accounts, including over SSH with a Kerberos ticket, and members of
 `labadmins` can use `sudo`.  Other accounts in the domain, such as
 `Administrator`, can't log in.  Local accounts are not affected.
 
-This uses the winbind service that Samba runs as part of the domain
-controller, and the gateway's host keys, which the package exports from Active
-Directory to `/etc/krb5.keytab`.
+Users and groups have the same names and IDs as on lab clients.  `nslcd` reads
+them from Active Directory through Samba's privileged local socket, which
+needs no password.  Passwords are checked with Kerberos, which also gives the
+user a ticket.  (Winbind isn't used for either, since on a domain controller it
+always names users `LAB\user`.)  Kerberos logins use the gateway's host keys,
+which the package exports from Active Directory to `/etc/krb5.keytab`.
 
-On the gateway, a user's primary group is usually Domain Users (GID 100), not
-labusers (GID 2000) as on lab clients.  Winbind only uses the user's AD primary
-group after they log in with a password, and otherwise uses Domain Users.  This
-only affects the group of new files, since labusers and labadmins still apply
-as secondary groups.
+As on lab clients, Kerberos tickets on the gateway are forwardable, and SSH
+forwards them to lab hosts (`*.lab.shaka`, `shaka-*`, and `gateway`), so users
+can SSH onward from there without a password.
 
 ## Creating Active Directory users
 
