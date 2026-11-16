@@ -50,6 +50,28 @@ login.  So this package installs a service that creates a home directory for
 each lab user.  It runs every 5 minutes, so a new lab user may have to wait a
 few minutes after being created on the gateway before logging in.
 
+## SSH access
+
+Lab users can log in over SSH with their Active Directory password, or with a
+Kerberos ticket and no password at all.  This package turns on Kerberos
+(GSSAPI) logins in `/etc/ssh/sshd_config.d/200-shaka-lab-gateway-client.conf`.
+
+To log in with Kerberos, get a ticket, then ssh:
+
+```sh
+kinit
+ssh HOSTNAME
+```
+
+Kerberos only works with the canonical name, not an alias or IP address.  Many
+SSH clients try Kerberos by default.  If yours does not, set
+`GSSAPIAuthentication yes` in your SSH client config.
+
+Your ticket follows you from one lab host to the next, so you only need
+`kinit` once.  This package's SSH client config in
+`/etc/ssh/ssh_config.d/200-shaka-lab-gateway-client.conf` forwards tickets to
+lab hosts (`*.lab.shaka`, `shaka-*`, and `gateway`).
+
 ## Managing Active Directory users
 
 Managing Active Directory users is done on the gateway itself.  See

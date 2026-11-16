@@ -53,6 +53,15 @@ if dscl . -read /Groups/com.apple.access_ssh &>/dev/null; then
   dseditgroup -o edit -a 'LAB\labusers' -t group com.apple.access_ssh
 fi
 
+# Let lab users SSH in and out with Kerberos tickets instead of passwords.
+# Binding to the domain above already created this machine's host keys in
+# /etc/krb5.keytab.  sshd starts fresh for each connection, so these take
+# effect without a restart.
+install -m 644 "$source_root/shaka-lab-gateway-client/macos/sshd.conf" \
+    /etc/ssh/sshd_config.d/200-shaka-lab-gateway-client.conf
+install -m 644 "$source_root/shaka-lab-gateway-client/macos/ssh.conf" \
+    /etc/ssh/ssh_config.d/200-shaka-lab-gateway-client.conf
+
 # Install the uninstall script outside of the tap.  Homebrew uninstalls from
 # its own saved copy of the Cask, which can't find files in the tap.
 mkdir -p "$destination"
