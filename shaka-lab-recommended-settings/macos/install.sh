@@ -27,6 +27,18 @@ systemsetup -setnetworktimeserver time.apple.com
 # access by shaka-lab-gateway-client.
 systemsetup -setremotelogin on
 
+# Don't warn about the lack of post-quantum key exchange when connecting to lab
+# machines.  Only ssh clients that know the WarnWeakCrypto option print that
+# warning, and older ones refuse to run if any config file mentions it.  So
+# install the setting only if this ssh client accepts it.  The check only
+# parses options; it doesn't connect.
+ssh_conf=/etc/ssh/ssh_config.d/200-shaka-lab-recommended-settings.conf
+if ssh -G -o WarnWeakCrypto=no-pq-kex localhost &>/dev/null; then
+  install -m 644 "$(dirname "$0")/ssh.conf" "$ssh_conf"
+else
+  rm -f "$ssh_conf"
+fi
+
 # Enable VNC
 /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
     -activate -configure \

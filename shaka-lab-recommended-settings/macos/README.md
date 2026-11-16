@@ -49,6 +49,9 @@ Settings configured automatically by this package:
    - Enable SSH for admins (lab users are given access by
      [`shaka-lab-gateway-client`](../../shaka-lab-gateway-client/macos/README.md#readme))
    - Enable VNC
+ - Configure SSH client (OpenSSH 10.1 and later only):
+   - Don't warn about missing post-quantum key exchange when connecting to lab
+     hosts.  Older clients never warn, and don't understand the setting.
  - Power:
    - Wake the system when the lid is opened (laptops)
    - Restart automatically on power loss
