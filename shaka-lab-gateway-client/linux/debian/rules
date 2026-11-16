@@ -31,6 +31,8 @@ override_dh_auto_install:
 	install -m 644 sudoers.labadmins "$(PREFIX)/etc/sudoers.d/labadmins"
 	install -m 755 -d "$(PREFIX)/etc/ssh/sshd_config.d"
 	install -m 644 sshd.conf "$(PREFIX)/etc/ssh/sshd_config.d/shaka-lab-gateway-client.conf"
+	install -m 755 -d "$(PREFIX)/etc/ssh/ssh_config.d"
+	install -m 644 ssh.conf "$(PREFIX)/etc/ssh/ssh_config.d/shaka-lab-gateway-client.conf"
 	install -m 755 -d "$(PREFIX)/etc/systemd/resolved.conf.d"
 	install -m 644 resolved.conf "$(PREFIX)/etc/systemd/resolved.conf.d/shaka-lab-gateway-client.conf"
 

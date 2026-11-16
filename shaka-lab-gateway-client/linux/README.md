@@ -118,6 +118,11 @@ password.  Kerberos only works with the full name, not a short name or an IP
 address.  Many SSH clients try Kerberos by default, including on Debian and
 Ubuntu.  On others, set `GSSAPIAuthentication yes` in your SSH client config.
 
+Your ticket follows you from one lab host to the next, so you only need
+`kinit` once.  This package gets forwardable tickets by default, and its SSH
+client config in `/etc/ssh/ssh_config.d/shaka-lab-gateway-client.conf`
+forwards them to lab hosts (`*.lab.shaka`, `shaka-*`, and `gateway`).
+
 ## Managing Active Directory users
 
 Managing Active Directory users is done on the gateway itself.  See

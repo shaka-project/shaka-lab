@@ -51,6 +51,9 @@ cat <<EOF >/etc/krb5.conf
 	# zone can have several names for one IP, and the first one returned is
 	# often not the one that has keys in Active Directory.
 	rdns = false
+	# Get tickets that can be forwarded, so that ssh can pass them on to the
+	# next lab host.  See /etc/ssh/ssh_config.d/shaka-lab-gateway-client.conf.
+	forwardable = true
 
 [realms]
 	LAB.SHAKA = {
