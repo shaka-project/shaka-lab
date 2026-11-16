@@ -24,10 +24,11 @@ set -e
 export PATH="$HOMEBREW_PREFIX/bin:$PATH"
 
 # Force npm to write its cache here.
-export HOME="/opt/shaka-lab-node"
+export HOME="/opt/shaka-lab-node/work"
 
-# Go to the install directory of shaka-lab-node.
-cd /opt/shaka-lab-node
+# Go to the working directory of shaka-lab-node, which holds the node modules
+# and the drivers.  It's the only part of the install this user can write to.
+cd /opt/shaka-lab-node/work
 
 # Update all modules to the latest version allowed by package.json.
 npm update
