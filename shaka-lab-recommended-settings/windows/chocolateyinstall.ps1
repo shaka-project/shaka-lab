@@ -104,17 +104,27 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Nam
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name RestartNotificationsAllowed2 -Value 0
 
 
-echo "`nInstalling all Windows and driver updates now...`n"
-Install-PackageProvider -Name NuGet -Scope CurrentUser -Force | Out-Null
-Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
-Install-Module PSWindowsUpdate -Scope CurrentUser
+echo "`nAdding the shaka-lab-windows-update command...`n"
+# Admins can run "shaka-lab-windows-update" at any time, including over SSH,
+# to install Windows updates.  This puts a shim on the PATH that runs the
+# script with PowerShell.  Install-BinFile passes -Command to the shim
+# generator without quoting it, so the value has to include its own quotes.
+# Without them, the shim starts an interactive PowerShell instead.
+$packageFolder = Split-Path -Parent $MyInvocation.MyCommand.Definition
+Install-BinFile -Name shaka-lab-windows-update `
+    -Path "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -Command "`"-NoProfile -ExecutionPolicy Bypass -File $packageFolder\install-windows-updates.ps1`""
 
+
+echo "`nInstalling all Windows and driver updates now...`n"
 # Try to install updates, but don't fail this package installation if Windows
 # Update fails.  That is out of our control.
 try {
-  # NOTE: Needs admin rights
-  Install-WindowsUpdate -Confirm:$false
+  # This script runs the updates as SYSTEM in a scheduled task, which also
+  # works over SSH.  Running it in a separate process also avoids a conflict
+  # inside Chocolatey scripts, where chocolatey-windowsupdate.extension (also
+  # present on lab machines) defines its own Install-WindowsUpdate.
+  & "$packageFolder\install-windows-updates.ps1"
 } catch {
   # Print the caught exception as an error.
   # -ErrorAction 'Continue' changes Write-Error's default behavior of

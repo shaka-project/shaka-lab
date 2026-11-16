@@ -22,11 +22,25 @@ choco install shaka-lab-recommended-settings
 choco upgrade -y shaka-lab-recommended-settings
 ```
 
+## Installing Windows updates
+
+Installing or upgrading this package also installs all available Windows and
+driver updates.  To install updates at any other time, run this as an
+administrator.  It works over SSH:
+
+```sh
+shaka-lab-windows-update
+```
+
+Windows refuses to install updates directly from an SSH session, so the script
+runs them as SYSTEM in a scheduled task, waits for them to finish, and prints
+the results.  It tells you if you need to restart to finish installing them.
+
 ## Uninstallation
 
 **NOTE**: This package does not back up your original settings.  Uninstalling
 will not restore any settings changed by installation or update of this
-package.
+package.  It only removes the `shaka-lab-windows-update` command.
 
 ```sh
 choco uninstall -y shaka-lab-recommended-settings
@@ -53,3 +67,4 @@ Settings configured automatically by this package:
    - No updates between midnight at 6pm local
    - Restart without prompting the logged-in user
  - Install all Windows and driver updates now
+ - Add the `shaka-lab-windows-update` command to install updates later
