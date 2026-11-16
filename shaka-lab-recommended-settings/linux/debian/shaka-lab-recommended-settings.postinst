@@ -28,6 +28,25 @@ else
   systemctl reload-or-restart sshd
 fi
 
+# Don't let the ssh client warn about lab hosts without post-quantum key
+# exchange.  The Windows OpenSSH server in the lab doesn't offer it yet, so
+# OpenSSH 10.1 and later warn on every connection to it.  See issue #122.
+# Older clients don't know this option, and reject it even inside a Host block
+# that doesn't match, which would break every ssh command.  So only write this
+# config if the installed client accepts the option.
+ssh_client_conf=/etc/ssh/ssh_config.d/shaka-ssh.conf
+if ssh -G -o WarnWeakCrypto=no-pq-kex localhost &>/dev/null; then
+  cat <<EOF >"$ssh_client_conf"
+# ssh client config for the Shaka Lab, written by
+# shaka-lab-recommended-settings.  See issue #122.
+
+Host *.lab.shaka shaka-* gateway
+    WarnWeakCrypto no-pq-kex
+EOF
+else
+  rm -f "$ssh_client_conf"
+fi
+
 # Configure additional apt repositories for third-party browser packages.
 # This makes it possible to then install the shaka-lab-browsers metapackage,
 # which depends on browser packages from these repos.

@@ -49,6 +49,9 @@ Settings configured automatically by this package:
  - Configure SSH server:
    - Disable root login
    - Enable port-forwarding
+ - Configure SSH client (OpenSSH 10.1 and later only):
+   - Don't warn about missing post-quantum key exchange when connecting to lab
+     hosts.  Older clients never warn, and don't understand the setting.
  - Disable prompting for service restarts, always restart affected services
  - Configure additional apt repositories to install major browsers
  - Prefer Mozila PPA for Firefox over Ubuntu snap package
