@@ -58,30 +58,6 @@ sudo apt -y install shaka-lab-gateway-client
 sudo apt update && sudo apt -y upgrade
 ```
 
-### Upgrading from nslcd
-
-Older versions of this package used `nslcd` to look up lab users.  The current
-version uses `sssd` instead, and conflicts with `nslcd`, so `apt upgrade` will
-hold it back until `nslcd` is removed.
-
-Lab users can't log in while neither is installed, and that includes using
-`sudo` through the `labadmins` group.  So start a root shell first, and do the
-rest from there:
-
-```sh
-sudo -i
-
-# Remove nslcd and its config, which contains the AD admin password.  Let
-# libnss-ldapd remove itself from /etc/nsswitch.conf without asking.
-echo "libnss-ldapd libnss-ldapd/clean_nsswitch boolean true" | \
-    debconf-set-selections
-apt purge -y nslcd libnss-ldapd libpam-ldapd nscd
-
-# If this machine has never joined the domain, configure the AD admin password
-# as in the installation instructions above.  Then upgrade.
-apt -y install shaka-lab-gateway-client
-```
-
 ## Configuration
 
 There is no configuration necessary if you are connecting to the Active
