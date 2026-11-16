@@ -19,13 +19,27 @@ set -e
 # Get the user ID currently logged in on the GUI.
 GUI_UID=$(stat -f "%Du" /dev/console)
 
-# Run this script as the GUI user via sudo if you're not already the GUI user.
-if [[ "$EUID" != "$GUI_UID" ]]; then
-  exec sudo -u "#$GUI_UID" "$0"
+# Run this script as root via sudo if you're not already root.  Starting the
+# app in the GUI user's session takes root, so that this works for any admin,
+# not just the GUI user.
+if [[ "$EUID" != 0 ]]; then
+  exec sudo "$0"
 fi
+
+# Don't keep a working directory the GUI user can't read, such as the home
+# directory of the admin who ran this.
+cd /
 
 /opt/shaka-lab-node/stop-services.sh
 sleep 2
 
 echo "Starting services..."
-open -n /Applications/shaka-lab-node.app
+# Start the app as the GUI user, in the GUI user's session.  Plain "open" only
+# works from the GUI user's own session.  From anywhere else, such as another
+# admin's SSH login, it fails with "Launch failed".
+#
+# Despite its name, "launchctl asuser" doesn't change users.  It only moves
+# the command into the GUI user's session, still running as root.  Then
+# "sudo -u" switches to the GUI user, staying in that session.  It has to be
+# in this order, because "asuser" needs root.
+launchctl asuser "$GUI_UID" sudo -u "#$GUI_UID" open -n /Applications/shaka-lab-node.app

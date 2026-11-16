@@ -44,6 +44,9 @@ See the [configuration section](../README.md#configuration) of the general doc.
 sudo /opt/shaka-lab-node/restart-services.sh
 ```
 
+Any admin can run this, including over SSH.  The services always run as the
+user logged in on the GUI.
+
 ## Tailing logs
 
 ```sh
