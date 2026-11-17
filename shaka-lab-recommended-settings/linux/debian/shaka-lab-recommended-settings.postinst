@@ -50,62 +50,88 @@ fi
 # Configure additional apt repositories for third-party browser packages.
 # This makes it possible to then install the shaka-lab-browsers metapackage,
 # which depends on browser packages from these repos.
+#
+# Chrome and Edge only need this to bootstrap.  Once installed, each one
+# manages its own repo in a .sources file, and its postinst removes the .list
+# file and key written here.  If this script wrote them again after that, apt
+# would warn that the repo is configured multiple times.
 
-# Install the package signing key from Google Chrome.
-curl -L https://dl.google.com/linux/linux_signing_key.pub \
-    | gpg --dearmor > /etc/apt/trusted.gpg.d/google-chrome.gpg
-# Configure the package repo that Chrome comes from.
-cat <<EOF >/etc/apt/sources.list.d/google-chrome.list
-deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
-EOF
-
-if dpkg-vendor --derives-from Ubuntu; then
-  # This branch is Ubuntu.  Use the Firefox PPA.
-
-  # Configure the package repo where we can get Firefox stable (not LTS as
-  # packaged by Ubuntu official repos).
-  add-apt-repository -n -y ppa:mozillateam/ppa
-
-  # Make sure the PPA version overrides the Ubuntu official version.
-  cat <<EOF >/etc/apt/preferences.d/mozillateamppa
-Package: firefox*
-Pin: release o=LP-PPA-mozillateam
-Pin-Priority: 501
-EOF
-
-  # Make sure that unattended upgrades pull from this alternate repo, as well.
-  cat <<EOF >/etc/apt/apt.conf.d/51unattended-upgrades-firefox
-Unattended-Upgrade::Allowed-Origins:: "LP-PPA-mozillateam:\${distro_codename}";
-EOF
+if [ -e /etc/apt/sources.list.d/google-chrome.sources ]; then
+  rm -f /etc/apt/sources.list.d/google-chrome.list
 else
-  # This branch is Debian.  Use Debian-specific instructions from Mozilla.
-
-  # Create the keyring folder if missing.
-  install -d -m 0755 /etc/apt/keyrings
-
-  # Install the signing key.
-  wget -q https://packages.mozilla.org/apt/repo-signing-key.gpg -O- \
-      > /etc/apt/keyrings/packages.mozilla.org.asc
-
-  # Configure the package source.
-  echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
-      > /etc/apt/sources.list.d/mozilla.list
-
-  # Configure APT to prioritize packages from the Mozilla repository.
-  cat <<EOF >/etc/apt/preferences.d/mozilla
-Package: *
-Pin: origin packages.mozilla.org
-Pin-Priority: 1000
+  # Install the package signing key from Google Chrome.
+  curl -L https://dl.google.com/linux/linux_signing_key.pub \
+      | gpg --dearmor > /etc/apt/trusted.gpg.d/google-chrome.gpg
+  # Configure the package repo that Chrome comes from.
+  cat <<EOF >/etc/apt/sources.list.d/google-chrome.list
+deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
 EOF
 fi
 
-# Install the package signing key from Microsoft Edge.
-curl -L https://packages.microsoft.com/keys/microsoft.asc \
-    | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft-edge.gpg
-# Configure the package repo that Edge comes from.
-cat <<EOF >/etc/apt/sources.list.d/microsoft-edge.list
-deb [arch=amd64] https://packages.microsoft.com/repos/edge/ stable main
+# Get Firefox stable directly from Mozilla's apt repo.  Ubuntu's own "firefox"
+# package is a transitional package that installs the snap, which doesn't work
+# for our test infrastructure.  The same setup works on Debian.
+
+# Install Mozilla's package signing key.
+install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg \
+    -o /etc/apt/keyrings/packages.mozilla.org.asc
+
+# Configure the package repo that Firefox comes from.  Older versions of this
+# package wrote a one-line .list file instead.
+rm -f /etc/apt/sources.list.d/mozilla.list
+cat <<EOF >/etc/apt/sources.list.d/mozilla.sources
+Types: deb
+URIs: https://packages.mozilla.org/apt
+Suites: mozilla
+Components: main
+Signed-By: /etc/apt/keyrings/packages.mozilla.org.asc
 EOF
+
+# Ubuntu's transitional package has a version like "1:1snap1", and that epoch
+# of 1 makes it sort above every Mozilla version, like "160.0~build1".  A
+# priority of 1000 or more is what lets apt "downgrade" from the snap package
+# to Mozilla's.  The -1 pin keeps Ubuntu's package from ever being installed
+# again, even if Mozilla's repo is briefly unreachable.  Both must be in one
+# file: Mozilla's own instructions write them both to this path, so the second
+# step overwrites the first.
+cat <<EOF >/etc/apt/preferences.d/mozilla
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+
+Package: firefox
+Pin: release o=Ubuntu
+Pin-Priority: -1
+EOF
+
+# Make sure that unattended upgrades pull from Mozilla's repo, as well.  Its
+# origin field is an opaque, internal-looking name, so match on its site.
+cat <<EOF >/etc/apt/apt.conf.d/51unattended-upgrades-firefox
+Unattended-Upgrade::Origins-Pattern:: "site=packages.mozilla.org";
+EOF
+
+# Older versions of this package used the Mozilla team PPA on Ubuntu, which
+# Ubuntu release upgrades disable.  Clean that up.
+rm -f /etc/apt/preferences.d/mozillateamppa
+rm -f /etc/apt/sources.list.d/mozillateam-ubuntu-ppa-*
+rm -f /etc/apt/trusted.gpg.d/mozillateam-ubuntu-ppa.gpg*
+
+# As with Chrome above, Edge manages its own repo once installed.
+if [ -e /etc/apt/sources.list.d/microsoft-edge.sources ]; then
+  rm -f /etc/apt/sources.list.d/microsoft-edge.list
+else
+  # Install the package signing key from Microsoft Edge.
+  curl -L https://packages.microsoft.com/keys/microsoft.asc \
+      | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft-edge.gpg
+  # Configure the package repo that Edge comes from.  This must match the
+  # pattern Edge's postinst uses to recognize the repo as its own, which has
+  # no trailing slash.  Otherwise, Edge leaves this file in place, but deletes
+  # the key it depends on.
+  cat <<EOF >/etc/apt/sources.list.d/microsoft-edge.list
+deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main
+EOF
+fi
 
 # Update the package list.
 apt update

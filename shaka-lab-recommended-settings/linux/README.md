@@ -54,4 +54,4 @@ Settings configured automatically by this package:
      hosts.  Older clients never warn, and don't understand the setting.
  - Disable prompting for service restarts, always restart affected services
  - Configure additional apt repositories to install major browsers
- - Prefer Mozila PPA for Firefox over Ubuntu snap package
+ - Prefer Mozilla's apt repo for Firefox over Ubuntu's snap package
