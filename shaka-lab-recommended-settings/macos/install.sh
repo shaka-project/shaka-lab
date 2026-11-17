@@ -39,6 +39,19 @@ else
   rm -f "$ssh_conf"
 fi
 
+# Install the shaka-lab-update-os command, and the password prompt it gives
+# Homebrew.  Admins run them with sudo, so they go in a folder that only root
+# can write to, rather than in /usr/local/bin, which Homebrew owns on Intel
+# Macs.  /etc/paths.d puts the folder on the PATH of login shells, including
+# SSH sessions.
+destination=/opt/shaka-lab-recommended-settings
+mkdir -p "$destination/bin" "$destination/libexec"
+install -m 755 -o root -g wheel "$(dirname "$0")/shaka-lab-update-os" \
+    "$destination/bin/"
+install -m 755 -o root -g wheel "$(dirname "$0")/shaka-lab-update-os-askpass" \
+    "$destination/libexec/"
+echo "$destination/bin" > /etc/paths.d/shaka-lab-recommended-settings
+
 # Enable VNC
 /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
     -activate -configure \

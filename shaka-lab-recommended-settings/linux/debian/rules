@@ -33,6 +33,9 @@ override_dh_auto_install:
 	install -m 755 -d "$(PREFIX)/etc/ssh/sshd_config.d"
 	install -m 644 shaka-sshd.conf "$(PREFIX)/etc/ssh/sshd_config.d/"
 
+	install -m 755 -d "$(PREFIX)/usr/bin"
+	install -m 755 shaka-lab-update-os "$(PREFIX)/usr/bin/"
+
 # Generically, any build target should be handled off to "dh" to do something
 # standard, unless a step is overriden above.
 %:

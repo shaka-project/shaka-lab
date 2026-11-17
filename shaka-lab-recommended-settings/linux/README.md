@@ -18,9 +18,26 @@ sudo apt install -y shaka-lab-recommended-settings
 
 ## Updates
 
+To install all package and OS updates, run this as an admin:
+
 ```sh
-sudo apt update && sudo apt -y upgrade
+shaka-lab-update-os
 ```
+
+It runs `apt update` and `apt full-upgrade`.  `apt` shows what it will
+install, upgrade, and remove, and asks before going ahead.  It also asks what
+to do about any config file you changed that an update replaces.
+
+This never restarts the computer.  If a restart is needed to finish installing
+updates, it says so, and exits with code 100.  To restart the computer when
+one is needed, run:
+
+```sh
+shaka-lab-update-os --restart
+```
+
+**NOTE**: This package makes updates restart any services they affect,
+without asking.  On the gateway, that can include Samba, DNS, and DHCP.
 
 ## Uninstallation
 
@@ -55,3 +72,4 @@ Settings configured automatically by this package:
  - Disable prompting for service restarts, always restart affected services
  - Configure additional apt repositories to install major browsers
  - Prefer Mozilla's apt repo for Firefox over Ubuntu's snap package
+ - Add the `shaka-lab-update-os` command to install all updates

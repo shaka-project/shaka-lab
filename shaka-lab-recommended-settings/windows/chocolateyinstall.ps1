@@ -104,16 +104,18 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Nam
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name RestartNotificationsAllowed2 -Value 0
 
 
-echo "`nAdding the shaka-lab-windows-update command...`n"
-# Admins can run "shaka-lab-windows-update" at any time, including over SSH,
-# to install Windows updates.  This puts a shim on the PATH that runs the
-# script with PowerShell.  Install-BinFile passes -Command to the shim
-# generator without quoting it, so the value has to include its own quotes.
-# Without them, the shim starts an interactive PowerShell instead.
+echo "`nAdding the shaka-lab-update-os command...`n"
+# Admins can run "shaka-lab-update-os" at any time, including over SSH, to
+# install all Chocolatey package and Windows updates.  This puts a shim on the
+# PATH that runs the script with PowerShell.  Install-BinFile passes -Command
+# to the shim generator without quoting it, so the value has to include its own
+# quotes.  Without them, the shim starts an interactive PowerShell instead.
 $packageFolder = Split-Path -Parent $MyInvocation.MyCommand.Definition
-Install-BinFile -Name shaka-lab-windows-update `
+Install-BinFile -Name shaka-lab-update-os `
     -Path "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
-    -Command "`"-NoProfile -ExecutionPolicy Bypass -File $packageFolder\install-windows-updates.ps1`""
+    -Command "`"-NoProfile -ExecutionPolicy Bypass -File $packageFolder\shaka-lab-update-os.ps1`""
+# Older versions called the command shaka-lab-windows-update.
+Uninstall-BinFile -Name shaka-lab-windows-update
 
 
 echo "`nInstalling all Windows and driver updates now...`n"
@@ -125,6 +127,11 @@ try {
   # inside Chocolatey scripts, where chocolatey-windowsupdate.extension (also
   # present on lab machines) defines its own Install-WindowsUpdate.
   & "$packageFolder\install-windows-updates.ps1"
+  # Chocolatey ignores $LASTEXITCODE from package scripts.  This is how a
+  # package tells it a restart is needed.
+  if ($LASTEXITCODE -eq 3010) {
+    Set-PowerShellExitCode 3010
+  }
 } catch {
   # Print the caught exception as an error.
   # -ErrorAction 'Continue' changes Write-Error's default behavior of

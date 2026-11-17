@@ -20,8 +20,8 @@
 # prints its log.
 #
 # The shaka-lab-recommended-settings package runs this on install and upgrade.
-# Admins can also run it at any time with the command shaka-lab-windows-update,
-# which the package puts on the PATH.
+# The shaka-lab-update-os command also runs it, after upgrading Chocolatey
+# packages.  See shaka-lab-update-os.ps1.
 
 
 # Stop on all errors
@@ -107,10 +107,15 @@ try {
   Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
 }
 
+# Exit with 3010 if a restart is needed, so that shaka-lab-update-os and the
+# package install script know.  Exit with 0 otherwise, so that an earlier
+# command's code isn't left behind.
 if ($result -eq 3010) {
   echo "`n*** Restart this computer to finish installing updates. ***`n"
+  exit 3010
 } elseif ($result -ne 0) {
   throw "Installing Windows updates failed with code $result.  See $logFile"
 } else {
   echo "`nWindows updates are installed.`n"
+  exit 0
 }

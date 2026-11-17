@@ -1,0 +1,77 @@
+#!/bin/bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Installs all package and OS updates.  An admin runs this by hand, and
+# answers any questions along the way.
+#
+# Usage: shaka-lab-update-os [--restart]
+#
+# Without --restart, this never restarts the computer.  If a restart is needed
+# to finish installing updates, it says so and exits with code 100.  With
+# --restart, it restarts the computer if one is needed.
+
+# Fail on error
+set -e
+
+restart=false
+case "$*" in
+  "") ;;
+  "--restart") restart=true ;;
+  *)
+    echo "Usage: shaka-lab-update-os [--restart]" >&2
+    exit 2
+    ;;
+esac
+
+# Run this script as root via sudo if you're not already root.
+if [[ "$EUID" != 0 ]]; then
+  exec sudo "$0" "$@"
+fi
+
+echo "Checking for updates..."
+# apt exits with code 100 when it fails, which would look like a restart is
+# needed.  So exit with code 1 instead.
+apt update || exit 1
+
+# Use full-upgrade, which can remove or replace packages, so that updates that
+# need that aren't quietly held back.  Don't use -y: apt shows everything it
+# will install, upgrade, and remove, and asks before going ahead.  It also asks
+# what to do about any config file that you changed and an update replaces.
+echo
+echo "Installing updates..."
+apt full-upgrade || exit 1
+
+if [[ -e /var/run/reboot-required ]]; then
+  if [[ -e /var/run/reboot-required.pkgs ]]; then
+    echo
+    echo "Updated packages that need a restart:"
+    sort -u /var/run/reboot-required.pkgs | sed -e 's/^/  /'
+  fi
+
+  if [[ "$restart" == true ]]; then
+    echo
+    echo "Restarting this computer to finish installing updates..."
+    systemctl reboot
+    exit 0
+  fi
+
+  echo
+  echo "*** Restart this computer to finish installing updates. ***"
+  echo "*** To restart now, run: sudo systemctl reboot ***"
+  exit 100
+fi
+
+echo
+echo "Updates are installed."
