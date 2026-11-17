@@ -33,9 +33,6 @@ cask "shaka-lab-gateway-client" do
   # primitives for Casks, which are oriented around app bundles.
   stage_only true
 
-  # Signal that this package does not need upgrading through "brew upgrade".
-  auto_updates true
-
   # The path from the Cask definition to the full shaka-lab source.
   # We install files from there.
   source_root = "#{__dir__}/../shaka-lab-source"
@@ -56,4 +53,21 @@ cask "shaka-lab-gateway-client" do
           sudo: true, print_stdout: true
     end
   end
+
+  # Leaving the domain asks for the Active Directory Administrator password.
+  # Upgrades uninstall the old version first, so a plain uninstall leaves this
+  # machine bound, and only "brew uninstall --zap" leaves the domain.  By then,
+  # the uninstall above has removed our files, so this can't run a script from
+  # /opt/shaka-lab-gateway-client.
+  zap script: {
+    executable: "/bin/bash",
+    args:       [
+      "-c",
+      "domain=$(/usr/sbin/dsconfigad -show | awk '/Active Directory Domain/{print $NF}'); " \
+      "if [[ \"$domain\" == lab.shaka ]]; then " \
+      "/usr/sbin/dsconfigad -remove -u Administrator; " \
+      "fi",
+    ],
+    sudo:       true,
+  }
 end

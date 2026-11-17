@@ -79,13 +79,20 @@ https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme
 
 ## Uninstallation
 
-**NOTE**: When you uninstall this package, you will be prompted for the Active
-Directory Administrator password used to set up the Gateway.  This is necessary
-to leave the domain.
+Uninstalling removes what this package set up, but leaves this machine joined
+to the domain:
 
 ```sh
 brew uninstall shaka-lab-gateway-client
 brew autoremove
 ```
 
-Uninstalling leaves lab users' home directories in `/Users` in place.
+To also leave the domain, uninstall with `--zap`.  This prompts for the Active
+Directory Administrator password used to set up the Gateway.
+
+```sh
+brew uninstall --zap shaka-lab-gateway-client
+brew autoremove
+```
+
+Either way, lab users' home directories in `/Users` are left in place.
