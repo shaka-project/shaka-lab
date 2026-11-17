@@ -21,8 +21,8 @@ Build-Depends: debhelper (>= 9)
 
 Package: shaka-lab-gateway
 Architecture: all
-Depends: bind9, iptables-persistent, isc-dhcp-server, krb5-user, ldap-utils, ldb-tools, libnss-winbind, libpam-winbind, net-tools, openssh-server, python3-jinja2, python3-yaml, samba, samba-ad-dc | samba (<< 2:4.20.1+dfsg-2~), subnetcalc, winbind
-Conflicts: shaka-lab-gateway-client
+Depends: bind9, iptables-persistent, isc-dhcp-server, krb5-user, ldap-utils, ldb-tools, libnss-ldapd, libpam-krb5, net-tools, nslcd, openssh-server, python3-jinja2, python3-yaml, samba, samba-ad-dc | samba (<< 2:4.20.1+dfsg-2~), subnetcalc, winbind
+Conflicts: libpam-heimdal, libpam-ldapd, libpam-sss, libpam-winbind, nscd, shaka-lab-gateway-client
 Description: Shaka Lab Gateway
  Shaka Lab network services: DHCP, DNS, Samba Active Directory
  .

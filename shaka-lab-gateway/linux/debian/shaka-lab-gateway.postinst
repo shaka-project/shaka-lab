@@ -251,10 +251,57 @@ update-ca-certificates
 
 ### LOGINS ON THE GATEWAY ###
 
-# Let Active Directory users log into the gateway itself.  This uses the
-# winbindd that Samba runs as part of the domain controller.  (The
+# Let Active Directory users log into the gateway itself.  (The
 # shaka-lab-gateway-client package must not be used here, since joining the
 # domain from the domain controller could reset its own machine account.)
+#
+# User accounts and groups come from nslcd, which reads them from Active
+# Directory.  Passwords are checked with Kerberos, by pam_krb5, which also gets
+# the user a ticket.  Winbind isn't used for either, because on a domain
+# controller it always names users "LAB\user".  For accounts, that breaks tools
+# like kinit and ssh that take the local user name as the default.  For
+# passwords, pam_winbind renames the user to "LAB\user" after checking the
+# password, which sshd rejects.
+
+# Configure nslcd to read users and groups through Samba's privileged local
+# socket.  Samba grants full access to whoever opens it, and only root can, so
+# nslcd runs as root and needs no password.  nslcd only answers lookups of
+# users and groups.
+cat <<'EOF' >/etc/nslcd.conf
+# /etc/nslcd.conf
+# nslcd configuration file, written by shaka-lab-gateway.
+# See nslcd.conf(5) for details.
+
+# Run as root, which is required to open Samba's privileged socket.
+uid root
+gid root
+
+# Samba's privileged local socket, which needs no credentials.
+uri ldapi://%2Fvar%2Flib%2Fsamba%2Fprivate%2Fldap_priv%2Fldapi
+
+# The search base that will be used for all queries.
+base cn=users,dc=lab,dc=shaka
+
+# The LDAP protocol version to use.
+ldap_version 3
+
+# Don't look up groups for local accounts in LDAP, so that they don't depend
+# on Samba, which may not have started yet.
+nss_initgroups_ignoreusers ALLLOCAL
+
+# Flush caches on startup.
+reconnect_invalidate passwd,group
+
+# Mappings for Samba Active Directory.  Users are named by sAMAccountName, as
+# on lab clients, and get their uidNumber and gidNumber.
+filter passwd (&(objectClass=user)(objectClass=person)(!(objectClass=computer))(uidNumber=*))
+map passwd uid sAMAccountName
+map passwd homeDirectory unixHomeDirectory
+filter group (&(objectClass=group)(gidNumber=*))
+EOF
+chmod 644 /etc/nslcd.conf
+systemctl enable nslcd
+systemctl restart nslcd
 
 mod_nsswitch() {
   # Modify an entry in nsswitch.conf, which tells the OS where to get various
@@ -278,12 +325,14 @@ mod_nsswitch() {
   fi
 }
 
-# Let winbind provide user accounts and groups.
+# Let nslcd provide user accounts and groups.  Earlier versions of this package
+# used winbind for them, so take it out, or every user would appear twice.
 backup_config /etc/nsswitch.conf
-mod_nsswitch passwd winbind "files winbind"
-mod_nsswitch group winbind "files winbind"
+sed -e "/^\\s*\\(passwd\\|group\\):/ s/\\s\\+winbind\\>//" -i /etc/nsswitch.conf
+mod_nsswitch passwd ldap "files ldap"
+mod_nsswitch group ldap "files ldap"
 
-# Enable PAM for winbind, which installing libpam-winbind normally does already,
+# Enable PAM for Kerberos, which installing libpam-krb5 normally does already,
 # and this package's profile that limits logins to labusers.  Also create home
 # directories when an AD user first logs in.
 pam-auth-update --package
@@ -303,6 +352,15 @@ elif ! samba-tool domain exportkeytab /etc/krb5.keytab \
   echo "WARNING: Reinstall this package to try again." >&2
 fi
 
+# Get tickets that can be forwarded, so that ssh can pass them on to the next
+# lab host (see /etc/ssh/ssh_config.d/shaka-lab-gateway.conf), as on lab
+# clients.  /etc/krb5.conf comes from Samba, so add this to it, unless it
+# already says whether tickets are forwardable.
+if ! grep -q "^\\s*forwardable\\s*=" /etc/krb5.conf; then
+  backup_config /etc/krb5.conf
+  sed -e "/^\\s*\\[libdefaults\\]/a \\\\tforwardable = true" -i /etc/krb5.conf
+fi
+
 # Reload sshd after installing new sshd configs.
 if systemctl cat ssh &>/dev/null; then
   # Since Ubuntu 24.04
@@ -312,8 +370,9 @@ else
   systemctl reload-or-restart sshd
 fi
 
-# The step below needs the labadmins group, which comes from winbind.  Samba
-# may have just been restarted, so wait up to 60 seconds for it to answer.
+# The step below needs the labadmins group, which nslcd reads from Samba.
+# Samba may have just been restarted, so wait up to 60 seconds for it to
+# answer.
 wait_time=0
 while (( wait_time < 60 )) && ! getent group labadmins >/dev/null; do
   sleep 1
@@ -322,9 +381,9 @@ done
 
 
 # Set permissions for the configs and templates of Total Perspective Vortex.
-# This happens last, after services have been started, and winbind is able to
+# This happens last, after services have been started, and nslcd is able to
 # resolve this Active Directory group "labadmins".  Users in that group have
 # permission to modify all configs.
-chown -R root.labadmins /etc/total-perspective-vortex
+chown -R root:labadmins /etc/total-perspective-vortex
 chmod 2664 /etc/total-perspective-vortex/templates/*
 chmod 2664 /etc/total-perspective-vortex/config.yaml
