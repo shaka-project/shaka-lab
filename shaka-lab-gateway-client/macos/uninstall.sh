@@ -16,6 +16,11 @@
 # Uninstalls shaka-lab-gateway-client on macOS.  Homebrew runs this as root
 # from the Cask's uninstall_preflight_steps.  install.sh puts it in
 # /opt/shaka-lab-gateway-client.
+#
+# This leaves the machine bound to the domain, because upgrades uninstall the
+# old version first, and leaving the domain would make every upgrade ask for
+# the Active Directory Administrator password.  "brew uninstall --zap" leaves
+# the domain, from the Cask's zap stanza.
 
 # Fail on error
 set -e
@@ -27,31 +32,21 @@ homes_plist="/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-gateway-cl
 # unloaded.  Home directories it created are left in place.
 launchctl bootout system "$homes_plist" 2>/dev/null || true
 
-# Commands to leave the domain will fail if we're not in it, so check.
+# Revoke what this package granted to lab users.  This needs the domain, to
+# resolve the group names, so skip it if this machine has already left.
 domain=$(dsconfigad -show | awk '/Active Directory Domain/{print $NF}')
-echo "Current domain = \"$domain\""
-
 if [[ "$domain" == "lab.shaka" ]]; then
-  # Revoke SSH access for lab users.  This must happen before leaving the
-  # domain, while the group name can still be resolved.  Tolerate lab users
-  # not having been in the group.
+  # Revoke SSH access for lab users.  Tolerate lab users not having been in
+  # the group.
   if dscl . -read /Groups/com.apple.access_ssh &>/dev/null; then
     dseditgroup -o edit -d 'LAB\labusers' -t group com.apple.access_ssh || true
   fi
 
   # Revoke local admin rights for lab admins.
   dsconfigad -nogroups
-
-  echo "Leaving the Shaka Lab domain via Shaka Lab Gateway."
-  echo "When prompted for \"Administrator's Password\", enter your Active Directory Administrator password."
-  dsconfigad -remove -u Administrator
-  echo "Successfully left the Shaka Lab domain."
-else
-  echo "Already left the Shaka Lab domain."
 fi
 
-# Remove our files last, so that if leaving the domain fails, uninstalling
-# again will retry it.
+# Remove our files.
 rm -rf "$destination" "$homes_plist" /var/log/shaka-lab-gateway-client.log \
     /etc/ssh/sshd_config.d/200-shaka-lab-gateway-client.conf \
     /etc/ssh/ssh_config.d/200-shaka-lab-gateway-client.conf

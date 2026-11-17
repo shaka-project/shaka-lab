@@ -36,9 +36,6 @@ cask "shaka-lab-recommended-settings" do
 
   binary "kcpassword-1.1.0/kcpassword"
 
-  # Signal that this package does not need upgrading through "brew upgrade".
-  auto_updates true
-
   # The path from the Cask definition to the full shaka-lab source.
   source_root = "#{__dir__}/../shaka-lab-source"
 

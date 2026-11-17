@@ -24,6 +24,16 @@ set -e
 
 homebrew_prefix="$1"
 
+# Upgrades reinstall this package, so don't ask again if autologin is already
+# set up for this user.  To store a new password, for example after the user's
+# password changes, delete /etc/kcpassword and reinstall this package.
+autologin_user=$(defaults read /Library/Preferences/com.apple.loginwindow \
+    autoLoginUser 2>/dev/null || true)
+if [[ -e /etc/kcpassword && "$autologin_user" == "$SUDO_USER" ]]; then
+  echo "Autologin is already enabled for $SUDO_USER."
+  exit 0
+fi
+
 # Prompt for the user's password to enable autologin.  Homebrew doesn't give us
 # its terminal on stdin, so use /dev/tty directly.
 echo "Enabling autologin..."

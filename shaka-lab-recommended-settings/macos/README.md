@@ -28,6 +28,9 @@ brew install shaka-lab-recommended-settings
 brew update && brew upgrade shaka-lab-recommended-settings
 ```
 
+Updating applies all the settings again, which restarts the screen sharing
+agent and disconnects anyone using VNC.
+
 ## Uninstallation
 
 ```sh
@@ -69,4 +72,6 @@ Settings configured automatically by this package:
  - Misc:
    - Enable time sync with Apple servers
    - Enable autologin for the current user (necessary for shaka-lab-node to run
-     typical GUI browsers)
+     typical GUI browsers).  This asks for the user's password on the first
+     install only.  To store a new password, delete `/etc/kcpassword` and
+     reinstall.
