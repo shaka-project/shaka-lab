@@ -22,7 +22,7 @@ Build-Depends: debhelper (>= 9)
 Package: shaka-lab-gateway-client
 Architecture: all
 Depends: adcli, krb5-user, libnss-sss, libpam-sss, openssh-server, sssd-ad
-Conflicts: libnss-ldapd, libpam-ldapd, nslcd, shaka-lab-gateway
+Conflicts: libnss-ldapd, libpam-ldapd, nscd, nslcd, nslcd-2, nslcd-utils, shaka-lab-gateway
 Description: Shaka Lab Gateway Client
  Allows Active Directory users from Shaka Lab Gateway to log in, including
  over SSH with Kerberos.
