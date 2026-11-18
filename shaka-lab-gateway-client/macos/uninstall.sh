@@ -37,9 +37,9 @@ launchctl bootout system "$homes_plist" 2>/dev/null || true
 domain=$(dsconfigad -show | awk '/Active Directory Domain/{print $NF}')
 if [[ "$domain" == "lab.shaka" ]]; then
   # Revoke SSH access for lab users.  Tolerate lab users not having been in
-  # the group.
+  # the group.  Use the plain group name, as install.sh does.
   if dscl . -read /Groups/com.apple.access_ssh &>/dev/null; then
-    dseditgroup -o edit -d 'LAB\labusers' -t group com.apple.access_ssh || true
+    dseditgroup -o edit -d labusers -t group com.apple.access_ssh || true
   fi
 
   # Revoke local admin rights for lab admins.
