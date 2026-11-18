@@ -42,25 +42,39 @@ else
   echo "Successfully joined the Shaka Lab domain!"
 fi
 
-# Give lab admins local admin rights, including sudo, as the Linux client
-# does.  This replaces any other admin groups set for the domain.
-dsconfigad -groups 'LAB\labadmins'
-
-# Allow lab users to log in over SSH.  When Remote Login is limited to certain
-# users, macOS keeps that list in the group com.apple.access_ssh.  If that
-# group doesn't exist, Remote Login is already open to all users.
-if dscl . -read /Groups/com.apple.access_ssh &>/dev/null; then
-  dseditgroup -o edit -a 'LAB\labusers' -t group com.apple.access_ssh
-fi
-
 # Let lab users SSH in and out with Kerberos tickets instead of passwords.
 # Binding to the domain above already created this machine's host keys in
 # /etc/krb5.keytab.  sshd starts fresh for each connection, so these take
-# effect without a restart.
+# effect without a restart.  Install these first, so that a failure in a later
+# step doesn't leave the machine without Kerberos SSH.
 install -m 644 "$source_root/shaka-lab-gateway-client/macos/sshd.conf" \
     /etc/ssh/sshd_config.d/200-shaka-lab-gateway-client.conf
 install -m 644 "$source_root/shaka-lab-gateway-client/macos/ssh.conf" \
     /etc/ssh/ssh_config.d/200-shaka-lab-gateway-client.conf
+
+# Group names below are plain, without the "LAB\" prefix.  Some Macs have
+# stopped resolving prefixed names, even though they still report records with
+# that prefix.  Plain names resolve either way.
+
+# Give lab admins local admin rights, including sudo, as the Linux client
+# does.  This replaces any other admin groups set for the domain.
+dsconfigad -groups labadmins
+
+# Allow lab users to log in over SSH.  When Remote Login is limited to certain
+# users, macOS keeps that list in the group com.apple.access_ssh.  If that
+# group doesn't exist, Remote Login is already open to all users.  Skip adding
+# labusers if it's already nested there, as on a reinstall.  (checkmember only
+# checks users, so compare the nested group IDs.)
+if dscl . -read /Groups/com.apple.access_ssh &>/dev/null; then
+  labusers_guid=$(dscl /Search -read /Groups/labusers GeneratedUID | awk '{print $NF}')
+  if [[ -n "$labusers_guid" ]] &&
+      dscl . -read /Groups/com.apple.access_ssh NestedGroups 2>/dev/null |
+      grep -qF "$labusers_guid"; then
+    echo "Lab users can already log in over SSH."
+  else
+    dseditgroup -o edit -a labusers -t group com.apple.access_ssh
+  fi
+fi
 
 # Install the uninstall script outside of the tap.  Homebrew uninstalls from
 # its own saved copy of the Cask, which can't find files in the tap.
