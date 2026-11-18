@@ -31,6 +31,46 @@ brew update && brew upgrade shaka-lab-recommended-settings
 Updating applies all the settings again, which restarts the screen sharing
 agent and disconnects anyone using VNC.
 
+## Installing all updates
+
+To install all Homebrew package and macOS updates, run this as an admin.  It
+works over SSH:
+
+```sh
+shaka-lab-update-os
+```
+
+It runs `brew update` and `brew upgrade`, then installs macOS updates with
+`softwareupdate`.  Apps that update themselves, such as Chrome and Edge, are
+left to do that.  Firefox only updates itself while it's running, and on lab
+machines it only runs under Selenium, which turns updates off, so it's always
+upgraded with Homebrew.  `brew upgrade` shows what it will upgrade, and asks before going
+ahead.  At that question, Ctrl+C, Esc, and Ctrl+D all mean no.  Anywhere
+else, Ctrl+C stops the whole command.
+
+If any Homebrew package fails to upgrade, or you tell `brew upgrade` not to go
+ahead, macOS updates are still installed, and the command exits with code 1.
+It won't restart the computer, even with `--restart`, because a failed upgrade
+can leave a package such as `node` unable to start.
+A pinned package, or one that depends on a pinned package, can't be upgraded,
+so avoid pinning packages on lab machines.
+
+Homebrew runs as the user logged in on the GUI, whichever admin runs this.  So
+Homebrew packages that need admin rights ask for the GUI user's password, and
+the prompt says so.  On Apple silicon, macOS updates also ask for the GUI
+user's password, as the owner of the disk.
+
+This never restarts the computer.  Installing a macOS update that needs a
+restart always restarts the computer right away, so those updates are only
+downloaded.  If a restart is needed, it says so, and exits with code 100.
+
+To also install the macOS updates that need a restart, and restart the computer
+when they're installed, run:
+
+```sh
+shaka-lab-update-os --restart
+```
+
 ## Uninstallation
 
 ```sh
@@ -75,3 +115,4 @@ Settings configured automatically by this package:
      typical GUI browsers).  This asks for the user's password on the first
      install only.  To store a new password, delete `/etc/kcpassword` and
      reinstall.
+ - Add the `shaka-lab-update-os` command to install all updates

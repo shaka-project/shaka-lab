@@ -22,25 +22,47 @@ choco install shaka-lab-recommended-settings
 choco upgrade -y shaka-lab-recommended-settings
 ```
 
-## Installing Windows updates
+## Installing all updates
 
 Installing or upgrading this package also installs all available Windows and
-driver updates.  To install updates at any other time, run this as an
-administrator.  It works over SSH:
+driver updates.  To install all Chocolatey package and Windows updates at any
+other time, run this as an administrator.  It works over SSH:
 
 ```sh
-shaka-lab-windows-update
+shaka-lab-update-os
 ```
+
+It upgrades all Chocolatey packages, then installs all Windows and driver
+updates.  Google Chrome's package can't keep its checksums current, so Chrome
+is upgraded without checking them.  Every other package is checked.
+
+If `shaka-lab-node` is running, it's stopped while packages are upgraded, so
+that Java and Node.js aren't in use, and started again afterwards.  The Java
+and Node.js packages are also told not to restart the computer, which their
+installers would otherwise do without asking if their files were in use.
+
+If any Chocolatey package fails to upgrade, the other packages and Windows
+updates are still installed, and the command exits with code 1.  It won't
+restart the computer, even with `--restart`.
 
 Windows refuses to install updates directly from an SSH session, so the script
 runs them as SYSTEM in a scheduled task, waits for them to finish, and prints
-the results.  It tells you if you need to restart to finish installing them.
+the results.
+
+This never restarts the computer, unless a package's own installer does it
+without being asked.  If a restart is needed to finish installing updates, it
+says so, and exits with code 3010.  To restart the computer when one is
+needed, run:
+
+```sh
+shaka-lab-update-os --restart
+```
 
 ## Uninstallation
 
 **NOTE**: This package does not back up your original settings.  Uninstalling
 will not restore any settings changed by installation or update of this
-package.  It only removes the `shaka-lab-windows-update` command.
+package.  It only removes the `shaka-lab-update-os` command.
 
 ```sh
 choco uninstall -y shaka-lab-recommended-settings
@@ -67,4 +89,4 @@ Settings configured automatically by this package:
    - No updates between midnight at 6pm local
    - Restart without prompting the logged-in user
  - Install all Windows and driver updates now
- - Add the `shaka-lab-windows-update` command to install updates later
+ - Add the `shaka-lab-update-os` command to install all updates later

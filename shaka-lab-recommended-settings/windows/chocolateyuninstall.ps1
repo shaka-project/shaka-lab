@@ -18,4 +18,4 @@
 $ErrorActionPreference = "Stop"
 
 # Chocolatey doesn't remove shims made with Install-BinFile by itself.
-Uninstall-BinFile -Name shaka-lab-windows-update
+Uninstall-BinFile -Name shaka-lab-update-os

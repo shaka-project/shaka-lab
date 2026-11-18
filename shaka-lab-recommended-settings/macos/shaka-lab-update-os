@@ -1,0 +1,227 @@
+#!/bin/bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Installs all package and OS updates: Homebrew packages, then macOS updates.
+# An admin runs this by hand, and answers any questions along the way.
+#
+# Homebrew belongs to the user logged in on the GUI, so it runs as that user,
+# whichever admin runs this.  So Homebrew packages that need admin rights ask
+# for the GUI user's password.  On Apple silicon, macOS updates ask for it too,
+# as the owner of the disk.
+#
+# Usage: shaka-lab-update-os [--restart]
+#
+# Without --restart, this never restarts the computer.  macOS updates that
+# need a restart are only downloaded, because installing one always restarts
+# the computer right away, with or without "softwareupdate --restart".  If a
+# restart is needed, this says so and exits with code 100.
+#
+# With --restart, this also installs macOS updates that need a restart, and
+# the computer restarts when they're installed.
+
+# Fail on error
+set -e
+
+restart=false
+case "$*" in
+  "") ;;
+  "--restart") restart=true ;;
+  *)
+    echo "Usage: shaka-lab-update-os [--restart]" >&2
+    exit 2
+    ;;
+esac
+
+# Run this script as root via sudo if you're not already root.
+if [[ "$EUID" != 0 ]]; then
+  echo "This needs admin rights.  If asked, enter your own password."
+  exec sudo "$0" "$@"
+fi
+
+# Don't keep a working directory the GUI user can't read, such as the home
+# directory of the admin who ran this.
+cd /
+
+# A Homebrew failure doesn't stop this script (see below), so make Ctrl+C stop
+# the whole script, not just the command it interrupts.  The exception is
+# brew upgrade's "Do you want to proceed?" prompt, which reads Ctrl+C as a
+# keypress, not a signal, and takes it as no.
+trap 'exit 130' INT
+
+gui_uid=$(stat -f "%Du" /dev/console)
+gui_user=$(stat -f "%Su" /dev/console)
+if [[ "$gui_uid" == 0 ]]; then
+  echo "Nobody is logged in on the GUI, so there's no user to run Homebrew as." >&2
+  exit 1
+fi
+
+if [[ -x /opt/homebrew/bin/brew ]]; then
+  # Apple silicon
+  brew=/opt/homebrew/bin/brew
+elif [[ -x /usr/local/bin/brew ]]; then
+  # Intel
+  brew=/usr/local/bin/brew
+else
+  echo "Homebrew is not installed." >&2
+  exit 1
+fi
+
+# Homebrew uses this to ask for passwords, so that the prompt says whose
+# password it wants.  See shaka-lab-update-os-askpass.
+askpass=/opt/shaka-lab-recommended-settings/libexec/shaka-lab-update-os-askpass
+
+# Runs a command as the GUI user, in the GUI user's session.  Some Homebrew
+# packages do things that only work from that session, such as adding login
+# items.
+#
+# Despite its name, "launchctl asuser" doesn't change users.  It only moves
+# the command into the GUI user's session, still running as root.  Then
+# "sudo -u" switches to the GUI user, staying in that session.  It has to be
+# in this order, because "asuser" needs root.
+as_gui_user() {
+  launchctl asuser "$gui_uid" sudo -u "#$gui_uid" -H "$@"
+}
+
+report_brew_failure() {
+  echo
+  echo "*** Some Homebrew packages failed to update.  See the errors above. ***"
+}
+
+echo
+echo "Updating Homebrew packages as $gui_user, the user logged in on the GUI."
+echo "Packages that need admin rights will ask for $gui_user's password."
+# One package that can't be upgraded, such as one that fails to build or
+# depends on a pinned package, shouldn't hold back macOS updates.  So if
+# Homebrew fails, report it, go on to macOS updates, and exit with code 1 at
+# the end.
+brew_failed=false
+if [[ "$(uname -m)" == "x86_64" ]]; then
+  echo
+  echo "On Intel, Homebrew builds most packages from source, which can take hours."
+  echo "Don't interrupt it.  A package such as node can be left unable to start"
+  echo "until its build finishes."
+fi
+as_gui_user "$brew" update || brew_failed=true
+# Not --greedy.  Casks that need it are the ones that update themselves, and
+# --greedy can replace a newer version that updated itself with the older
+# version Homebrew knows about.
+as_gui_user env SUDO_ASKPASS="$askpass" "$brew" upgrade || brew_failed=true
+# Firefox is the exception.  It only updates itself from inside the running
+# app, and on lab machines it only runs under Selenium, which turns updates
+# off.  So nothing else upgrades it.
+if as_gui_user "$brew" list --cask firefox &>/dev/null; then
+  as_gui_user env SUDO_ASKPASS="$askpass" "$brew" upgrade --cask --greedy \
+      firefox || brew_failed=true
+fi
+if [[ "$brew_failed" == true ]]; then
+  report_brew_failure
+  echo "Installing macOS updates anyway."
+fi
+
+# Each command from here on that fails exits with code 1, even if the
+# command's own code was different, so that a failure never looks like the
+# code 100 that means a restart is needed.
+echo
+echo "Checking for macOS updates..."
+updates=$(softwareupdate --list 2>&1) || exit 1
+echo "$updates"
+
+# Sort the updates into those that need a restart and those that don't.  Each
+# update is a "Label:" line, followed by a "Title:" line that ends with
+# "Action: restart," if it needs one.
+restart_labels=()
+other_labels=()
+while IFS=$'\t' read -r action label; do
+  if [[ "$action" == restart ]]; then
+    restart_labels+=("$label")
+  else
+    other_labels+=("$label")
+  fi
+done < <(awk '
+  /^[*-] Label: / { label = substr($0, index($0, "Label: ") + 7) }
+  /Title: / && label != "" {
+    print (/Action: restart/ ? "restart" : "none") "\t" label
+    label = ""
+  }
+' <<< "$updates")
+
+# On Apple silicon, installing macOS updates needs the disk owner's password.
+owner_args=()
+if [[ "$(uname -m)" == "arm64" ]]; then
+  owner_args=(--user "$gui_user")
+fi
+
+# Don't restart if Homebrew failed.  A failed or interrupted upgrade can leave
+# a package such as node unable to start, and then shaka-lab-node wouldn't come
+# back after the restart.
+if [[ ${#restart_labels[@]} -gt 0 && "$restart" == true &&
+      "$brew_failed" == true ]]; then
+  echo
+  echo "Not restarting, because Homebrew failed.  Fix Homebrew first, then run"
+  echo "shaka-lab-update-os --restart again."
+  restart=false
+fi
+
+if [[ ${#restart_labels[@]} -gt 0 && "$restart" == true ]]; then
+  echo
+  echo "Installing all macOS updates.  This computer will restart when they're"
+  echo "installed."
+  if [[ ${#owner_args[@]} -gt 0 ]]; then
+    echo "If asked, enter $gui_user's password, as the owner of the disk."
+  fi
+  softwareupdate --install --all --restart "${owner_args[@]}" || exit 1
+  exit 0
+fi
+
+if [[ ${#other_labels[@]} -gt 0 ]]; then
+  echo
+  echo "Installing macOS updates that don't need a restart..."
+  if [[ ${#owner_args[@]} -gt 0 ]]; then
+    echo "If asked, enter $gui_user's password, as the owner of the disk."
+  fi
+  softwareupdate --install "${other_labels[@]}" "${owner_args[@]}" || exit 1
+fi
+
+if [[ ${#restart_labels[@]} -gt 0 ]]; then
+  # Installing these would restart the computer right away, so only download
+  # them.
+  echo
+  echo "Downloading macOS updates that need a restart..."
+  softwareupdate --download "${restart_labels[@]}" || exit 1
+
+  echo
+  echo "*** These macOS updates are downloaded, and need a restart to install: ***"
+  printf '  %s\n' "${restart_labels[@]}"
+  if [[ "$brew_failed" == true ]]; then
+    echo "*** Fix Homebrew, then to install them and restart, run: ***"
+    echo "***   shaka-lab-update-os --restart ***"
+  else
+    echo "*** To install them and restart, run: shaka-lab-update-os --restart ***"
+  fi
+fi
+
+# A failure takes priority over a needed restart, so that a failure is never
+# mistaken for success.
+if [[ "$brew_failed" == true ]]; then
+  report_brew_failure
+  exit 1
+fi
+
+if [[ ${#restart_labels[@]} -gt 0 ]]; then
+  exit 100
+fi
+
+echo
+echo "Updates are installed."

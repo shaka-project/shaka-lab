@@ -1,0 +1,24 @@
+#!/bin/bash
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Asks for a password on the terminal, for "sudo -A".  shaka-lab-update-os
+# gives this to Homebrew, which runs as the GUI user, so that its prompts say
+# whose password they want.  Otherwise an admin who isn't the GUI user would
+# see a bare "Password:" prompt and type in their own.
+
+printf "Password for %s (the user logged in on the GUI): " "$(id -un)" > /dev/tty
+read -rs password < /dev/tty
+printf "\n" > /dev/tty
+printf "%s\n" "$password"
