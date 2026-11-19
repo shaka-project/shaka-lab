@@ -8,7 +8,7 @@ $ORIGIN .
 $TTL 86400	; 1 day
 {% set reverse_domain = lan_subnet.split('.')[0:3]|reverse()|join('.') %}
 {{ reverse_domain }}.in-addr.arpa	IN SOA	gateway.lab.shaka. shaka.lab.shaka. (
-				1263527841 ; serial
+				1795120633 ; serial (raise this whenever the SOA or NS records change)
 				10800      ; refresh (3 hours)
 				3600       ; retry (1 hour)
 				604800     ; expire (1 week)

@@ -44,6 +44,10 @@ if [[ "$domain" == "lab.shaka" ]]; then
 
   # Revoke local admin rights for lab admins.
   dsconfigad -nogroups
+
+  # Let macOS register this machine's addresses in DNS on all interfaces
+  # again, as it does by default.
+  dsconfigad -restrictDDNS ""
 fi
 
 # Remove our files.

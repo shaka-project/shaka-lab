@@ -106,6 +106,15 @@ if ! systemctl is-enabled samba-ad-dc.service &>/dev/null; then
     for i in $(smbd -b | egrep "LOCKDIR|STATEDIR|CACHEDIR|PRIVATE_DIR" | cut -f 2 -d :); do
       find $i -name '*.tdb' -or -name '*.ldb'
     done | sort | uniq | xargs rm
+
+    # Also remove any sysvol left by an earlier domain.  Its Linux ACLs name
+    # Samba's own ID numbers, which were defined in the idmap database deleted
+    # above.  The new domain reuses those numbers for other accounts, so a
+    # leftover sysvol can block clients from reading Group Policy, even though
+    # "samba-tool ntacl sysvolcheck" reports no problem.
+    samba_state_dir=$(smbd -b | awk '/STATEDIR:/ {print $2}')
+    rm -rf "${samba_state_dir:?}/sysvol"
+
     backup_config /etc/samba/smb.conf
     rm /etc/samba/smb.conf
 

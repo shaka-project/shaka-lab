@@ -11,7 +11,9 @@ A config file for Samba Active Directory.
 	netbios name = GATEWAY
 	realm = LAB.SHAKA
 	server role = active directory domain controller
-	server services = s3fs, rpc, nbt, wrepl, ldap, cldap, kdc, drepl, winbindd, ntp_signd, kcc, dnsupdate
+	# No dnsupdate: the DNS zone is generated from the lab config, refuses
+	# updates, and already has the records that dnsupdate would add.
+	server services = s3fs, rpc, nbt, wrepl, ldap, cldap, kdc, drepl, winbindd, ntp_signd, kcc
 	workgroup = LAB
 	# Take UIDs and GIDs from uidNumber and gidNumber, so they match the
 	# accounts that nslcd provides on this gateway, and those on lab clients.

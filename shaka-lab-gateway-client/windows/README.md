@@ -109,6 +109,14 @@ them to confirm before running something as administrator.
 Keep a local administrator account as well.  Domain accounts can't log in if
 the gateway is down, or after the computer leaves the domain.
 
+## DNS registration
+
+The package stops Windows from registering this computer's addresses in DNS,
+by setting `DisableDynamicUpdate` in the registry.  The gateway's DNS zone is
+generated from the lab config and refuses updates, so registration only fills
+the gateway's logs with failures.  Lab names come from the gateway config
+instead.
+
 ## Managing Active Directory users
 
 Managing Active Directory users is done on the gateway itself.  See
@@ -120,11 +128,12 @@ https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme
 Directory Administrator password used to set up the Gateway.  This is necessary
 to leave the domain.
 
-Uninstalling removes `LAB\labadmins` from the local Administrators group, and
-removes the SSH client settings block from `ssh_config`.  It does not restore
-the `sshd_config` changes made during installation.  If leaving the domain
-fails, for example because of a mistyped password, `LAB\labadmins` keeps its
-admin rights and the computer stays in the domain.
+Uninstalling removes `LAB\labadmins` from the local Administrators group,
+turns DNS registration back on, and removes the SSH client settings block from
+`ssh_config`.  It does not restore the `sshd_config` changes made during
+installation.  If leaving the domain fails, for example because of a mistyped
+password, `LAB\labadmins` keeps its admin rights and the computer stays in the
+domain.
 
 Uninstall while logged in as a local administrator.  After the computer leaves
 the domain, domain accounts can't log in to it.

@@ -55,6 +55,11 @@ if ($domain -eq "lab.shaka") {
   echo "`nAlready left the Shaka Lab domain.`n"
 }
 
+# Let Windows register this machine's addresses in DNS again, as it does by
+# default.  Tolerate the setting already being gone.
+Remove-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters `
+    -Name DisableDynamicUpdate -ErrorAction SilentlyContinue
+
 # Remove the SSH client settings block that installation added.  Delete the
 # file if nothing else is left in it, since it doesn't exist by default.
 $sshConfig = "$env:ProgramData\ssh\ssh_config"
