@@ -19,8 +19,7 @@
 # run as SYSTEM in a scheduled task, and this script waits for the task and
 # prints its log.
 #
-# The shaka-lab-recommended-settings package runs this on install and upgrade.
-# The shaka-lab-update-os command also runs it, after upgrading Chocolatey
+# The shaka-lab-update-os command runs this after upgrading Chocolatey
 # packages.  See shaka-lab-update-os.ps1.
 
 

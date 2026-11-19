@@ -129,8 +129,6 @@ try {
 
 # Windows Update needs a separate script, which runs the updates as SYSTEM in a
 # scheduled task, because Windows refuses to install updates from SSH sessions.
-# The package also runs that script on install and upgrade, so it can't
-# upgrade Chocolatey packages itself.
 # It exits with 3010 if Windows Update says a restart is needed.
 $packageFolder = Split-Path -Parent $MyInvocation.MyCommand.Definition
 & "$packageFolder\install-windows-updates.ps1"
