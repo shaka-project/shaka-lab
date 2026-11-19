@@ -62,7 +62,8 @@ shaka-lab-update-os --restart
 
 **NOTE**: This package does not back up your original settings.  Uninstalling
 will not restore any settings changed by installation or update of this
-package.  It only removes the `shaka-lab-update-os` command.
+package.  It only removes the `shaka-lab-update-os` command and the `klist`
+alias from the all-users PowerShell profile.
 
 ```sh
 choco uninstall -y shaka-lab-recommended-settings
@@ -77,6 +78,10 @@ Settings configured automatically by this package:
  - Install and start Microsoft SSH server
  - Configure SSH server:
    - Use PowerShell as the login shell
+ - Configure PowerShell:
+   - Run local scripts and profiles (execution policy `RemoteSigned`)
+   - Make `klist` run Windows' `klist`, not the one from the Java JDK, whose
+     folder comes first in `PATH`
  - Sync time from time.windows.com, even when joined to a domain
  - Enable Remote Desktop connections
  - Disable firewall

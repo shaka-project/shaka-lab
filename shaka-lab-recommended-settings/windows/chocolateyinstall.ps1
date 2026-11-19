@@ -37,6 +37,72 @@ New-ItemProperty `
   -PropertyType String -Force | Out-Null
 
 
+echo "`nConfiguring PowerShell...`n"
+# Let PowerShell run local scripts, including the all-users profile below.
+# Scripts downloaded from the internet still need a signature.  The Windows
+# default, Restricted, runs no scripts at all, not even profiles.
+#
+# Chocolatey runs this script with "-ExecutionPolicy Bypass", which sets the
+# policy for this process only.  Set-ExecutionPolicy saves the machine-wide
+# policy, then reports an error because this process's policy overrides it.
+# Ignore that error, as long as the machine-wide policy was saved.
+try {
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine -Force
+} catch {
+  if ((Get-ExecutionPolicy -Scope LocalMachine) -ne "RemoteSigned") {
+    throw
+  }
+}
+
+# The Microsoft JDK, which shaka-lab-node depends on, puts its bin folder at
+# the front of the system PATH on every install and upgrade.  The JDK has its
+# own klist.exe, which hides Windows' klist, the one that shows a domain user's
+# Kerberos tickets.  In PowerShell, an alias takes precedence over PATH, so
+# define one in the all-users profile.  This also covers SSH sessions, since
+# PowerShell is the SSH login shell.
+#
+# The alias lives in a marked block that this package owns, and that
+# uninstalling removes.
+$profilePath = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\profile.ps1"
+$blockStart = "# BEGIN shaka-lab-recommended-settings"
+$blockEnd = "# END shaka-lab-recommended-settings"
+$block = @(
+  $blockStart,
+  "# Use Windows' klist, not the JDK's, which comes first in PATH.",
+  'Set-Alias -Name klist -Value "$env:SystemRoot\System32\klist.exe"',
+  $blockEnd
+)
+
+$lines = @()
+if (Test-Path $profilePath) {
+  $lines = @(Get-Content $profilePath)
+}
+
+# Drop any copy of the block from an earlier install, then append the current
+# one.
+$newLines = @()
+$inBlock = $false
+foreach ($line in $lines) {
+  if ($line -eq $blockStart) {
+    $inBlock = $true
+  }
+  if (-Not $inBlock) {
+    $newLines += $line
+  }
+  if ($line -eq $blockEnd) {
+    $inBlock = $false
+  }
+}
+$newLines += $block
+
+if (($newLines -join "`n") -ne ($lines -join "`n")) {
+  # Windows PowerShell reads a script without a byte order mark in the
+  # system's legacy code page, so write UTF-8 with one.
+  $utf8WithBom = New-Object System.Text.UTF8Encoding $true
+  [System.IO.File]::WriteAllLines($profilePath, [string[]]$newLines, $utf8WithBom)
+}
+
+
 echo "`nEnabling time sync...`n"
 # Domain members normally sync time from a domain controller, but the Shaka Lab
 # Gateway doesn't serve time.  Always sync from a public time server instead,
