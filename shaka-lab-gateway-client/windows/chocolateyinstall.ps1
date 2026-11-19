@@ -48,6 +48,14 @@ if ($domain -eq "lab.shaka" -and -Not $joinPending) {
 }
 
 
+# Don't register this machine's addresses in DNS.  The gateway's DNS zone is
+# generated from the lab config and refuses updates, so every attempt fails and
+# fills the gateway's logs.  This covers all network adapters, including ones
+# added later.
+New-ItemProperty -Path HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters `
+    -Name DisableDynamicUpdate -PropertyType DWord -Value 1 -Force | Out-Null
+
+
 # Give lab admins admin rights on this machine.  S-1-5-32-544 is the local
 # Administrators group, whatever its name in the system's language.
 try {

@@ -33,7 +33,7 @@ attribute of the result.  That raises an error whose message includes the key.
 $ORIGIN .
 $TTL 86400	; 1 day
 lab.shaka		IN SOA	gateway.lab.shaka. shaka.lab.shaka. (
-				1263527841 ; serial
+				1795120633 ; serial (raise this whenever the SOA or NS records change)
 				10800      ; refresh (3 hours)
 				3600       ; retry (1 hour)
 				604800     ; expire (1 week)

@@ -76,6 +76,13 @@ if dscl . -read /Groups/com.apple.access_ssh &>/dev/null; then
   fi
 fi
 
+# Don't register this machine's addresses in DNS.  The gateway's DNS zone is
+# generated from the lab config and refuses updates, so every attempt fails and
+# fills the gateway's logs.  dsconfigad can't turn these updates off, only
+# limit them to certain interfaces, so limit them to loopback, which never has
+# a lab address.
+dsconfigad -restrictDDNS lo0
+
 # Install the uninstall script outside of the tap.  Homebrew uninstalls from
 # its own saved copy of the Cask, which can't find files in the tap.
 mkdir -p "$destination"
