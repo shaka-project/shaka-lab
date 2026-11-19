@@ -101,9 +101,7 @@ mkdir -p /var/log/shaka-lab-node
 # the path to node, which we replace with the real prefix here.
 install -m 644 "$source_root/shaka-lab-node/macos/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist" "$proxy_plist"
 sed -i '' -e "s|\\\$HOMEBREW_PREFIX|$homebrew_prefix|g" "$proxy_plist"
-# Reload it.  Tolerate "not loaded" on a first install.
-launchctl bootout system "$proxy_plist" 2>/dev/null || true
-launchctl bootstrap system "$proxy_plist"
+# restart-services.sh, at the end, loads it or reloads it.
 
 # Symlink the log rotation config file into its required location.
 ln -sf "$destination/shaka-lab-node-logrotate.conf" /etc/newsyslog.d/

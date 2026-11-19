@@ -48,6 +48,9 @@ upgraded with Homebrew.  `brew upgrade` shows what it will upgrade, and asks bef
 ahead.  At that question, Ctrl+C, Esc, and Ctrl+D all mean no.  Anywhere
 else, Ctrl+C stops the whole command.
 
+If Homebrew upgrades `node` and shaka-lab-node is installed, shaka-lab-node is
+restarted, so that it runs the new `node`.
+
 If any Homebrew package fails to upgrade, or you tell `brew upgrade` not to go
 ahead, macOS updates are still installed, and the command exits with code 1.
 It won't restart the computer, even with `--restart`, because a failed upgrade
