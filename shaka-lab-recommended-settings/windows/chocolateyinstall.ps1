@@ -182,28 +182,3 @@ Install-BinFile -Name shaka-lab-update-os `
     -Command "`"-NoProfile -ExecutionPolicy Bypass -File $packageFolder\shaka-lab-update-os.ps1`""
 # Older versions called the command shaka-lab-windows-update.
 Uninstall-BinFile -Name shaka-lab-windows-update
-
-
-echo "`nInstalling all Windows and driver updates now...`n"
-# Try to install updates, but don't fail this package installation if Windows
-# Update fails.  That is out of our control.
-try {
-  # This script runs the updates as SYSTEM in a scheduled task, which also
-  # works over SSH.  Running it in a separate process also avoids a conflict
-  # inside Chocolatey scripts, where chocolatey-windowsupdate.extension (also
-  # present on lab machines) defines its own Install-WindowsUpdate.
-  & "$packageFolder\install-windows-updates.ps1"
-  # Chocolatey ignores $LASTEXITCODE from package scripts.  This is how a
-  # package tells it a restart is needed.
-  if ($LASTEXITCODE -eq 3010) {
-    Set-PowerShellExitCode 3010
-  }
-} catch {
-  # Print the caught exception as an error.
-  # -ErrorAction 'Continue' changes Write-Error's default behavior of
-  # triggering our $ErrorActionPreference setting to stop execution.
-  Write-Error $Error[0] -ErrorAction 'Continue'
-
-  # Print advice to the user.
-  echo "`nWindows update failed.  Please install updates through the UI.`n"
-}

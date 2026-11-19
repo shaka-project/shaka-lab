@@ -16,6 +16,12 @@ choco source add -n=shaka-lab -s=https://chocolatey.shakalab.rocks/
 choco install shaka-lab-recommended-settings
 ```
 
+Then install all updates, as described below:
+
+```sh
+shaka-lab-update-os
+```
+
 ## Updates
 
 ```sh
@@ -24,9 +30,8 @@ choco upgrade -y shaka-lab-recommended-settings
 
 ## Installing all updates
 
-Installing or upgrading this package also installs all available Windows and
-driver updates.  To install all Chocolatey package and Windows updates at any
-other time, run this as an administrator.  It works over SSH:
+To install all Chocolatey package and Windows updates, run this as an
+administrator.  It works over SSH:
 
 ```sh
 shaka-lab-update-os
@@ -93,5 +98,4 @@ Settings configured automatically by this package:
  - Configure Windows Update:
    - No updates between midnight at 6pm local
    - Restart without prompting the logged-in user
- - Install all Windows and driver updates now
- - Add the `shaka-lab-update-os` command to install all updates later
+ - Add the `shaka-lab-update-os` command to install all updates
