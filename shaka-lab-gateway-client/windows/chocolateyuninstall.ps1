@@ -26,8 +26,10 @@ if ($domain -eq "lab.shaka") {
   # domain, while the name LAB\labadmins can still be resolved.  S-1-5-32-544
   # is the local Administrators group, whatever its name in the system's
   # language.
+  $revoked = $false
   try {
     Remove-LocalGroupMember -SID S-1-5-32-544 -Member "LAB\labadmins"
+    $revoked = $true
     echo "`nRevoked admin rights from LAB\labadmins.`n"
   } catch [Microsoft.PowerShell.Commands.MemberNotFoundException] {
     echo "`nLAB\labadmins did not have admin rights.`n"
@@ -35,7 +37,18 @@ if ($domain -eq "lab.shaka") {
 
   echo "`nLeaving the Shaka Lab domain via Shaka Lab Gateway.`n"
   echo "`nWhen prompted, enter your Active Directory Administrator password.`n"
-  Remove-Computer -UnjoinDomainCredential Administrator -Force
+  try {
+    Remove-Computer -UnjoinDomainCredential Administrator -Force
+  } catch {
+    # If leaving fails (for example, a mistyped password), Windows rolls back
+    # and the computer stays in the domain.  Give lab admins their rights back,
+    # so that a failed uninstall leaves the computer as it was.
+    if ($revoked) {
+      Add-LocalGroupMember -SID S-1-5-32-544 -Member "LAB\labadmins"
+      echo "`nFailed to leave the domain.  Restored admin rights to LAB\labadmins.`n"
+    }
+    throw
+  }
   echo "`nSuccessfully left the Shaka Lab domain.`n"
   echo "`n*** Restart this computer to finish leaving the Shaka Lab domain. ***`n"
 } else {
