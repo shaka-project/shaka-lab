@@ -122,7 +122,9 @@ to leave the domain.
 
 Uninstalling removes `LAB\labadmins` from the local Administrators group, and
 removes the SSH client settings block from `ssh_config`.  It does not restore
-the `sshd_config` changes made during installation.
+the `sshd_config` changes made during installation.  If leaving the domain
+fails, for example because of a mistyped password, `LAB\labadmins` keeps its
+admin rights and the computer stays in the domain.
 
 Uninstall while logged in as a local administrator.  After the computer leaves
 the domain, domain accounts can't log in to it.
