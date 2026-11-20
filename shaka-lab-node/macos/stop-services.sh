@@ -21,7 +21,10 @@ GUI_UID=$(stat -f "%Du" /dev/console)
 
 # Run this script as the GUI user via sudo if you're not already the GUI user.
 if [[ "$EUID" != "$GUI_UID" ]]; then
-  exec sudo -u "#$GUI_UID" "$0"
+  # Don't keep a working directory the GUI user can't read, such as the home
+  # directory of the admin who ran this.  So run this script by its full path.
+  cd /
+  exec sudo -u "#$GUI_UID" /opt/shaka-lab-node/stop-services.sh
 fi
 
 # The app writes these through symlinks in /opt/shaka-lab-node.  Use the real

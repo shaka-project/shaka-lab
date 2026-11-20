@@ -45,7 +45,7 @@ sudo /opt/shaka-lab-node/restart-services.sh
 ```
 
 Any admin can run this, including over SSH.  The services always run as the
-user logged in on the GUI.
+user logged in on the GUI.  This also restarts the loopback proxy (see below).
 
 ## Tailing logs
 
