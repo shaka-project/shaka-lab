@@ -24,6 +24,11 @@ Type=simple
 User=shaka-lab-node
 ExecStart=/opt/shaka-lab/shaka-lab-node/start-nodes.sh
 Restart=always
+# Wait between restarts.  Startup installs NVM and Node.js, and fails if it
+# can't and there is no existing install (for example, a fresh install with no
+# network).  Without a delay, systemd would retry so quickly that it would hit
+# its start limit and stop retrying for good.
+RestartSec=30
 SuccessExitStatus=2
 
 [Install]

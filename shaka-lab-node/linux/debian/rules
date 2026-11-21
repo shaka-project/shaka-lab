@@ -29,7 +29,7 @@ export DESTDIR = $(PREFIX)/opt/shaka-lab
 # How "dh" helpers will install the package contents to a staging area.
 override_dh_auto_install:
 	install -m 755 -d "$(DESTDIR)/nvm"
-	echo "NVM placeholder; installed by package post-install" \
+	echo "NVM placeholder; installed by the service on startup" \
 	    | install -m 644 /dev/stdin "$(DESTDIR)/nvm/.placeholder"
 	
 	install -m 755 -d "$(DESTDIR)/shaka-lab-node"
@@ -38,7 +38,6 @@ override_dh_auto_install:
 	install -m 644 ../start-nodes.js "$(DESTDIR)/shaka-lab-node/"
 	install -m 644 ../node-templates.yaml "$(DESTDIR)/shaka-lab-node/"
 	install -m 755 update-drivers.sh "$(DESTDIR)/shaka-lab-node/"
-	install -m 755 update-node.sh "$(DESTDIR)/shaka-lab-node/"
 	install -m 755 start-nodes.sh "$(DESTDIR)/shaka-lab-node/"
 	
 	install -m 755 -d "$(PREFIX)/etc"
