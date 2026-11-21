@@ -82,10 +82,20 @@ function update_nvm() {
 # Install the latest release of our pinned Node.js major version, make it the
 # default, and remove every other version.
 function update_node() {
+  # Clear NVM's cache first.  When the timeout below kills an install, NVM
+  # leaves that version's install lock in its cache, and never steals it back
+  # by default.  Every later install of that version would then wait on the
+  # lock until it timed out, too.  We are the only thing installing Node.js
+  # here, so any lock left at this point is stale.  This also drops any
+  # partial downloads.
+  nvm cache clear
+
   # nvm is a shell function, so to put a timeout on it, it has to run in a new
-  # shell.
+  # shell.  Pass -b to install only prebuilt binaries.  If there is no binary
+  # for this platform, NVM would otherwise build Node.js from source, which
+  # would never finish within the timeout.
   if ! timeout "$NODE_UPDATE_TIMEOUT" bash -c \
-      '. "$NVM_DIR/nvm.sh" && nvm install "$NODE_MAJOR"'; then
+      '. "$NVM_DIR/nvm.sh" && nvm install -b "$NODE_MAJOR"'; then
     warn "Failed to install the latest Node.js $NODE_MAJOR."
   fi
 
