@@ -24,6 +24,9 @@
 // Configure the listen port with the PROXY_PORT environment variable
 // (default 1080).
 
+// Only load modules built into Node.js.  The proxy keeps running after a
+// Node.js update deletes the version it started on, and built-in modules are
+// part of the node binary, which is already in memory.
 const net = require('net');
 
 const HOST = '127.0.0.1';

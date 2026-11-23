@@ -20,8 +20,10 @@
 # Fail on error.
 set -e
 
-# Set PATH to include node, npm, and other homebrew executables.
-export PATH="$HOMEBREW_PREFIX/bin:$PATH"
+# Load NVM so we can use our hermetic copy of nodejs.
+export NVM_DIR=/opt/shaka-lab-node/nvm
+# shellcheck source=/dev/null  # Installed at runtime, not in this repo.
+. "$NVM_DIR/nvm.sh"
 
 # Force npm to write its cache here.
 export HOME="/opt/shaka-lab-node/work"

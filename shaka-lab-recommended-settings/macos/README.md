@@ -48,13 +48,10 @@ upgraded with Homebrew.  `brew upgrade` shows what it will upgrade, and asks bef
 ahead.  At that question, Ctrl+C, Esc, and Ctrl+D all mean no.  Anywhere
 else, Ctrl+C stops the whole command.
 
-If Homebrew upgrades `node` and shaka-lab-node is installed, shaka-lab-node is
-restarted, so that it runs the new `node`.
-
 If any Homebrew package fails to upgrade, or you tell `brew upgrade` not to go
 ahead, macOS updates are still installed, and the command exits with code 1.
 It won't restart the computer, even with `--restart`, because a failed upgrade
-can leave a package such as `node` unable to start.
+can leave a package unable to start.
 A pinned package, or one that depends on a pinned package, can't be upgraded,
 so avoid pinning packages on lab machines.
 

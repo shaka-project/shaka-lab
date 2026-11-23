@@ -30,9 +30,15 @@ echo "Done!"
 # already being unloaded.
 launchctl bootout system "$proxy_plist" 2>/dev/null || true
 
-# Remove the main installation and symlinks.
+# Remove the main installation, except NVM and Node.js.  Upgrades uninstall the
+# old version first, and the new version keeps using them, so they shouldn't
+# be downloaded again.  Only "brew uninstall --zap" removes them.
+find "$destination" -mindepth 1 -maxdepth 1 ! -name nvm -exec rm -rf {} +
+# Remove the folder too, if there was no NVM in it.
+rmdir "$destination" 2>/dev/null || true
+
+# Remove the symlinks and everything else.
 rm -rf \
-    "$destination" \
     /etc/newsyslog.d/shaka-lab-node-logrotate.conf \
     /Applications/shaka-lab-node.app \
     /Applications/shaka-lab-node-update-drivers.app \

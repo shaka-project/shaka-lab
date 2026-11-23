@@ -32,9 +32,10 @@ cd /
 
 /opt/shaka-lab-node/stop-services.sh
 
-# Restart the loopback proxy too.  Otherwise, after Homebrew upgrades node, it
-# keeps running the old node until the computer restarts.  This also loads any
-# changes install.sh made to its plist.  Tolerate it not being loaded.
+# Restart the loopback proxy too.  Otherwise, after the services update
+# Node.js, it keeps running the old version until the computer restarts.  This
+# also loads any changes install.sh made to its plist.  Tolerate it not being
+# loaded.
 PROXY_PLIST="/Library/LaunchDaemons/io.github.shaka-project.shaka-lab-node.local-network-proxy.plist"
 launchctl bootout system "$PROXY_PLIST" 2>/dev/null || true
 launchctl bootstrap system "$PROXY_PLIST"
