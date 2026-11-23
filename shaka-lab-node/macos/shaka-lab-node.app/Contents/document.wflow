@@ -59,21 +59,9 @@
 				<key>ActionParameters</key>
 				<dict>
 					<key>COMMAND_STRING</key>
-					<string>set -e
-set -x
-
-export PATH=$PATH:/usr/local/bin:/opt/homebrew/bin
-NODE_PATH=$(which node)
-
-cd /opt/shaka-lab-node
-
-"$NODE_PATH" \
-    /opt/shaka-lab-node/log-wrapper.js \
-    /opt/shaka-lab-node/logs/stdout.log \
-    /opt/shaka-lab-node/logs/stderr.log \
-    /opt/shaka-lab-node/shaka-lab-node.pid \
-    "$NODE_PATH" \
-    /opt/shaka-lab-node/start-nodes.js
+					<string># All the logic is in launch.sh, so that this app doesn't have to change.
+# See /opt/shaka-lab-node/automator-app.md.
+exec /opt/shaka-lab-node/launch.sh
 </string>
 					<key>CheckedForUserDefaultShell</key>
 					<true/>

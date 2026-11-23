@@ -109,15 +109,10 @@ echo "Packages that need admin rights will ask for $gui_user's password."
 brew_failed=false
 if [[ "$(uname -m)" == "x86_64" ]]; then
   echo
-  echo "On Intel, Homebrew builds most packages from source, which can take hours."
-  echo "Don't interrupt it.  A package such as node can be left unable to start"
-  echo "until its build finishes."
+  echo "On Intel, Homebrew builds most packages from source, which can take a while."
+  echo "Don't interrupt it.  An interrupted upgrade can leave a package unable to"
+  echo "start."
 fi
-# shaka-lab-node and its proxy keep running the node they started with, even
-# after Homebrew upgrades it.  So note which node this is, to restart them if
-# it changes.
-node_link="${brew%/brew}/node"
-old_node=$(readlink "$node_link" || true)
 as_gui_user "$brew" update || brew_failed=true
 # Not --greedy.  Casks that need it are the ones that update themselves, and
 # --greedy can replace a newer version that updated itself with the older
@@ -129,14 +124,6 @@ as_gui_user env SUDO_ASKPASS="$askpass" "$brew" upgrade || brew_failed=true
 if as_gui_user "$brew" list --cask firefox &>/dev/null; then
   as_gui_user env SUDO_ASKPASS="$askpass" "$brew" upgrade --cask --greedy \
       firefox || brew_failed=true
-fi
-# If shaka-lab-node can't come back on the new node, treat that like a failed
-# upgrade.
-if [[ -x /opt/shaka-lab-node/restart-services.sh &&
-      "$(readlink "$node_link" || true)" != "$old_node" ]]; then
-  echo
-  echo "Restarting shaka-lab-node, because node was upgraded..."
-  /opt/shaka-lab-node/restart-services.sh || brew_failed=true
 fi
 if [[ "$brew_failed" == true ]]; then
   report_brew_failure
@@ -177,8 +164,7 @@ if [[ "$(uname -m)" == "arm64" ]]; then
 fi
 
 # Don't restart if Homebrew failed.  A failed or interrupted upgrade can leave
-# a package such as node unable to start, and then shaka-lab-node wouldn't come
-# back after the restart.
+# a package unable to start, and then it wouldn't come back after the restart.
 if [[ ${#restart_labels[@]} -gt 0 && "$restart" == true &&
       "$brew_failed" == true ]]; then
   echo

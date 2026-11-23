@@ -94,9 +94,8 @@ HTTPS and `wss`.
 - `io.github.shaka-project.shaka-lab-node.local-network-proxy.plist`: the
   LaunchDaemon that runs it. Install it in `/Library/LaunchDaemons` so it loads
   in the system domain as root, which is what grants the Local Network Privacy
-  exemption. The path to node uses `$HOMEBREW_PREFIX`, which the package install
-  replaces with the real Homebrew prefix; if you load the plist by hand,
-  substitute the output of `command -v node` first.
+  exemption. It runs node through `/opt/shaka-lab-node/run-node.sh`, which runs
+  NVM's default Node.js, so its path doesn't change when Node.js updates.
 
 ### Wiring the browser
 

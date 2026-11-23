@@ -37,9 +37,9 @@ cask "shaka-lab-node" do
   # NOTE: We can't express a specific version in a Cask's dependencies.
   depends_on cask: "oracle-jdk"
 
-  # We need node.js, any LTS.
-  # NOTE: We can't express a specific version in a Cask's dependencies.
-  depends_on formula: "node"
+  # We don't depend on Homebrew's node.  On Intel, Homebrew builds it from
+  # source, which takes hours.  The services install Node.js themselves, from
+  # prebuilt binaries, through NVM.  See start-nodes.sh.
 
   # Tell homebrew that we won't "install" anything.  We do, just not using the
   # primitives for Casks, which are oriented around app bundles.
@@ -57,7 +57,7 @@ cask "shaka-lab-node" do
   # If they fail, the package is not considered installed or uninstalled.
   preflight_steps do
     run "#{source_root}/shaka-lab-node/macos/install.sh",
-        args: [source_root, "{{HOMEBREW_PREFIX}}"], sudo: true, print_stdout: true
+        args: [source_root], sudo: true, print_stdout: true
   end
 
   # install.sh puts uninstall.sh outside of the tap, because Homebrew
@@ -68,4 +68,9 @@ cask "shaka-lab-node" do
       run "/opt/shaka-lab-node/uninstall.sh", sudo: true, print_stdout: true
     end
   end
+
+  # Upgrades uninstall the old version first, so a plain uninstall keeps NVM
+  # and Node.js in /opt/shaka-lab-node/nvm, for the new version to use, and
+  # only "brew uninstall --zap" removes them.
+  zap delete: "/opt/shaka-lab-node"
 end

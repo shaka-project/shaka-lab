@@ -46,6 +46,8 @@ sudo /opt/shaka-lab-node/restart-services.sh
 
 Any admin can run this, including over SSH.  The services always run as the
 user logged in on the GUI.  This also restarts the loopback proxy (see below).
+The services start from an app, which is also a login item (see
+[automator-app.md](automator-app.md)).
 
 ## Tailing logs
 
@@ -61,4 +63,11 @@ runs as root and logs to `/var/log/shaka-lab-node/local-network-proxy.log`.
 ```sh
 sudo /opt/shaka-lab-node/stop-services.sh
 brew uninstall shaka-lab-node
+```
+
+Uninstalling leaves Node.js in `/opt/shaka-lab-node/nvm`, so that upgrades
+don't download it again.  To remove it too, uninstall with `--zap`:
+
+```sh
+brew uninstall --zap shaka-lab-node
 ```

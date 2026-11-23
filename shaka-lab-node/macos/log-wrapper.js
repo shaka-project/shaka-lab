@@ -42,6 +42,9 @@
 //  - https://serverfault.com/q/900499
 //  - https://stackoverflow.com/q/71832882
 
+// Only load modules built into Node.js.  The wrapper keeps running after a
+// Node.js update deletes the version it started on, and built-in modules are
+// part of the node binary, which is already in memory.
 const child_process = require('child_process');
 const fs = require('fs');
 
