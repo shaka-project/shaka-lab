@@ -48,6 +48,10 @@ upgraded with Homebrew.  `brew upgrade` shows what it will upgrade, and asks bef
 ahead.  At that question, Ctrl+C, Esc, and Ctrl+D all mean no.  Anywhere
 else, Ctrl+C stops the whole command.
 
+After the Homebrew upgrades, it takes Firefox, Chrome and Edge out of
+quarantine, in case Homebrew upgraded any of them.  A quarantined browser can
+show a dialog that blocks tests until someone answers it.
+
 If any Homebrew package fails to upgrade, or you tell `brew upgrade` not to go
 ahead, macOS updates are still installed, and the command exits with code 1.
 It won't restart the computer, even with `--restart`, because a failed upgrade

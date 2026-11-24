@@ -125,6 +125,17 @@ if as_gui_user "$brew" list --cask firefox &>/dev/null; then
   as_gui_user env SUDO_ASKPASS="$askpass" "$brew" upgrade --cask --greedy \
       firefox || brew_failed=true
 fi
+# Homebrew quarantines the apps it installs, and a quarantined browser can show
+# a dialog that blocks Selenium until someone answers it.  shaka-lab-browsers
+# only removes quarantine when it's installed, and Homebrew upgrades browsers
+# on their own.  So remove it here.  If that fails, the browser might not
+# start, so treat that like a failed upgrade.
+for app in "Firefox" "Google Chrome" "Microsoft Edge"; do
+  if xattr -p com.apple.quarantine "/Applications/$app.app" &>/dev/null; then
+    echo "Removing quarantine from $app..."
+    xattr -d com.apple.quarantine "/Applications/$app.app" || brew_failed=true
+  fi
+done
 if [[ "$brew_failed" == true ]]; then
   report_brew_failure
   echo "Installing macOS updates anyway."
