@@ -82,7 +82,7 @@ try {
   # first, because upgrading shaka-lab-node starts it again.  Skip the ones
   # that aren't installed, because "choco upgrade" would install them.
   $noRestartPackages = @(
-      @("microsoft-openjdk", "nodejs.install", "nodejs") |
+      @("microsoft-openjdk", "nodejs-lts", "nodejs.install", "nodejs") |
       ? { Test-Path "$env:ChocolateyInstall\lib\$_" })
   if ($noRestartPackages.Count -gt 0) {
     # PowerShell passes each item in the array as a separate argument.
@@ -95,7 +95,7 @@ try {
   # checked, then Chrome on its own without them, as shaka-lab-browsers
   # installs it.
   choco upgrade all -y `
-      --except="googlechrome,microsoft-openjdk,nodejs.install,nodejs"
+      --except="googlechrome,microsoft-openjdk,nodejs-lts,nodejs.install,nodejs"
   Check-ChocoResult
   if (Test-Path "$env:ChocolateyInstall\lib\googlechrome") {
     choco upgrade googlechrome -y --ignore-checksums
