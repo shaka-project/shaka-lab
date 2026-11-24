@@ -25,5 +25,5 @@ if ($service) {
   echo "Stopping service..."
   Stop-Service -Name shaka-lab-node
   echo "Deleting service..."
-  $service.delete()
+  $service.delete() | Out-Null
 }
