@@ -30,17 +30,22 @@ echo "Done!"
 # already being unloaded.
 launchctl bootout system "$proxy_plist" 2>/dev/null || true
 
-# Remove the main installation, except NVM and Node.js.  Upgrades uninstall the
-# old version first, and the new version keeps using them, so they shouldn't
-# be downloaded again.  Only "brew uninstall --zap" removes them.
-find "$destination" -mindepth 1 -maxdepth 1 ! -name nvm -exec rm -rf {} +
-# Remove the folder too, if there was no NVM in it.
+# Remove the main installation, except NVM and Node.js, the working directory,
+# and the service logs.  Upgrades uninstall the old version first.  The new
+# version keeps using NVM, Node.js, and the node modules and WebDrivers in the
+# working directory, so they shouldn't be downloaded again, and keeping the
+# logs keeps their history.  Only "brew uninstall --zap" removes them.
+find "$destination" -mindepth 1 -maxdepth 1 \
+    ! -name nvm ! -name work ! -name logs -exec rm -rf {} +
+# Remove the folder too, if there was nothing left in it.
 rmdir "$destination" 2>/dev/null || true
 
-# Remove the symlinks and everything else.
+# Remove the symlinks and everything else.  This leaves the loopback proxy's
+# log in /var/log/shaka-lab-node, for the same reason, and the login item,
+# which install.sh adds back without duplicating it.  Only
+# "brew uninstall --zap" removes them.
 rm -rf \
     /etc/newsyslog.d/shaka-lab-node-logrotate.conf \
     /Applications/shaka-lab-node.app \
     /Applications/shaka-lab-node-update-drivers.app \
-    "$proxy_plist" \
-    /var/log/shaka-lab-node
+    "$proxy_plist"

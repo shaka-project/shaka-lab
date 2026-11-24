@@ -79,16 +79,19 @@ https://github.com/shaka-project/shaka-lab/tree/main/shaka-lab-gateway#readme
 
 ## Uninstallation
 
-Uninstalling removes what this package set up, but leaves this machine joined
-to the domain:
+Uninstalling removes this package's files, but leaves this machine joined to
+the domain.  Lab admins keep their admin rights, lab users keep SSH access, and
+the log in `/var/log/shaka-lab-gateway-client.log` stays.  Upgrades uninstall
+the old version first, so this keeps an upgrade from cutting anyone off.
 
 ```sh
 brew uninstall shaka-lab-gateway-client
 brew autoremove
 ```
 
-To also leave the domain, uninstall with `--zap`.  This prompts for the Active
-Directory Administrator password used to set up the Gateway.
+To also revoke those rights, remove the log, and leave the domain, uninstall
+with `--zap`.  This prompts for the Active Directory Administrator password
+used to set up the Gateway.
 
 ```sh
 brew uninstall --zap shaka-lab-gateway-client

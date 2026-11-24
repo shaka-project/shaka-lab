@@ -86,6 +86,15 @@ brew autoremove
 Uninstalling the package will not reset any modified settings to their previous
 or default values.
 
+Uninstalling also leaves the `shaka-lab-update-os` command, which needs its
+own files while it upgrades this package.  To remove it too, uninstall with
+`--zap`:
+
+```sh
+brew uninstall --zap shaka-lab-recommended-settings
+brew autoremove
+```
+
 ## Specific Settings and Dependencies
 
 Dependencies installed with this package:

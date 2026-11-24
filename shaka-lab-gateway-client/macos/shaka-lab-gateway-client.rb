@@ -54,20 +54,37 @@ cask "shaka-lab-gateway-client" do
     end
   end
 
-  # Leaving the domain asks for the Active Directory Administrator password.
   # Upgrades uninstall the old version first, so a plain uninstall leaves this
-  # machine bound, and only "brew uninstall --zap" leaves the domain.  By then,
+  # machine bound, with what this package granted to lab users, and only
+  # "brew uninstall --zap" takes those away and leaves the domain.  Leaving the
+  # domain asks for the Active Directory Administrator password, and revoking
+  # admin rights mid-upgrade would cut off lab admins.  By the time this runs,
   # the uninstall above has removed our files, so this can't run a script from
   # /opt/shaka-lab-gateway-client.
+  #
+  # Before leaving the domain, revoke what install.sh granted, which needs the
+  # domain to resolve the group names:
+  #  - SSH access for lab users.  Tolerate them not having been in the group.
+  #    Use the plain group name, as install.sh does.
+  #  - Local admin rights for lab admins.
+  #  - The limit on DNS registration, so that macOS registers this machine's
+  #    addresses on all interfaces again, as it does by default.
   zap script: {
-    executable: "/bin/bash",
-    args:       [
-      "-c",
-      "domain=$(/usr/sbin/dsconfigad -show | awk '/Active Directory Domain/{print $NF}'); " \
-      "if [[ \"$domain\" == lab.shaka ]]; then " \
-      "/usr/sbin/dsconfigad -remove -u Administrator; " \
-      "fi",
-    ],
-    sudo:       true,
-  }
+        executable: "/bin/bash",
+        args:       [
+          "-c",
+          "set -e; " \
+          "domain=$(/usr/sbin/dsconfigad -show | awk '/Active Directory Domain/{print $NF}'); " \
+          "if [[ \"$domain\" == lab.shaka ]]; then " \
+          "if /usr/bin/dscl . -read /Groups/com.apple.access_ssh &>/dev/null; then " \
+          "/usr/sbin/dseditgroup -o edit -d labusers -t group com.apple.access_ssh || true; " \
+          "fi; " \
+          "/usr/sbin/dsconfigad -nogroups; " \
+          "/usr/sbin/dsconfigad -restrictDDNS \"\"; " \
+          "/usr/sbin/dsconfigad -remove -u Administrator; " \
+          "fi",
+        ],
+        sudo:       true,
+      },
+      delete: "/var/log/shaka-lab-gateway-client.log"
 end
