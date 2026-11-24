@@ -11,10 +11,18 @@ platforms, see [the general docs](../README.md#readme).
 ## Installation
 
 ```sh
-curl -L https://shaka-project.github.io/shaka-lab/public.key | \
-    sudo tee /etc/apt/trusted.gpg.d/shaka-lab.asc
-echo deb https://shaka-project.github.io/shaka-lab/ stable main | \
-    sudo tee /etc/apt/sources.list.d/shaka-lab.list
+# Remove the repo setup from older versions of these instructions.
+sudo rm -f /etc/apt/sources.list.d/shaka-lab.list /etc/apt/trusted.gpg.d/shaka-lab.asc
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://shaka-project.github.io/shaka-lab/public.key | \
+    sudo tee /etc/apt/keyrings/shaka-lab.asc
+cat << EOF | sudo tee /etc/apt/sources.list.d/shaka-lab.sources
+Types: deb
+URIs: https://shaka-project.github.io/shaka-lab/
+Suites: stable
+Components: main
+Signed-By: /etc/apt/keyrings/shaka-lab.asc
+EOF
 sudo apt update
 sudo apt install -y shaka-lab-node
 ```
