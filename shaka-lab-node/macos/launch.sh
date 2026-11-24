@@ -34,9 +34,15 @@ echo "$$" > /opt/shaka-lab-node/work/shaka-lab-node.pid
 # The location of our hermetic NVM installation.
 export NVM_DIR=/opt/shaka-lab-node/nvm
 
-# Apps get a minimal PATH.  Add Homebrew's, for tools the nodes run, such as
-# docker for the Tizen node.  (/usr/local on Intel, /opt/homebrew on Apple
-# Silicon.)
+# Start from the system's default PATH, the one a login gets, rather than the
+# one this inherits.  When Homebrew installs or upgrades the package, install.sh
+# runs restart-services.sh, which starts the app with Homebrew's PATH.  That has
+# Homebrew's internal git and curl, which only work under brew, so NVM couldn't
+# install or update anything.  An admin running restart-services.sh would pass
+# along their own PATH, too.
+eval "$(env -i /usr/libexec/path_helper -s)"
+# Add Homebrew's bin folders, for tools the nodes run, such as docker for the
+# Tizen node.  (/usr/local on Intel, /opt/homebrew on Apple Silicon.)
 export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
 
 # After a first install, there is no Node.js yet.  Install it, and keep trying
