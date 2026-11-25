@@ -65,8 +65,11 @@ sudo /opt/shaka-lab-node/stop-services.sh
 brew uninstall shaka-lab-node
 ```
 
-Uninstalling leaves Node.js in `/opt/shaka-lab-node/nvm`, so that upgrades
-don't download it again.  To remove it too, uninstall with `--zap`:
+Uninstalling leaves Node.js in `/opt/shaka-lab-node/nvm` and the node modules
+and WebDrivers in `/opt/shaka-lab-node/work`, so that upgrades don't download
+them again.  It also leaves the logs in `/opt/shaka-lab-node/logs` and
+`/var/log/shaka-lab-node`, so that upgrades keep their history, and the login
+item.  To remove all of those too, uninstall with `--zap`:
 
 ```sh
 brew uninstall --zap shaka-lab-node

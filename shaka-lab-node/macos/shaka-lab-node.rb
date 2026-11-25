@@ -70,7 +70,14 @@ cask "shaka-lab-node" do
   end
 
   # Upgrades uninstall the old version first, so a plain uninstall keeps NVM
-  # and Node.js in /opt/shaka-lab-node/nvm, for the new version to use, and
-  # only "brew uninstall --zap" removes them.
-  zap delete: "/opt/shaka-lab-node"
+  # and Node.js, the working directory, and the logs, for the new version to
+  # use, and only "brew uninstall --zap" removes them.  It also keeps the login
+  # item, which install.sh adds back without duplicating it.  Homebrew removes
+  # login items as the user running it, who is the user install.sh added it
+  # for.
+  zap login_item: "shaka-lab-node",
+      delete:     [
+        "/opt/shaka-lab-node",
+        "/var/log/shaka-lab-node",
+      ]
 end

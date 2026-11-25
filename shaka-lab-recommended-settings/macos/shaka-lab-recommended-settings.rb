@@ -53,15 +53,24 @@ cask "shaka-lab-recommended-settings" do
   end
 
   # Most settings stay after uninstalling, but remove the ssh client config,
-  # which is only meant for lab machines, and the shaka-lab-update-os command.
+  # which is only meant for lab machines.
   uninstall_preflight_steps do
     run "/bin/rm",
         args: [
-          "-rf",
+          "-f",
           "/etc/ssh/ssh_config.d/200-shaka-lab-recommended-settings.conf",
-          "/opt/shaka-lab-recommended-settings",
-          "/etc/paths.d/shaka-lab-recommended-settings",
         ],
         sudo: true
   end
+
+  # Upgrades uninstall the old version first, and shaka-lab-update-os runs
+  # those upgrades with its password prompt from
+  # /opt/shaka-lab-recommended-settings.  If uninstalling removed that prompt,
+  # Homebrew couldn't ask for a password to install the new version.  So a
+  # plain uninstall keeps the shaka-lab-update-os command, and only
+  # "brew uninstall --zap" removes it.
+  zap delete: [
+    "/etc/paths.d/shaka-lab-recommended-settings",
+    "/opt/shaka-lab-recommended-settings",
+  ]
 end
